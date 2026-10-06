@@ -1,18 +1,21 @@
-import React from "react";
+// ...existing code...
 
 const BoardOfDirectors = () => {
   const directors = [
     {
-      name: "Director's Name",
+      name: "Fortune Niceman",
       role: "Chairman / Director",
+      image: "/images/team/11.jpg",
     },
     {
-      name: "Director's Name",
-      role: "Director",
+      name: "Akpanam Theophilos",
+      role: "Operations",
+      image: "/images/team/13.jpg",
     },
     {
-      name: "Director's Name",
+      name: "Hannah Ifiok",
       role: "Director",
+      image: "/images/team/14.jpg",
     },
   ];
 
@@ -67,11 +70,13 @@ const BoardOfDirectors = () => {
                 key={`${director.name}-${director.role}`}
                 className="overflow-hidden rounded-2xl bg-white shadow-sm"
               >
-                {/* Placeholder for Director Image */}
+                {/* Director Profile Image */}
                 <div className="flex h-72 items-center justify-center bg-green-100">
-                  <span className="text-6xl font-bold text-green-700">
-                    {director.name.charAt(0)}
-                  </span>
+                  <img
+                    src={director.image}
+                    alt={director.name}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
 
                 <div className="p-7">

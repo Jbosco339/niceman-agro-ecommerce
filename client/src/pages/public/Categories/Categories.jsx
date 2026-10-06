@@ -5,37 +5,37 @@ const categories = [
   {
     name: "Fresh Vegetables",
     description: "Fresh and naturally grown vegetables for your home and business.",
-    image: "/images/categories/vegetables.jpg",
+    image: "/images/categories/1.jpg",
     link: "/shop?category=vegetables",
   },
   {
     name: "Fruits",
     description: "Quality fresh fruits carefully selected for freshness and taste.",
-    image: "/images/categories/fruits.jpg",
+    image: "/images/categories/2.jpg",
     link: "/shop?category=fruits",
   },
   {
     name: "Grains & Cereals",
     description: "Quality grains and cereals suitable for everyday meals.",
-    image: "/images/categories/grains.jpg",
+    image: "/images/categories/3.jpg",
     link: "/shop?category=grains",
   },
   {
     name: "Tubers",
     description: "Fresh farm tubers including yam, cassava and other farm produce.",
-    image: "/images/categories/tubers.jpg",
+    image: "/images/categories/4.jpg",
     link: "/shop?category=tubers",
   },
   {
     name: "Livestock",
     description: "Quality livestock and farm animals from trusted sources.",
-    image: "/images/categories/livestock.jpg",
+    image: "/images/categories/5.jpg",
     link: "/shop?category=livestock",
   },
   {
     name: "Poultry",
     description: "Fresh poultry products and quality birds from our farms.",
-    image: "/images/categories/poultry.jpg",
+    image: "/images/categories/6.jpg",
     link: "/shop?category=poultry",
   },
 ];
@@ -44,11 +44,11 @@ const Categories = () => {
   return (
     <main className="bg-white">
       {/* Hero Section */}
-      <section className="relative flex min-h-[420px] items-center overflow-hidden">
+      <section className="relative flex min-h-105 items-center overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: "url('/images/categories-bg.jpg')",
+            backgroundImage: "url('/images/categories/6.jpg')",
           }}
         />
 

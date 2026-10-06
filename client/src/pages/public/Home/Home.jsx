@@ -7,23 +7,23 @@ const categories = [
   },
   {
     name: "Herbicides",
-    image: "/images/categories/herbicides.jpg",
+    image: "/images/categories/2.jpg",
   },
   {
     name: "Insecticides",
-    image: "/images/categories/insecticides.jpg",
+    image: "/images/categories/3.jpg",
   },
   {
     name: "Fungicides",
-    image: "/images/categories/fungicides.jpg",
+    image: "/images/categories/4.jpg",
   },
   {
     name: "Seeds",
-    image: "/images/categories/seeds.jpg",
+    image: "/images/categories/1.jpg",
   },
   {
     name: "Farm Equipment",
-    image: "/images/categories/farm-equipment.jpg",
+    image: "/images/categories/2.jpg",
   },
 ];
 
@@ -37,19 +37,19 @@ const popularProducts = [
   {
     name: "Crop Protection Herbicide",
     price: "₦18,500",
-    image: "/images/products/herbicide.jpg",
+    image: "/images/products/7.jpg",
     category: "Herbicide",
   },
   {
     name: "Farm Insect Control",
     price: "₦14,500",
-    image: "/images/products/agro12.jpg",
+    image: "/images/products/8.jpg",
     category: "Insecticide",
   },
   {
     name: "Quality Maize Seeds",
     price: "₦12,000",
-    image: "/images/products/seeds.jpg",
+    image: "/images/products/9.jpg",
     category: "Seeds",
   },
 ];
@@ -57,7 +57,7 @@ const popularProducts = [
 const blogPosts = [
   {
     title: "How to Choose the Right Fertilizer for Your Crops",
-    image: "/images/blog/fertilizer-guide.jpg",
+    image: "/images/blog/17.jpg",
     category: "Crop Management",
   },
   {
@@ -67,7 +67,7 @@ const blogPosts = [
   },
   {
     title: "Important Tips for Better Farm Productivity",
-    image: "/images/blog/farm-productivity.jpg",
+    image: "/images/blog/5.jpg",
     category: "Agriculture",
   },
 ];

@@ -13,7 +13,7 @@ const dummyBlogs = [
     author: "Niceman Agro & Farms",
     date: "October 2, 2026",
     readTime: "5 min read",
-    image: "/images/blog/fresh-produce.jpg",
+    image: "/images/blog/2.jpg",
   },
 
   {
@@ -28,7 +28,7 @@ const dummyBlogs = [
     author: "Niceman Agro & Farms",
     date: "September 28, 2026",
     readTime: "4 min read",
-    image: "/images/blog/healthy-food.jpg",
+    image: "/images/blog/16.jpg",
   },
 
   {
@@ -43,7 +43,7 @@ const dummyBlogs = [
     author: "Niceman Agro & Farms",
     date: "September 20, 2026",
     readTime: "6 min read",
-    image: "/images/blog/modern-farming.jpg",
+    image: "/images/blog/6.jpg",
   },
 
   {
@@ -58,7 +58,7 @@ const dummyBlogs = [
     author: "Niceman Agro & Farms",
     date: "September 15, 2026",
     readTime: "5 min read",
-    image: "/images/blog/local-farmers.jpg",
+    image: "/images/blog/3.jpg",
   },
 
   {
@@ -73,7 +73,7 @@ const dummyBlogs = [
     author: "Niceman Agro & Farms",
     date: "September 10, 2026",
     readTime: "4 min read",
-    image: "/images/blog/storage-tips.jpg",
+    image: "/images/blog/7.jpg",
   },
 
   {
@@ -88,7 +88,7 @@ const dummyBlogs = [
     author: "Niceman Agro & Farms",
     date: "September 5, 2026",
     readTime: "7 min read",
-    image: "/images/blog/farm-to-table.jpg",
+    image: "/images/blog/11.jpg",
   },
 ];
 

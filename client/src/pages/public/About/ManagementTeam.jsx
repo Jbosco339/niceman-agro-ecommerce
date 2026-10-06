@@ -1,22 +1,26 @@
-import React from "react";
+// ...existing code...
 
 const ManagementTeam = () => {
   const team = [
     {
       name: "Manager's Name",
       role: "Managing Director",
+      image: "/images/team/16.jpg",
     },
     {
       name: "Manager's Name",
       role: "Operations Manager",
+      image: "/images/team/8.jpg",
     },
     {
       name: "Manager's Name",
       role: "Farm Manager",
+      image: "/images/team/11.jpg",
     },
     {
       name: "Manager's Name",
       role: "Business Development Manager",
+      image: "/images/team/13.jpg",
     },
   ];
 
@@ -35,8 +39,8 @@ const ManagementTeam = () => {
             </h1>
 
             <p className="mt-6 text-lg leading-8 text-green-50">
-              A dedicated team driving our agricultural operations and
-              business growth.
+              A dedicated team driving our agricultural operations and business
+              growth.
             </p>
           </div>
         </div>
@@ -55,9 +59,8 @@ const ManagementTeam = () => {
 
           <p className="mt-6 leading-8 text-slate-600">
             Our management team brings together leadership, agricultural
-            knowledge, operational experience, and business expertise to
-            support the company's goals and ensure effective day-to-day
-            operations.
+            knowledge, operational experience, and business expertise to support
+            the company's goals and ensure effective day-to-day operations.
           </p>
         </div>
       </section>
@@ -71,11 +74,13 @@ const ManagementTeam = () => {
                 key={`${member.name}-${member.role}`}
                 className="overflow-hidden rounded-2xl bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-                {/* Placeholder Image */}
+                {/* Profile Image */}
                 <div className="flex h-64 items-center justify-center bg-green-100">
-                  <span className="text-6xl font-bold text-green-700">
-                    {member.name.charAt(0)}
-                  </span>
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
 
                 <div className="p-6">
@@ -102,27 +107,21 @@ const ManagementTeam = () => {
       <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
         <div className="grid gap-8 md:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 p-8">
-            <h3 className="text-xl font-bold text-slate-900">
-              Leadership
-            </h3>
+            <h3 className="text-xl font-bold text-slate-900">Leadership</h3>
             <p className="mt-4 leading-7 text-slate-600">
               Providing clear direction and making responsible decisions.
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 p-8">
-            <h3 className="text-xl font-bold text-slate-900">
-              Collaboration
-            </h3>
+            <h3 className="text-xl font-bold text-slate-900">Collaboration</h3>
             <p className="mt-4 leading-7 text-slate-600">
               Working together across different areas of the business.
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 p-8">
-            <h3 className="text-xl font-bold text-slate-900">
-              Excellence
-            </h3>
+            <h3 className="text-xl font-bold text-slate-900">Excellence</h3>
             <p className="mt-4 leading-7 text-slate-600">
               Continuously improving our operations, products, and services.
             </p>
