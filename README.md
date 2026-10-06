@@ -31,9 +31,10 @@ Shop by category
 Shop by crop
 View product details
 Add multiple products to a cart
-Checkout as guests
+Checkout as logged in users and guests
 Make payments
 Receive order confirmations
+ordet sent to admin as mail
 Read agricultural articles and resources
 
 The administrator should be able to manage products, inventory, orders, customers, blog content and other website data through the backend/admin system.
@@ -76,11 +77,7 @@ The project follows a client-server architecture.
               ▼                ▼                ▼
           Database          Payments          Email
 
-The client should communicate with the server through APIs.
-
-The client must not connect directly to the database.
-
-Core Features
+Core Features:
 Customer Shopping
 Product catalog
 Product categories

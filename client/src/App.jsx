@@ -1,11 +1,19 @@
+import Header from "./components/layout/Header";
+import Footer from "./components/layout/Footer";
+import AppRoutes from "./routes/AppRoutes";
+
 function App() {
   return (
-    <div className="min-h-screen bg-green-600 flex items-center justify-center">
-      <h1 className="text-4xl font-bold text-white">
-        Niceman Agro & Farms
-      </h1>
+    <div className="flex min-h-screen flex-col">
+      <Header />
+
+      <main className="flex-1">
+        <AppRoutes />
+      </main>
+
+      <Footer />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
