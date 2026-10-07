@@ -23,7 +23,7 @@ const categories = [
   {
     name: "Tubers",
     description: "Fresh farm tubers including yam, cassava and other farm produce.",
-    image: "/images/categories/4.jpg",
+    image: "/images/categories/1.jpg",
     link: "/shop?category=tubers",
   },
   {

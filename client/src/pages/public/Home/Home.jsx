@@ -1,29 +1,30 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 const categories = [
   {
     name: "Fertilizers",
-    image: "/images/categories/agro12.jpg",
+    image: "/images/categories/fertiliser.jpg",
   },
   {
     name: "Herbicides",
-    image: "/images/categories/2.jpg",
+    image: "/images/categories/herbicides.jpg",
   },
   {
     name: "Insecticides",
-    image: "/images/categories/3.jpg",
+    image: "/images/categories/18.jpg",
   },
   {
     name: "Fungicides",
-    image: "/images/categories/4.jpg",
+    image: "/images/categories/fungicide.jpg",
   },
   {
     name: "Seeds",
-    image: "/images/categories/1.jpg",
+    image: "/images/categories/12.jpg",
   },
   {
     name: "Farm Equipment",
-    image: "/images/categories/2.jpg",
+    image: "/images/categories/tools.jpg",
   },
 ];
 
@@ -31,25 +32,25 @@ const popularProducts = [
   {
     name: "Premium Crop Fertilizer",
     price: "₦25,000",
-    image: "/images/products/agro12.jpg",
+    image: "/images/products/5.jpg",
     category: "Fertilizer",
   },
   {
     name: "Crop Protection Herbicide",
     price: "₦18,500",
-    image: "/images/products/7.jpg",
+    image: "/images/products/herbicides.jpg",
     category: "Herbicide",
   },
   {
     name: "Farm Insect Control",
     price: "₦14,500",
-    image: "/images/products/8.jpg",
+    image: "/images/products/15.jpg",
     category: "Insecticide",
   },
   {
-    name: "Quality Maize Seeds",
+    name: "Quality Seeds",
     price: "₦12,000",
-    image: "/images/products/9.jpg",
+    image: "/images/products/14.jpg",
     category: "Seeds",
   },
 ];
@@ -57,17 +58,17 @@ const popularProducts = [
 const blogPosts = [
   {
     title: "How to Choose the Right Fertilizer for Your Crops",
-    image: "/images/blog/17.jpg",
+    image: "/images/blog/6.jpg",
     category: "Crop Management",
   },
   {
     title: "Best Practices for Protecting Your Farm From Pests",
-    image: "/images/blog/agro12.jpg",
+    image: "/images/blog/7.jpg",
     category: "Pest Management",
   },
   {
     title: "Important Tips for Better Farm Productivity",
-    image: "/images/blog/5.jpg",
+    image: "/images/blog/9.jpg",
     category: "Agriculture",
   },
 ];
@@ -96,51 +97,102 @@ const faqs = [
 ];
 
 function Home() {
+  const slides = [
+    {
+      image: "/images/hero/agro12.jpg",
+      title: ["Growing Better Crops.", "Building a Better Future."],
+      description:
+        "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farms.",
+    },
+    {
+      image: "/images/hero/3.jpg",
+      title: ["Trusted Inputs.", "Sustainable Practices."],
+      description:
+        "Reliable products and expert guidance to support sustainable farming and increase yields.",
+    },
+    {
+      image: "/images/hero/5.jpg",
+      title: ["From Seed to Harvest.", "We Grow With You."],
+      description:
+        "Comprehensive farm inputs and resources designed to deliver consistent results across each growing season.",
+    },
+  ];
+
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActive((s) => (s + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [slides.length]);
+
   return (
     <main className="overflow-hidden bg-white text-slate-800">
-
       {/* HERO */}
-      <section
-        className="relative flex min-h-[620px] items-center bg-cover bg-center"
-        style={{
-          backgroundImage:
-            "linear-gradient(90deg, rgba(3, 54, 31, 0.88), rgba(3, 54, 31, 0.30)), url('/images/hero/agro12.jpg')",
-        }}
-      >
-        <div className="mx-auto w-full max-w-7xl px-5 py-20 sm:px-8 lg:px-10">
-          <div className="max-w-2xl text-white">
-            <span className="mb-5 inline-block rounded-full bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.15em]">
-              Quality Agro Inputs
-            </span>
+      <section className="relative flex min-h-[620px] items-center justify-center overflow-hidden pt-16">
+        {/* Slides (backgrounds) */}
+        <div className="absolute inset-0">
+          {slides.map((slide, i) => (
+            <div
+              key={slide.image}
+              className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out z-0 ${
+                i === active ? "opacity-100" : "opacity-0"
+              }`}
+              style={{
+                backgroundImage: `linear-gradient(90deg, rgba(3, 54, 31, 0.88), rgba(3, 54, 31, 0.30)), url('${slide.image}')`,
+              }}
+            />
+          ))}
+        </div>
 
-            <h1 className="text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-7xl">
-              Growing Better Crops.
-              <br />
-              Building a Better Future.
-            </h1>
+        <div className="relative flex h-full w-full items-center justify-center">
+          {slides.map((slide, i) => (
+            <div
+              key={slide.image + i}
+              className={`absolute inset-0 flex items-center justify-center transition-opacity duration-1000 ease-in-out z-10 ${
+                i === active ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}
+              aria-hidden={i === active ? "false" : "true"}
+            >
+              <div className="mx-auto w-full max-w-7xl px-5 py-12 sm:px-8 lg:px-10 sm:py-16 lg:py-20">
+                <div className="mx-auto flex max-w-2xl flex-col items-center text-center text-white">
+                  <span className="mb-5 inline-block rounded-full bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.15em]">
+                    Quality Agro Inputs
+                  </span>
 
-            <p className="mt-6 max-w-xl text-base leading-7 text-white/90 sm:text-lg">
-              Quality agricultural inputs and practical farming knowledge
-              helping farmers grow healthier crops and build more productive
-              farms.
-            </p>
+                  <h1 className="text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-7xl">
+                    {slide.title.map((line, idx) => (
+                      <span key={idx}>
+                        {line}
+                        <br />
+                      </span>
+                    ))}
+                  </h1>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/shop"
-                className="inline-flex min-h-12 items-center justify-center rounded-md bg-green-700 px-7 font-semibold text-white transition hover:bg-green-800"
-              >
-                Shop Products
-              </Link>
+                  <p className="mt-6 max-w-xl text-base leading-7 text-white/90 sm:text-lg">
+                    {slide.description}
+                  </p>
 
-              <Link
-                to="/shop"
-                className="inline-flex min-h-12 items-center justify-center rounded-md border border-white px-7 font-semibold text-white transition hover:bg-white hover:text-green-800"
-              >
-                Explore Products
-              </Link>
+                  <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+                    <Link
+                      to="/shop"
+                      className="inline-flex min-h-12 items-center justify-center rounded-md bg-green-700 px-7 font-semibold text-white transition hover:bg-green-800"
+                    >
+                      Shop Products
+                    </Link>
+
+                    <Link
+                      to="/shop"
+                      className="inline-flex min-h-12 items-center justify-center rounded-md border border-white px-7 font-semibold text-white transition hover:bg-white hover:text-green-800"
+                    >
+                      Explore Products
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       </section>
 
@@ -276,8 +328,8 @@ function Home() {
             </h2>
 
             <p className="mt-4 leading-7 text-slate-600">
-              We combine quality agricultural inputs with practical knowledge
-              to help farmers make better decisions and achieve better results.
+              We combine quality agricultural inputs with practical knowledge to
+              help farmers make better decisions and achieve better results.
             </p>
           </div>
 
@@ -353,10 +405,7 @@ function Home() {
                 key={post.title}
                 className="overflow-hidden rounded-lg border border-slate-200 bg-white"
               >
-                <Link
-                  to="/blog"
-                  className="block aspect-video overflow-hidden"
-                >
+                <Link to="/blog" className="block aspect-video overflow-hidden">
                   <img
                     src={post.image}
                     alt={post.title}

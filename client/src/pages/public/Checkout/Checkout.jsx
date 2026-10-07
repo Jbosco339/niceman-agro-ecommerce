@@ -1,8 +1,23 @@
-
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useCart } from "../../../context/CartContext";
+
+const bankDetails = {
+  accountName: "Niceman Agro & Farms",
+  bankName: "Access Bank",
+  accountNumber: "1234567890",
+};
 
 const Checkout = () => {
+  const location = useLocation();
+  const { cartItems: cartContextItems, cartTotal } = useCart();
+
+  const cartItems = location.state?.cartItems ?? cartContextItems ?? [];
+  const subtotal = location.state?.subtotal ?? cartTotal ?? 0;
+  const deliveryFee =
+    location.state?.deliveryFee ?? (subtotal >= 50000 ? 0 : 3000);
+  const total = location.state?.total ?? subtotal + deliveryFee;
+
   const [paymentMethod, setPaymentMethod] = useState("paystack");
 
   const [formData, setFormData] = useState({
@@ -16,37 +31,7 @@ const Checkout = () => {
     notes: "",
   });
 
-  // Temporary cart data.
-  // Replace this with your CartContext/API data later.
-  const cartItems = [
-    {
-      id: 1,
-      name: "Fresh Tomatoes",
-      price: 3500,
-      quantity: 2,
-      image: "/images/products/tomatoes.jpg",
-    },
-    {
-      id: 2,
-      name: "Premium Rice",
-      price: 45000,
-      quantity: 1,
-      image: "/images/products/rice.jpg",
-    },
-  ];
-
-  const subtotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
-
-  const deliveryFee = subtotal >= 50000 ? 0 : 3000;
-
-  const total = subtotal + deliveryFee;
-
-  const formatPrice = (price) => {
-    return `₦${price.toLocaleString()}`;
-  };
+  const formatPrice = (price) => `₦${price.toLocaleString()}`;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -70,9 +55,45 @@ const Checkout = () => {
     };
 
     console.log("Order:", orderData);
-
-    // Connect your backend / Paystack payment here.
   };
+
+  if (!cartItems || cartItems.length === 0) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <section className="bg-green-900 px-5 py-12 sm:px-8">
+          <div className="mx-auto max-w-7xl">
+            <Link
+              to="/cart"
+              className="text-sm font-semibold text-yellow-400 hover:text-yellow-300"
+            >
+              ← Back to Cart
+            </Link>
+
+            <h1 className="mt-4 text-4xl font-extrabold text-white sm:text-5xl">
+              Checkout
+            </h1>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-3xl px-5 py-16 sm:px-8">
+          <div className="rounded-2xl bg-white p-10 text-center shadow-sm ring-1 ring-gray-100">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Your cart is empty
+            </h2>
+            <p className="mt-3 text-gray-600">
+              Add a product before continuing to checkout.
+            </p>
+            <Link
+              to="/shop"
+              className="mt-7 inline-flex items-center gap-2 rounded-lg bg-green-800 px-6 py-3 font-semibold text-white transition hover:bg-green-900"
+            >
+              Continue Shopping
+            </Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -380,9 +401,7 @@ const Checkout = () => {
                     />
 
                     <div>
-                      <p className="font-bold text-gray-900">
-                        Pay Online
-                      </p>
+                      <p className="font-bold text-gray-900">Pay Online</p>
 
                       <p className="text-sm text-gray-500">
                         Pay securely with card, bank transfer or USSD.
@@ -390,33 +409,66 @@ const Checkout = () => {
                     </div>
                   </label>
 
-                  {/* Cash */}
-                  <label
-                    className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition ${
-                      paymentMethod === "cash"
-                        ? "border-green-700 bg-green-50"
-                        : "border-gray-200 hover:border-green-300"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="cash"
-                      checked={paymentMethod === "cash"}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="h-4 w-4 accent-green-700"
-                    />
+                  {/* Bank Transfer */}
+                  <div className="space-y-3">
+                    <label
+                      className={`flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition ${
+                        paymentMethod === "bank-transfer"
+                          ? "border-green-700 bg-green-50"
+                          : "border-gray-200 hover:border-green-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="bank-transfer"
+                        checked={paymentMethod === "bank-transfer"}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="h-4 w-4 accent-green-700"
+                      />
 
-                    <div>
-                      <p className="font-bold text-gray-900">
-                        Cash on Delivery
-                      </p>
+                      <div>
+                        <p className="font-bold text-gray-900">Bank Transfer</p>
 
-                      <p className="text-sm text-gray-500">
-                        Pay when your order is delivered.
-                      </p>
-                    </div>
-                  </label>
+                        <p className="text-sm text-gray-500">
+                          Transfer payment to our company account.
+                        </p>
+                      </div>
+                    </label>
+
+                    {paymentMethod === "bank-transfer" && (
+                      <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-gray-700">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="font-medium text-gray-500">
+                              Account Name
+                            </span>
+                            <span className="font-semibold text-gray-900">
+                              {bankDetails.accountName}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="font-medium text-gray-500">
+                              Bank Name
+                            </span>
+                            <span className="font-semibold text-gray-900">
+                              {bankDetails.bankName}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="font-medium text-gray-500">
+                              Account Number
+                            </span>
+                            <span className="font-semibold text-gray-900">
+                              {bankDetails.accountNumber}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -471,9 +523,7 @@ const Checkout = () => {
                     <span>Delivery</span>
 
                     <span className="font-semibold text-gray-800">
-                      {deliveryFee === 0
-                        ? "FREE"
-                        : formatPrice(deliveryFee)}
+                      {deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}
                     </span>
                   </div>
 
@@ -487,9 +537,7 @@ const Checkout = () => {
                 <div className="my-5 border-t border-gray-200" />
 
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold text-gray-900">
-                    Total
-                  </span>
+                  <span className="text-lg font-bold text-gray-900">Total</span>
 
                   <span className="text-2xl font-extrabold text-green-800">
                     {formatPrice(total)}
@@ -505,8 +553,7 @@ const Checkout = () => {
                 </button>
 
                 <p className="mt-4 text-center text-xs leading-5 text-gray-400">
-                  By placing your order, you agree to our terms and
-                  conditions.
+                  By placing your order, you agree to our terms and conditions.
                 </p>
 
                 <Link

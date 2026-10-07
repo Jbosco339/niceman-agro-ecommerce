@@ -8,7 +8,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Heart,
+  Check,
 } from "lucide-react";
+import { useCart } from "../../../context/CartContext";
 
 const products = [
   {
@@ -16,8 +18,9 @@ const products = [
     name: "Premium Crop Fertilizer",
     category: "Fertilizers",
     price: 25000,
-    image: "/images/products/agro12.jpg",
-    description: "Quality fertilizer formulated to support healthy crop growth.",
+    image: "/images/products/5.jpg",
+    description:
+      "Quality fertilizer formulated to support healthy crop growth.",
     featured: true,
   },
   {
@@ -25,7 +28,7 @@ const products = [
     name: "Crop Protection Herbicide",
     category: "Herbicides",
     price: 18500,
-    image: "/images/products/9.jpg",
+    image: "/images/products/herbicides.jpg",
     description: "Effective weed control solution for agricultural crops.",
     featured: true,
   },
@@ -34,16 +37,16 @@ const products = [
     name: "Farm Insect Control",
     category: "Insecticides",
     price: 14500,
-    image: "/images/products/7.jpg",
+    image: "/images/products/17.jpg",
     description: "Reliable protection against common agricultural pests.",
     featured: true,
   },
   {
     id: 4,
-    name: "Quality Maize Seeds",
+    name: "Quality Seeds",
     category: "Seeds",
     price: 12000,
-    image: "/images/products/10.jpg",
+    image: "/images/products/13.jpg",
     description: "Quality maize seeds selected for productive farming.",
     featured: true,
   },
@@ -52,7 +55,7 @@ const products = [
     name: "NPK Fertilizer",
     category: "Fertilizers",
     price: 22000,
-    image: "/images/products/11.jpg",
+    image: "/images/products/7.jpg",
     description: "Balanced NPK fertilizer for improved crop nutrition.",
     featured: false,
   },
@@ -61,7 +64,7 @@ const products = [
     name: "Broad Spectrum Herbicide",
     category: "Herbicides",
     price: 16500,
-    image: "/images/products/12.jpg",
+    image: "/images/products/herbicides.jpg",
     description: "Agricultural herbicide for effective weed management.",
     featured: false,
   },
@@ -70,7 +73,7 @@ const products = [
     name: "Agricultural Insecticide",
     category: "Insecticides",
     price: 13500,
-    image: "/images/products/8.jpg",
+    image: "/images/products/15.jpg",
     description: "Crop protection product for controlling harmful insects.",
     featured: false,
   },
@@ -79,7 +82,25 @@ const products = [
     name: "Improved Vegetable Seeds",
     category: "Seeds",
     price: 9500,
-    image: "/images/products/9.jpg",
+    image: "/images/products/12.jpg",
+    description: "Selected vegetable seeds for productive farm cultivation.",
+    featured: false,
+  },
+  {
+    id: 8,
+    name: "Improved Vegetable Seeds",
+    category: "Fungicides",
+    price: 9500,
+    image: "/images/products/3.jpg",
+    description: "Selected vegetable seeds for productive farm cultivation.",
+    featured: false,
+  },
+  {
+    id: 8,
+    name: "Improved Vegetable Seeds",
+    category: "Farm Equipment",
+    price: 9500,
+    image: "/images/products/13.jpg",
     description: "Selected vegetable seeds for productive farm cultivation.",
     featured: false,
   },
@@ -104,13 +125,24 @@ function Shop() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
+  const { addToCart } = useCart();
+  const [addedProductId, setAddedProductId] = useState(null);
+
+  const handleAddToCart = (product) => {
+    addToCart(product, 1);
+    setAddedProductId(product.id);
+
+    window.setTimeout(() => {
+      setAddedProductId((current) => (current === product.id ? null : current));
+    }, 1200);
+  };
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
     if (selectedCategory !== "All Products") {
       result = result.filter(
-        (product) => product.category === selectedCategory
+        (product) => product.category === selectedCategory,
       );
     }
 
@@ -121,7 +153,7 @@ function Shop() {
         (product) =>
           product.name.toLowerCase().includes(search) ||
           product.category.toLowerCase().includes(search) ||
-          product.description.toLowerCase().includes(search)
+          product.description.toLowerCase().includes(search),
       );
     }
 
@@ -146,7 +178,6 @@ function Shop() {
 
   return (
     <main className="min-h-screen bg-slate-50">
-
       {/* Page Header */}
       <section className="bg-green-950 py-14 text-white sm:py-16">
         <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
@@ -170,10 +201,8 @@ function Shop() {
       {/* Shop Content */}
       <section className="py-10 sm:py-14">
         <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
-
           {/* Search + Sort */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
             {/* Search */}
             <div className="relative w-full lg:max-w-xl">
               <Search
@@ -204,12 +233,8 @@ function Shop() {
                 >
                   <option value="featured">Featured</option>
                   <option value="name">Name</option>
-                  <option value="price-low">
-                    Price: Low to High
-                  </option>
-                  <option value="price-high">
-                    Price: High to Low
-                  </option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
                 </select>
 
                 <ChevronDown
@@ -231,11 +256,8 @@ function Shop() {
           </button>
 
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[220px_1fr]">
-
             {/* Category Sidebar */}
-            <aside
-              className={`${showFilters ? "block" : "hidden"} lg:block`}
-            >
+            <aside className={`${showFilters ? "block" : "hidden"} lg:block`}>
               <div className="rounded-lg border border-slate-200 bg-white p-5">
                 <h2 className="text-base font-bold text-green-950">
                   Categories
@@ -258,11 +280,7 @@ function Shop() {
                       >
                         <span>{category}</span>
 
-                        {active && (
-                          <span className="text-xs">
-                            ✓
-                          </span>
-                        )}
+                        {active && <span className="text-xs">✓</span>}
                       </button>
                     );
                   })}
@@ -342,7 +360,7 @@ function Shop() {
                           to={`/shop/product/${product.id}`}
                           className="mt-2 block"
                         >
-                          <h3 className="min-h-[48px] text-base font-bold leading-6 text-green-950 transition hover:text-green-700">
+                          <h3 className="min-h-12 text-base font-bold leading-6 text-green-950 transition hover:text-green-700">
                             {product.name}
                           </h3>
                         </Link>
@@ -358,10 +376,20 @@ function Shop() {
 
                           <button
                             type="button"
+                            onClick={() => handleAddToCart(product)}
                             className="flex h-10 items-center gap-2 rounded-md bg-green-700 px-4 text-sm font-semibold text-white transition hover:bg-green-800"
                           >
-                            <ShoppingCart size={16} />
-                            Add
+                            {addedProductId === product.id ? (
+                              <>
+                                <Check size={16} />
+                                Added
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingCart size={16} />
+                                Add
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>

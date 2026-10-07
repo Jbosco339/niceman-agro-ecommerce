@@ -1,21 +1,25 @@
 import { Link } from "react-router-dom";
+import { useCart } from "../../context/CartContext";
 
 function Navbar() {
+  const { cartItems } = useCart();
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
   return (
     <nav className="bg-white">
-      <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
         {/* Logo */}
         <Link
           to="/"
           className="flex items-center gap-3"
           aria-label="Niceman Agro & Farms Home"
         >
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-green-700 text-2xl text-white">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-700 text-xl text-white">
             🌱
           </div>
 
           <div className="leading-tight">
-            <span className="block text-lg font-bold text-green-900">
+            <span className="block text-base font-bold text-green-900">
               Niceman Agro
             </span>
 
@@ -201,9 +205,11 @@ function Navbar() {
           >
             <span className="text-lg">🛒</span>
 
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-700 px-1 text-[10px] font-bold text-white">
-              0
-            </span>
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-700 px-1 text-[10px] font-bold text-white">
+                {cartCount}
+              </span>
+            )}
           </Link>
 
           {/* Customer Account */}

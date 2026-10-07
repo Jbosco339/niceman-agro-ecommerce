@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   Star,
 } from "lucide-react";
+import { useCart } from "../../../context/CartContext";
 
 const products = [
   {
@@ -138,14 +139,15 @@ function ProductDetails() {
 
   const product = useMemo(
     () => products.find((item) => String(item.id) === id),
-    [id]
+    [id],
   );
 
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [addFeedback, setAddFeedback] = useState("");
+  const { addToCart, cartItems } = useCart();
 
-  const formatPrice = (price) =>
-    `₦${price.toLocaleString("en-NG")}`;
+  const formatPrice = (price) => `₦${price.toLocaleString("en-NG")}`;
 
   if (!product) {
     return (
@@ -177,6 +179,17 @@ function ProductDetails() {
 
   const decreaseQuantity = () => {
     setQuantity((current) => Math.max(1, current - 1));
+  };
+
+  const isProductInCart = cartItems.find((item) => item.id === product.id);
+
+  const handleAddToCart = () => {
+    addToCart(product, quantity);
+    const existingQty = isProductInCart ? isProductInCart.quantity : 0;
+    const nextQty = existingQty + quantity;
+    setAddFeedback(`${product.name} added to cart (${nextQty} in cart)`);
+
+    window.setTimeout(() => setAddFeedback(""), 1200);
   };
 
   return (
@@ -306,6 +319,7 @@ function ProductDetails() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
+                onClick={handleAddToCart}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-800 px-6 py-3.5 font-semibold text-white transition hover:bg-green-900"
               >
                 <ShoppingCart size={19} />
@@ -329,6 +343,13 @@ function ProductDetails() {
               </button>
             </div>
 
+            {addFeedback && (
+              <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-800">
+                <Check size={16} />
+                {addFeedback}
+              </div>
+            )}
+
             {/* Delivery Info */}
             <div className="mt-8 rounded-xl border border-green-100 bg-green-50 p-5">
               <p className="font-semibold text-green-900">
@@ -336,8 +357,8 @@ function ProductDetails() {
               </p>
 
               <p className="mt-1 text-sm leading-6 text-green-800">
-                Product availability, delivery options, and other order
-                details will be connected to the store system later.
+                Product availability, delivery options, and other order details
+                will be connected to the store system later.
               </p>
             </div>
           </div>

@@ -7,7 +7,7 @@ const products = [
     name: "Fresh Tomatoes",
     category: "vegetables",
     price: "₦3,500",
-    image: "/images/products/tomatoes.jpg",
+    image: "/images/products/3.jpg",
     description: "Fresh, healthy and naturally grown tomatoes.",
   },
   {
@@ -15,7 +15,7 @@ const products = [
     name: "Fresh Pepper",
     category: "vegetables",
     price: "₦2,500",
-    image: "/images/products/pepper.jpg",
+    image: "/images/products/2.jpg",
     description: "Fresh farm-grown pepper with great flavor.",
   },
   {
@@ -23,7 +23,7 @@ const products = [
     name: "Fresh Carrots",
     category: "vegetables",
     price: "₦2,000",
-    image: "/images/products/carrots.jpg",
+    image: "/images/products/1.jpg",
     description: "Crisp and nutritious fresh carrots.",
   },
   {
@@ -31,7 +31,7 @@ const products = [
     name: "Premium Rice",
     category: "grains",
     price: "₦45,000",
-    image: "/images/products/rice.jpg",
+    image: "/images/products/4.jpg",
     description: "Quality locally sourced premium rice.",
   },
   {
@@ -39,7 +39,7 @@ const products = [
     name: "Yellow Corn",
     category: "grains",
     price: "₦15,000",
-    image: "/images/products/corn.jpg",
+    image: "/images/products/9.jpg",
     description: "Fresh and carefully selected maize.",
   },
   {
@@ -47,7 +47,7 @@ const products = [
     name: "Fresh Yam",
     category: "tubers",
     price: "₦4,500",
-    image: "/images/products/yam.jpg",
+    image: "/images/products/3.jpg",
     description: "Fresh quality yam directly from the farm.",
   },
   {
@@ -55,7 +55,7 @@ const products = [
     name: "Cassava",
     category: "tubers",
     price: "₦3,000",
-    image: "/images/products/cassava.jpg",
+    image: "/images/products/2.jpg",
     description: "Freshly harvested cassava.",
   },
   {
@@ -63,7 +63,7 @@ const products = [
     name: "Fresh Chicken",
     category: "poultry",
     price: "₦12,000",
-    image: "/images/products/chicken.jpg",
+    image: "/images/products/6.jpg",
     description: "Quality farm-raised chicken.",
   },
   {
@@ -71,7 +71,7 @@ const products = [
     name: "Farm Eggs",
     category: "poultry",
     price: "₦6,500",
-    image: "/images/products/eggs.jpg",
+    image: "/images/products/5.jpg",
     description: "Fresh eggs from healthy farm-raised birds.",
   },
   {
@@ -79,7 +79,7 @@ const products = [
     name: "Fresh Oranges",
     category: "fruits",
     price: "₦4,000",
-    image: "/images/products/oranges.jpg",
+    image: "/images/products/1.jpg",
     description: "Fresh and juicy farm-grown oranges.",
   },
   {
@@ -87,7 +87,7 @@ const products = [
     name: "Fresh Pineapple",
     category: "fruits",
     price: "₦3,000",
-    image: "/images/products/pineapple.jpg",
+    image: "/images/products/10.jpg",
     description: "Sweet and naturally grown pineapple.",
   },
   {
@@ -95,7 +95,7 @@ const products = [
     name: "Farm Goat",
     category: "livestock",
     price: "₦85,000",
-    image: "/images/products/goat.jpg",
+    image: "/images/products/14.jpg",
     description: "Healthy and well-raised farm goat.",
   },
 ];
@@ -128,7 +128,7 @@ const CategoryByProduct = () => {
         <div
           className="absolute inset-0 bg-cover bg-center opacity-20"
           style={{
-            backgroundImage: "url('/images/categories-bg.jpg')",
+            backgroundImage: "url('/images/categories/11.jpg')",
           }}
         />
 
