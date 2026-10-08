@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import useCategories from "../../../hooks/useCategories";
 
 const AddCategory = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const AddCategory = () => {
   });
 
   const [saving, setSaving] = useState(false);
+  const { addCategory } = useCategories();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,13 +29,22 @@ const AddCategory = () => {
 
     setSaving(true);
 
-    // Connect to backend API here later
-    console.log("New Category:", formData);
+    try {
+      // add to shared CategoryContext
+      addCategory({
+        name: formData.name,
+        description: formData.description,
+        image: formData.image,
+        status: formData.status || "Active",
+      });
 
-    setTimeout(() => {
       setSaving(false);
       navigate("/admin/categories");
-    }, 1000);
+    } catch (err) {
+      // keep original UI behavior: stop saving and log
+      console.error("Failed to add category", err);
+      setSaving(false);
+    }
   };
 
   return (

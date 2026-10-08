@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import useProducts from "../../../hooks/useProducts";
-import useCategories from "../../../hooks/useCategories";
+import { useCategoryContext } from "../../../context/CategoryContext";
 
 const blogPosts = [
   {
@@ -46,7 +46,7 @@ const faqs = [
 
 function Home() {
   const { products } = useProducts();
-  const { activeCategories } = useCategories();
+  const { activeCategories } = useCategoryContext();
   const slides = [
     {
       image: "/images/hero/agro12.jpg",
