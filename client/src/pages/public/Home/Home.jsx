@@ -1,59 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-
-const categories = [
-  {
-    name: "Fertilizers",
-    image: "/images/categories/fertiliser.jpg",
-  },
-  {
-    name: "Herbicides",
-    image: "/images/categories/herbicides.jpg",
-  },
-  {
-    name: "Insecticides",
-    image: "/images/categories/18.jpg",
-  },
-  {
-    name: "Fungicides",
-    image: "/images/categories/fungicide.jpg",
-  },
-  {
-    name: "Seeds",
-    image: "/images/categories/12.jpg",
-  },
-  {
-    name: "Farm Equipment",
-    image: "/images/categories/tools.jpg",
-  },
-];
-
-const popularProducts = [
-  {
-    name: "Premium Crop Fertilizer",
-    price: "₦25,000",
-    image: "/images/products/5.jpg",
-    category: "Fertilizer",
-  },
-  {
-    name: "Crop Protection Herbicide",
-    price: "₦18,500",
-    image: "/images/products/herbicides.jpg",
-    category: "Herbicide",
-  },
-  {
-    name: "Farm Insect Control",
-    price: "₦14,500",
-    image: "/images/products/15.jpg",
-    category: "Insecticide",
-  },
-  {
-    name: "Quality Seeds",
-    price: "₦12,000",
-    image: "/images/products/14.jpg",
-    category: "Seeds",
-  },
-];
+import useProducts from "../../../hooks/useProducts";
+import useCategories from "../../../hooks/useCategories";
 
 const blogPosts = [
   {
@@ -97,6 +45,8 @@ const faqs = [
 ];
 
 function Home() {
+  const { products } = useProducts();
+  const { activeCategories } = useCategories();
   const slides = [
     {
       image: "/images/hero/agro12.jpg",
@@ -105,7 +55,7 @@ function Home() {
         "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farms.",
     },
     {
-      image: "/images/hero/3.jpg",
+      image: "/images/hero/6.jpg",
       title: ["Trusted Inputs.", "Sustainable Practices."],
       description:
         "Reliable products and expert guidance to support sustainable farming and increase yields.",
@@ -127,10 +77,13 @@ function Home() {
     return () => clearInterval(id);
   }, [slides.length]);
 
+  const activeProducts = (products || []).filter((p) => p.status === "Active");
+  const productsToShow = activeProducts.slice(0, 4);
+
   return (
     <main className="overflow-hidden bg-white text-slate-800">
       {/* HERO */}
-      <section className="relative flex min-h-[620px] items-center justify-center overflow-hidden pt-16">
+      <section className="relative flex min-h-155 items-center justify-center overflow-hidden pt-16">
         {/* Slides (backgrounds) */}
         <div className="absolute inset-0">
           {slides.map((slide, i) => (
@@ -211,7 +164,7 @@ function Home() {
             </div>
 
             <Link
-              to="/categories"
+              to="/shop"
               className="font-semibold text-green-700 hover:underline"
             >
               View All
@@ -219,10 +172,10 @@ function Home() {
           </div>
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            {categories.map((category) => (
+            {activeCategories.map((category) => (
               <Link
                 key={category.name}
-                to="/categories"
+                to={`/shop?category=${encodeURIComponent(category.name)}`}
                 className="group overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
               >
                 <div className="aspect-square overflow-hidden bg-slate-100">
@@ -271,13 +224,13 @@ function Home() {
           </div>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {popularProducts.map((product) => (
+            {productsToShow.map((product) => (
               <article
-                key={product.name}
+                key={product.id}
                 className="overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
               >
                 <Link
-                  to="/shop"
+                  to={`/product/${product.id}`}
                   className="block aspect-square overflow-hidden bg-slate-50"
                 >
                   <img
@@ -292,7 +245,7 @@ function Home() {
                     {product.category}
                   </span>
 
-                  <h3 className="mt-2 min-h-[44px] font-semibold leading-6 text-green-950">
+                  <h3 className="mt-2 font-semibold leading-6 text-green-950">
                     {product.name}
                   </h3>
 
@@ -302,7 +255,7 @@ function Home() {
                     </strong>
 
                     <Link
-                      to="/shop"
+                      to={`/product/${product.id}`}
                       className="text-sm font-bold text-green-700 hover:underline"
                     >
                       View →

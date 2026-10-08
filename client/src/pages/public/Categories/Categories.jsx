@@ -1,46 +1,9 @@
-
 import { Link } from "react-router-dom";
-
-const categories = [
-  {
-    name: "Fresh Vegetables",
-    description: "Fresh and naturally grown vegetables for your home and business.",
-    image: "/images/categories/1.jpg",
-    link: "/shop?category=vegetables",
-  },
-  {
-    name: "Fruits",
-    description: "Quality fresh fruits carefully selected for freshness and taste.",
-    image: "/images/categories/2.jpg",
-    link: "/shop?category=fruits",
-  },
-  {
-    name: "Grains & Cereals",
-    description: "Quality grains and cereals suitable for everyday meals.",
-    image: "/images/categories/3.jpg",
-    link: "/shop?category=grains",
-  },
-  {
-    name: "Tubers",
-    description: "Fresh farm tubers including yam, cassava and other farm produce.",
-    image: "/images/categories/1.jpg",
-    link: "/shop?category=tubers",
-  },
-  {
-    name: "Livestock",
-    description: "Quality livestock and farm animals from trusted sources.",
-    image: "/images/categories/5.jpg",
-    link: "/shop?category=livestock",
-  },
-  {
-    name: "Poultry",
-    description: "Fresh poultry products and quality birds from our farms.",
-    image: "/images/categories/6.jpg",
-    link: "/shop?category=poultry",
-  },
-];
+import useCategories from "../../../hooks/useCategories";
 
 const Categories = () => {
+  const { activeCategories } = useCategories();
+
   return (
     <main className="bg-white">
       {/* Hero Section */}
@@ -64,8 +27,8 @@ const Categories = () => {
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-white/85 sm:text-lg">
-            Explore our wide range of fresh agricultural products sourced
-            directly from trusted farms and suppliers.
+            Explore our wide range of agricultural input categories designed to
+            support productive and sustainable farming.
           </p>
         </div>
       </section>
@@ -83,16 +46,16 @@ const Categories = () => {
             </h2>
 
             <p className="mx-auto mt-4 max-w-2xl text-gray-500">
-              Find quality farm produce and agricultural products conveniently
-              in one place.
+              Find the right agricultural inputs for your crop protection,
+              growth, and farm productivity needs.
             </p>
           </div>
 
           <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
-            {categories.map((category) => (
+            {activeCategories.map((category) => (
               <Link
                 key={category.name}
-                to={category.link}
+                to={`/shop?category=${encodeURIComponent(category.name)}`}
                 className="group overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 {/* Image */}
@@ -135,12 +98,12 @@ const Categories = () => {
       <section className="bg-green-900 px-5 py-16 sm:px-8">
         <div className="mx-auto max-w-5xl text-center">
           <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-            Fresh From the Farm to You
+            Trusted Agricultural Inputs for Every Farm
           </h2>
 
           <p className="mx-auto mt-4 max-w-2xl leading-7 text-white/80">
-            Shop quality agricultural products from Niceman Agro & Farms and
-            enjoy convenient access to fresh farm produce.
+            Shop quality agricultural products and crop protection solutions
+            from Niceman Agro & Farms.
           </p>
 
           <Link

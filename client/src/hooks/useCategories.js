@@ -3,50 +3,50 @@ import { useState } from "react";
 const initialCategories = [
   {
     id: 1,
-    name: "Fresh Vegetables",
-    slug: "vegetables",
-    description: "Fresh and locally sourced vegetables.",
-    image: "/images/categories/vegetables.jpg",
+    name: "Fertilizers",
+    slug: "fertilizers",
+    description: "Nutrient-rich fertilizer solutions for healthy crop growth.",
+    image: "/images/categories/fertiliser.jpg",
     status: "Active",
   },
   {
     id: 2,
-    name: "Fruits",
-    slug: "fruits",
-    description: "Fresh and healthy fruits from local farms.",
-    image: "/images/categories/fruits.jpg",
+    name: "Herbicides",
+    slug: "herbicides",
+    description: "Effective crop protection products for weed control.",
+    image: "/images/categories/herbicides.jpg",
     status: "Active",
   },
   {
     id: 3,
-    name: "Grains & Cereals",
-    slug: "grains",
-    description: "Quality grains and cereals for everyday use.",
-    image: "/images/categories/grains.jpg",
+    name: "Insecticides",
+    slug: "insecticides",
+    description: "Reliable solutions for tackling common agricultural pests.",
+    image: "/images/categories/18.jpg",
     status: "Active",
   },
   {
     id: 4,
-    name: "Tubers",
-    slug: "tubers",
-    description: "Fresh and quality tubers from local farms.",
-    image: "/images/categories/tubers.jpg",
+    name: "Fungicides",
+    slug: "fungicides",
+    description: "Crop protection products for disease and fungal control.",
+    image: "/images/categories/fungicide.jpg",
     status: "Active",
   },
   {
     id: 5,
-    name: "Livestock",
-    slug: "livestock",
-    description: "Quality livestock products.",
-    image: "/images/categories/livestock.jpg",
-    status: "Inactive",
+    name: "Seeds",
+    slug: "seeds",
+    description: "High-quality seeds selected for productive farming.",
+    image: "/images/categories/12.jpg",
+    status: "Active",
   },
   {
     id: 6,
-    name: "Poultry",
-    slug: "poultry",
-    description: "Fresh poultry products from trusted farms.",
-    image: "/images/categories/poultry.jpg",
+    name: "Farm Equipment",
+    slug: "farm-equipment",
+    description: "Practical farm tools and equipment for daily operations.",
+    image: "/images/categories/tools.jpg",
     status: "Active",
   },
 ];
@@ -71,27 +71,23 @@ export default function useCategories() {
       current.map((category) =>
         category.id === Number(id)
           ? { ...category, ...updatedCategory }
-          : category
-      )
+          : category,
+      ),
     );
   };
 
   const deleteCategory = (id) => {
     setCategories((current) =>
-      current.filter((category) => category.id !== Number(id))
+      current.filter((category) => category.id !== Number(id)),
     );
   };
 
   const getCategory = (id) => {
-    return categories.find(
-      (category) => category.id === Number(id)
-    );
+    return categories.find((category) => category.id === Number(id));
   };
 
   const getCategoryBySlug = (slug) => {
-    return categories.find(
-      (category) => category.slug === slug
-    );
+    return categories.find((category) => category.slug === slug);
   };
 
   const toggleStatus = (id) => {
@@ -100,22 +96,19 @@ export default function useCategories() {
         category.id === Number(id)
           ? {
               ...category,
-              status:
-                category.status === "Active"
-                  ? "Inactive"
-                  : "Active",
+              status: category.status === "Active" ? "Inactive" : "Active",
             }
-          : category
-      )
+          : category,
+      ),
     );
   };
 
   const activeCategories = categories.filter(
-    (category) => category.status === "Active"
+    (category) => category.status === "Active",
   );
 
   const inactiveCategories = categories.filter(
-    (category) => category.status === "Inactive"
+    (category) => category.status === "Inactive",
   );
 
   return {

@@ -65,13 +65,11 @@ const Categories = () => {
 
   const handleDelete = (id) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this category?"
+      "Are you sure you want to delete this category?",
     );
 
     if (confirmed) {
-      setCategories(
-        categories.filter((category) => category.id !== id)
-      );
+      setCategories(categories.filter((category) => category.id !== id));
     }
   };
 
@@ -81,13 +79,10 @@ const Categories = () => {
         category.id === id
           ? {
               ...category,
-              status:
-                category.status === "Active"
-                  ? "Inactive"
-                  : "Active",
+              status: category.status === "Active" ? "Inactive" : "Active",
             }
-          : category
-      )
+          : category,
+      ),
     );
   };
 
@@ -128,9 +123,8 @@ const Categories = () => {
 
           <h2 className="text-2xl font-bold text-green-700 mt-1">
             {
-              categories.filter(
-                (category) => category.status === "Active"
-              ).length
+              categories.filter((category) => category.status === "Active")
+                .length
             }
           </h2>
         </div>
@@ -140,9 +134,8 @@ const Categories = () => {
 
           <h2 className="text-2xl font-bold text-red-600 mt-1">
             {
-              categories.filter(
-                (category) => category.status === "Inactive"
-              ).length
+              categories.filter((category) => category.status === "Inactive")
+                .length
             }
           </h2>
         </div>
@@ -200,10 +193,7 @@ const Categories = () => {
             <tbody className="divide-y">
               {filteredCategories.length > 0 ? (
                 filteredCategories.map((category) => (
-                  <tr
-                    key={category.id}
-                    className="hover:bg-gray-50"
-                  >
+                  <tr key={category.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <p className="font-semibold text-gray-900">
                         {category.name}
@@ -235,9 +225,7 @@ const Categories = () => {
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() =>
-                            navigate(
-                              `/admin/categories/edit/${category.id}`
-                            )
+                            navigate(`/admin/categories/edit/${category.id}`)
                           }
                           className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
                         >
@@ -245,9 +233,7 @@ const Categories = () => {
                         </button>
 
                         <button
-                          onClick={() =>
-                            handleDelete(category.id)
-                          }
+                          onClick={() => handleDelete(category.id)}
                           className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
                         >
                           Delete
@@ -258,10 +244,7 @@ const Categories = () => {
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan="5"
-                    className="text-center py-12 text-gray-500"
-                  >
+                  <td colSpan="5" className="text-center py-12 text-gray-500">
                     No categories found.
                   </td>
                 </tr>

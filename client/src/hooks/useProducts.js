@@ -4,17 +4,18 @@ const initialProducts = [
   {
     id: 1,
     name: "Fresh Tomatoes",
-    category: "Fresh Vegetables",
+    category: "Fertilizers",
     price: 3500,
     stock: 45,
-    description: "Fresh, locally sourced tomatoes suitable for everyday cooking.",
+    description:
+      "Fresh, locally sourced tomatoes suitable for everyday cooking.",
     image: "/images/products/tomatoes.jpg",
     status: "Active",
   },
   {
     id: 2,
     name: "Premium Rice",
-    category: "Grains & Cereals",
+    category: "Herbicides",
     price: 45000,
     stock: 8,
     description: "High-quality premium rice for everyday meals.",
@@ -24,7 +25,7 @@ const initialProducts = [
   {
     id: 3,
     name: "Irish Potatoes",
-    category: "Tubers",
+    category: "Insecticides",
     price: 6000,
     stock: 0,
     description: "Fresh Irish potatoes sourced from trusted farms.",
@@ -34,7 +35,7 @@ const initialProducts = [
   {
     id: 4,
     name: "Fresh Chicken",
-    category: "Poultry",
+    category: "Seeds",
     price: 8500,
     stock: 25,
     description: "Fresh and quality poultry products.",
@@ -44,7 +45,7 @@ const initialProducts = [
   {
     id: 5,
     name: "Fresh Mangoes",
-    category: "Fruits",
+    category: "Farm Equipment",
     price: 5000,
     stock: 12,
     description: "Fresh, sweet and naturally sourced mangoes.",
@@ -80,27 +81,24 @@ export default function useProducts() {
               price: Number(updatedProduct.price ?? product.price),
               stock: Number(updatedProduct.stock ?? product.stock),
             }
-          : product
-      )
+          : product,
+      ),
     );
   };
 
   const deleteProduct = (id) => {
     setProducts((current) =>
-      current.filter((product) => product.id !== Number(id))
+      current.filter((product) => product.id !== Number(id)),
     );
   };
 
   const getProduct = (id) => {
-    return products.find(
-      (product) => product.id === Number(id)
-    );
+    return products.find((product) => product.id === Number(id));
   };
 
   const getProductsByCategory = (category) => {
     return products.filter(
-      (product) =>
-        product.category.toLowerCase() === category.toLowerCase()
+      (product) => product.category.toLowerCase() === category.toLowerCase(),
     );
   };
 
@@ -110,13 +108,10 @@ export default function useProducts() {
         product.id === Number(id)
           ? {
               ...product,
-              status:
-                product.status === "Active"
-                  ? "Inactive"
-                  : "Active",
+              status: product.status === "Active" ? "Inactive" : "Active",
             }
-          : product
-      )
+          : product,
+      ),
     );
   };
 
@@ -128,30 +123,26 @@ export default function useProducts() {
               ...product,
               stock: Math.max(0, product.stock + Number(quantity)),
             }
-          : product
-      )
+          : product,
+      ),
     );
   };
 
   const activeProducts = products.filter(
-    (product) => product.status === "Active"
+    (product) => product.status === "Active",
   );
 
   const inactiveProducts = products.filter(
-    (product) => product.status === "Inactive"
+    (product) => product.status === "Inactive",
   );
 
-  const inStockProducts = products.filter(
-    (product) => product.stock > 10
-  );
+  const inStockProducts = products.filter((product) => product.stock > 10);
 
   const lowStockProducts = products.filter(
-    (product) => product.stock > 0 && product.stock <= 10
+    (product) => product.stock > 0 && product.stock <= 10,
   );
 
-  const outOfStockProducts = products.filter(
-    (product) => product.stock === 0
-  );
+  const outOfStockProducts = products.filter((product) => product.stock === 0);
 
   return {
     products,
