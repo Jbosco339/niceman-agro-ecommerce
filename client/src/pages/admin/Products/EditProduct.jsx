@@ -1,23 +1,58 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import useCategories from "../../../hooks/useCategories";
+import useProducts from "../../../hooks/useProducts";
 
-const sampleProduct = {
-  name: "Fresh Tomatoes",
-  category: "Fresh Vegetables",
-  price: "3500",
-  stock: "45",
-  description:
-    "Fresh, locally sourced tomatoes suitable for everyday cooking.",
-  image: "/images/products/tomatoes.jpg",
+const emptyProduct = {
+  name: "",
+  category: "",
+  price: "",
+  stock: "",
+  description: "",
+  image: "",
   status: "Active",
 };
 
 export default function EditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { activeCategories } = useCategories();
+  const { getProduct, updateProduct } = useProducts();
 
-  const [formData, setFormData] = useState(sampleProduct);
-  const [preview, setPreview] = useState(sampleProduct.image);
+  const existingProduct = getProduct(id) || null;
+
+  const [formData, setFormData] = useState(() =>
+    existingProduct
+      ? {
+          name: existingProduct.name,
+          category: existingProduct.category,
+          price: String(existingProduct.price),
+          stock: String(existingProduct.stock),
+          description: existingProduct.description,
+          image: existingProduct.image,
+          status: existingProduct.status,
+        }
+      : emptyProduct,
+  );
+  const [preview, setPreview] = useState(existingProduct?.image || "");
+
+  if (!existingProduct) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Link
+            to="/admin/products"
+            className="text-sm font-medium text-green-600 hover:text-green-800"
+          >
+            ← Back to Products
+          </Link>
+          <h1 className="mt-2 text-2xl font-bold text-gray-900">
+            Product Not Found
+          </h1>
+        </div>
+      </div>
+    );
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,10 +70,10 @@ export default function EditProduct() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Connect to backend API here later
-    console.log("Product to update:", {
-      id,
+    updateProduct(id, {
       ...formData,
+      price: Number(formData.price),
+      stock: Number(formData.stock),
     });
 
     navigate("/admin/products");
@@ -55,9 +90,7 @@ export default function EditProduct() {
           ← Back to Products
         </Link>
 
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">
-          Edit Product
-        </h1>
+        <h1 className="mt-2 text-2xl font-bold text-gray-900">Edit Product</h1>
 
         <p className="mt-1 text-sm text-gray-500">
           Update product information and inventory.
@@ -100,16 +133,11 @@ export default function EditProduct() {
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
             >
               <option value="">Select category</option>
-              <option value="Fresh Vegetables">
-                Fresh Vegetables
-              </option>
-              <option value="Fruits">Fruits</option>
-              <option value="Grains & Cereals">
-                Grains & Cereals
-              </option>
-              <option value="Tubers">Tubers</option>
-              <option value="Livestock">Livestock</option>
-              <option value="Poultry">Poultry</option>
+              {activeCategories.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -221,25 +249,19 @@ export default function EditProduct() {
         <div className="mt-8 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:justify-end">
           <Link
             to="/admin/products"
-            className="rounded-lg border border-gray-300 px-6 py-3 text-center text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Cancel
           </Link>
 
           <button
             type="submit"
-            className="rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700"
+            className="rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-800"
           >
-            Save Changes
+            Update Product
           </button>
         </div>
       </form>
-
-      {/* Backend Note */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> This currently uses sample product
-        data. Connect the product ID to your backend API later.
-      </div>
     </div>
   );
 }

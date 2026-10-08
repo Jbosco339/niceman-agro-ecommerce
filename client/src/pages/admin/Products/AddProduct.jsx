@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import useCategories from "../../../hooks/useCategories";
+import useProducts from "../../../hooks/useProducts";
 
 export default function AddProduct() {
   const navigate = useNavigate();
+  const { activeCategories } = useCategories();
+  const { addProduct } = useProducts();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -32,9 +36,13 @@ export default function AddProduct() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Connect to backend API here later
-    console.log("Product to create:", formData);
+    const newProduct = {
+      ...formData,
+      price: Number(formData.price),
+      stock: Number(formData.stock),
+    };
 
+    addProduct(newProduct);
     navigate("/admin/products");
   };
 
@@ -49,9 +57,7 @@ export default function AddProduct() {
           ← Back to Products
         </Link>
 
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">
-          Add Product
-        </h1>
+        <h1 className="mt-2 text-2xl font-bold text-gray-900">Add Product</h1>
 
         <p className="mt-1 text-sm text-gray-500">
           Add a new product to your store.
@@ -95,16 +101,11 @@ export default function AddProduct() {
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
             >
               <option value="">Select category</option>
-              <option value="Fresh Vegetables">
-                Fresh Vegetables
-              </option>
-              <option value="Fruits">Fruits</option>
-              <option value="Grains & Cereals">
-                Grains & Cereals
-              </option>
-              <option value="Tubers">Tubers</option>
-              <option value="Livestock">Livestock</option>
-              <option value="Poultry">Poultry</option>
+              {activeCategories.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {category.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -219,26 +220,19 @@ export default function AddProduct() {
         <div className="mt-8 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:justify-end">
           <Link
             to="/admin/products"
-            className="rounded-lg border border-gray-300 px-6 py-3 text-center text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Cancel
           </Link>
 
           <button
             type="submit"
-            className="rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700"
+            className="rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-800"
           >
-            Add Product
+            Save Product
           </button>
         </div>
       </form>
-
-      {/* Backend Note */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> Product creation currently uses local
-        form data. Connect the submit action to your backend API
-        later.
-      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
   SlidersHorizontal,
@@ -11,121 +11,23 @@ import {
   Check,
 } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
-
-const products = [
-  {
-    id: 1,
-    name: "Premium Crop Fertilizer",
-    category: "Fertilizers",
-    price: 25000,
-    image: "/images/products/5.jpg",
-    description:
-      "Quality fertilizer formulated to support healthy crop growth.",
-    featured: true,
-  },
-  {
-    id: 2,
-    name: "Crop Protection Herbicide",
-    category: "Herbicides",
-    price: 18500,
-    image: "/images/products/herbicides.jpg",
-    description: "Effective weed control solution for agricultural crops.",
-    featured: true,
-  },
-  {
-    id: 3,
-    name: "Farm Insect Control",
-    category: "Insecticides",
-    price: 14500,
-    image: "/images/products/17.jpg",
-    description: "Reliable protection against common agricultural pests.",
-    featured: true,
-  },
-  {
-    id: 4,
-    name: "Quality Seeds",
-    category: "Seeds",
-    price: 12000,
-    image: "/images/products/13.jpg",
-    description: "Quality maize seeds selected for productive farming.",
-    featured: true,
-  },
-  {
-    id: 5,
-    name: "NPK Fertilizer",
-    category: "Fertilizers",
-    price: 22000,
-    image: "/images/products/7.jpg",
-    description: "Balanced NPK fertilizer for improved crop nutrition.",
-    featured: false,
-  },
-  {
-    id: 6,
-    name: "Broad Spectrum Herbicide",
-    category: "Herbicides",
-    price: 16500,
-    image: "/images/products/herbicides.jpg",
-    description: "Agricultural herbicide for effective weed management.",
-    featured: false,
-  },
-  {
-    id: 7,
-    name: "Agricultural Insecticide",
-    category: "Insecticides",
-    price: 13500,
-    image: "/images/products/15.jpg",
-    description: "Crop protection product for controlling harmful insects.",
-    featured: false,
-  },
-  {
-    id: 8,
-    name: "Improved Vegetable Seeds",
-    category: "Seeds",
-    price: 9500,
-    image: "/images/products/12.jpg",
-    description: "Selected vegetable seeds for productive farm cultivation.",
-    featured: false,
-  },
-  {
-    id: 8,
-    name: "Improved Vegetable Seeds",
-    category: "Fungicides",
-    price: 9500,
-    image: "/images/products/3.jpg",
-    description: "Selected vegetable seeds for productive farm cultivation.",
-    featured: false,
-  },
-  {
-    id: 8,
-    name: "Improved Vegetable Seeds",
-    category: "Farm Equipment",
-    price: 9500,
-    image: "/images/products/13.jpg",
-    description: "Selected vegetable seeds for productive farm cultivation.",
-    featured: false,
-  },
-];
-
-const categories = [
-  "All Products",
-  "Fertilizers",
-  "Herbicides",
-  "Insecticides",
-  "Fungicides",
-  "Seeds",
-  "Farm Equipment",
-];
+import { useFavorites } from "../../../context/FavoritesContext";
+import useProducts from "../../../hooks/useProducts";
+import useCategories from "../../../hooks/useCategories";
 
 function formatPrice(price) {
   return `₦${price.toLocaleString("en-NG")}`;
 }
 
 function Shop() {
+  const { products } = useProducts();
+  const { activeCategories } = useCategories();
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
   const { addToCart } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
   const [addedProductId, setAddedProductId] = useState(null);
 
   const handleAddToCart = (product) => {
@@ -137,12 +39,27 @@ function Shop() {
     }, 1200);
   };
 
-  const filteredProducts = useMemo(() => {
-    let result = [...products];
+  const location = useLocation();
+  const navigate = useNavigate();
 
-    if (selectedCategory !== "All Products") {
+  const params = new URLSearchParams(location.search);
+  const categoryFromUrl = params.get("category");
+  const categoriesList = [
+    "All Products",
+    ...activeCategories.map((category) => category.name),
+  ];
+
+  const displayedCategory =
+    categoryFromUrl && categoriesList.includes(categoryFromUrl)
+      ? categoryFromUrl
+      : selectedCategory;
+
+  const filteredProducts = useMemo(() => {
+    let result = [...(products || [])];
+
+    if (displayedCategory !== "All Products") {
       result = result.filter(
-        (product) => product.category === selectedCategory,
+        (product) => product.category === displayedCategory,
       );
     }
 
@@ -174,7 +91,7 @@ function Shop() {
     }
 
     return result;
-  }, [selectedCategory, searchTerm, sortOption]);
+  }, [displayedCategory, searchTerm, sortOption, products]);
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -264,14 +181,24 @@ function Shop() {
                 </h2>
 
                 <div className="mt-5 space-y-1">
-                  {categories.map((category) => {
-                    const active = selectedCategory === category;
+                  {categoriesList.map((category) => {
+                    const active = displayedCategory === category;
 
                     return (
                       <button
                         key={category}
                         type="button"
-                        onClick={() => setSelectedCategory(category)}
+                        onClick={() => {
+                          if (category === "All Products") {
+                            navigate("/shop");
+                            setSelectedCategory("All Products");
+                          } else {
+                            navigate(
+                              `/shop?category=${encodeURIComponent(category)}`,
+                            );
+                            setSelectedCategory(category);
+                          }
+                        }}
                         className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition ${
                           active
                             ? "bg-green-700 font-semibold text-white"
@@ -294,7 +221,7 @@ function Shop() {
               <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-green-950">
-                    {selectedCategory}
+                    {displayedCategory}
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-500">
@@ -325,7 +252,7 @@ function Shop() {
                       {/* Product Image */}
                       <div className="relative aspect-square overflow-hidden bg-slate-50">
                         <Link
-                          to={`/shop/product/${product.id}`}
+                          to={`/product/${product.id}`}
                           className="block h-full w-full"
                         >
                           <img
@@ -343,10 +270,16 @@ function Shop() {
 
                         <button
                           type="button"
+                          onClick={() => toggleFavorite(product)}
                           className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm transition hover:text-red-500"
-                          aria-label={`Add ${product.name} to wishlist`}
+                          aria-label={`Toggle favorite for ${product.name}`}
                         >
-                          <Heart size={17} />
+                          <Heart
+                            size={17}
+                            fill={
+                              isFavorite(product.id) ? "currentColor" : "none"
+                            }
+                          />
                         </button>
                       </div>
 
@@ -357,7 +290,7 @@ function Shop() {
                         </span>
 
                         <Link
-                          to={`/shop/product/${product.id}`}
+                          to={`/product/${product.id}`}
                           className="mt-2 block"
                         >
                           <h3 className="min-h-12 text-base font-bold leading-6 text-green-950 transition hover:text-green-700">
@@ -417,6 +350,7 @@ function Shop() {
                     onClick={() => {
                       setSearchTerm("");
                       setSelectedCategory("All Products");
+                      navigate("/shop");
                     }}
                     className="mt-5 font-semibold text-green-700 hover:underline"
                   >

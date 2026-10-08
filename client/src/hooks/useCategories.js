@@ -1,57 +1,9 @@
-import { useState } from "react";
-
-const initialCategories = [
-  {
-    id: 1,
-    name: "Fresh Vegetables",
-    slug: "vegetables",
-    description: "Fresh and locally sourced vegetables.",
-    image: "/images/categories/vegetables.jpg",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Fruits",
-    slug: "fruits",
-    description: "Fresh and healthy fruits from local farms.",
-    image: "/images/categories/fruits.jpg",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Grains & Cereals",
-    slug: "grains",
-    description: "Quality grains and cereals for everyday use.",
-    image: "/images/categories/grains.jpg",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Tubers",
-    slug: "tubers",
-    description: "Fresh and quality tubers from local farms.",
-    image: "/images/categories/tubers.jpg",
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Livestock",
-    slug: "livestock",
-    description: "Quality livestock products.",
-    image: "/images/categories/livestock.jpg",
-    status: "Inactive",
-  },
-  {
-    id: 6,
-    name: "Poultry",
-    slug: "poultry",
-    description: "Fresh poultry products from trusted farms.",
-    image: "/images/categories/poultry.jpg",
-    status: "Active",
-  },
-];
+import { useContext, useMemo, useState } from "react";
+import { CategoryContext, initialCategories } from "../context/CategoryContext";
 
 export default function useCategories() {
+  const ctx = useContext(CategoryContext);
+
   const [categories, setCategories] = useState(initialCategories);
   const [loading, setLoading] = useState(false);
 
@@ -59,10 +11,11 @@ export default function useCategories() {
     const newCategory = {
       ...category,
       id: Date.now(),
+      slug: category.slug || category.name?.toLowerCase().replace(/\s+/g, "-"),
+      status: category.status || "Active",
     };
 
     setCategories((current) => [...current, newCategory]);
-
     return newCategory;
   };
 
@@ -70,27 +23,35 @@ export default function useCategories() {
     setCategories((current) =>
       current.map((category) =>
         category.id === Number(id)
-          ? { ...category, ...updatedCategory }
-          : category
-      )
+          ? {
+              ...category,
+              ...updatedCategory,
+              slug:
+                updatedCategory.slug ||
+                (updatedCategory.name || category.name)
+                  ?.toLowerCase()
+                  .replace(/\s+/g, "-"),
+              status: updatedCategory.status || category.status,
+            }
+          : category,
+      ),
     );
   };
 
   const deleteCategory = (id) => {
     setCategories((current) =>
-      current.filter((category) => category.id !== Number(id))
+      current.filter((category) => category.id !== Number(id)),
     );
   };
 
   const getCategory = (id) => {
-    return categories.find(
-      (category) => category.id === Number(id)
-    );
+    return categories.find((category) => category.id === Number(id));
   };
 
   const getCategoryBySlug = (slug) => {
     return categories.find(
-      (category) => category.slug === slug
+      (category) =>
+        String(category.slug).toLowerCase() === String(slug).toLowerCase(),
     );
   };
 
@@ -100,25 +61,24 @@ export default function useCategories() {
         category.id === Number(id)
           ? {
               ...category,
-              status:
-                category.status === "Active"
-                  ? "Inactive"
-                  : "Active",
+              status: category.status === "Active" ? "Inactive" : "Active",
             }
-          : category
-      )
+          : category,
+      ),
     );
   };
 
-  const activeCategories = categories.filter(
-    (category) => category.status === "Active"
+  const activeCategories = useMemo(
+    () => categories.filter((category) => category.status === "Active"),
+    [categories],
   );
 
-  const inactiveCategories = categories.filter(
-    (category) => category.status === "Inactive"
+  const inactiveCategories = useMemo(
+    () => categories.filter((category) => category.status === "Inactive"),
+    [categories],
   );
 
-  return {
+  const localValue = {
     categories,
     activeCategories,
     inactiveCategories,
@@ -131,4 +91,6 @@ export default function useCategories() {
     getCategoryBySlug,
     toggleStatus,
   };
+
+  return ctx || localValue;
 }

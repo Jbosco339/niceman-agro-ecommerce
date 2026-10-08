@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,142 +10,20 @@ import {
   Star,
 } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
-
-const products = [
-  {
-    id: 1,
-    name: "Premium Crop Fertilizer",
-    category: "Fertilizers",
-    price: 25000,
-    image: "/images/products/fertilizer.jpg",
-    description:
-      "A quality fertilizer formulated to support healthy crop growth, strong development, and improved farm productivity.",
-    features: [
-      "Supports healthy crop growth",
-      "Suitable for a wide range of crops",
-      "Helps improve soil nutrient availability",
-      "Ideal for farm and commercial use",
-    ],
-  },
-  {
-    id: 2,
-    name: "Crop Protection Herbicide",
-    category: "Herbicides",
-    price: 18500,
-    image: "/images/products/herbicide.jpg",
-    description:
-      "An agricultural herbicide designed to help farmers manage unwanted weeds and maintain cleaner, more productive fields.",
-    features: [
-      "Effective weed management",
-      "Suitable for agricultural use",
-      "Helps reduce weed competition",
-      "Easy to apply according to product instructions",
-    ],
-  },
-  {
-    id: 3,
-    name: "Farm Insect Control",
-    category: "Insecticides",
-    price: 14500,
-    image: "/images/products/insecticide.jpg",
-    description:
-      "A crop protection solution designed to help farmers manage insect pests and protect valuable crops.",
-    features: [
-      "Helps control common agricultural pests",
-      "Supports crop protection",
-      "Suitable for farm use",
-      "Use according to label instructions",
-    ],
-  },
-  {
-    id: 4,
-    name: "Quality Maize Seeds",
-    category: "Seeds",
-    price: 12000,
-    image: "/images/products/seeds.jpg",
-    description:
-      "Quality maize seeds selected to give farmers a reliable starting point for productive maize cultivation.",
-    features: [
-      "Quality planting material",
-      "Suitable for farm cultivation",
-      "Good option for maize production",
-      "Store properly before planting",
-    ],
-  },
-  {
-    id: 5,
-    name: "NPK Fertilizer",
-    category: "Fertilizers",
-    price: 22000,
-    image: "/images/products/fertilizer.jpg",
-    description:
-      "A balanced fertilizer option for supporting crop nutrition throughout the growing cycle.",
-    features: [
-      "Provides essential crop nutrients",
-      "Suitable for different farming applications",
-      "Supports crop development",
-      "Easy to incorporate into farm operations",
-    ],
-  },
-  {
-    id: 6,
-    name: "Broad Spectrum Herbicide",
-    category: "Herbicides",
-    price: 16500,
-    image: "/images/products/herbicide.jpg",
-    description:
-      "A practical weed-control product for farmers looking to maintain cleaner and healthier growing areas.",
-    features: [
-      "Helps manage unwanted weeds",
-      "Suitable for agricultural applications",
-      "Supports better crop establishment",
-      "Follow application instructions carefully",
-    ],
-  },
-  {
-    id: 7,
-    name: "Agricultural Insecticide",
-    category: "Insecticides",
-    price: 13500,
-    image: "/images/products/insecticide.jpg",
-    description:
-      "An agricultural insect-control product intended to help protect crops from damaging insect activity.",
-    features: [
-      "Helps protect crops from insects",
-      "Suitable for agricultural use",
-      "Supports crop health",
-      "Apply according to product instructions",
-    ],
-  },
-  {
-    id: 8,
-    name: "Improved Vegetable Seeds",
-    category: "Seeds",
-    price: 9500,
-    image: "/images/products/seeds.jpg",
-    description:
-      "Quality vegetable seeds for farmers looking to establish productive vegetable-growing operations.",
-    features: [
-      "Quality planting material",
-      "Suitable for vegetable farming",
-      "Useful for farm and garden production",
-      "Store in a cool, dry place",
-    ],
-  },
-];
+import { useFavorites } from "../../../context/FavoritesContext";
+import useProducts from "../../../hooks/useProducts";
 
 function ProductDetails() {
   const { id } = useParams();
+  const { getProduct } = useProducts();
 
-  const product = useMemo(
-    () => products.find((item) => String(item.id) === id),
-    [id],
-  );
+  const product = getProduct(id);
 
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+
   const [addFeedback, setAddFeedback] = useState("");
   const { addToCart, cartItems } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   const formatPrice = (price) => `₦${price.toLocaleString("en-NG")}`;
 
@@ -271,7 +149,7 @@ function ProductDetails() {
               </h3>
 
               <ul className="mt-4 space-y-3">
-                {product.features.map((feature) => (
+                {(product.features || []).map((feature) => (
                   <li
                     key={feature}
                     className="flex items-start gap-3 text-gray-600"
@@ -328,18 +206,20 @@ function ProductDetails() {
 
               <button
                 type="button"
-                onClick={() => setIsWishlisted((current) => !current)}
+                onClick={() => {
+                  toggleFavorite(product);
+                }}
                 className={`flex items-center justify-center gap-2 rounded-lg border px-5 py-3.5 font-semibold transition ${
-                  isWishlisted
+                  isFavorite(product.id)
                     ? "border-red-200 bg-red-50 text-red-600"
                     : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 <Heart
                   size={19}
-                  fill={isWishlisted ? "currentColor" : "none"}
+                  fill={isFavorite(product.id) ? "currentColor" : "none"}
                 />
-                {isWishlisted ? "Saved" : "Wishlist"}
+                {isFavorite(product.id) ? "Saved" : "Wishlist"}
               </button>
             </div>
 

@@ -35,6 +35,7 @@ import SavedAddresses from "../pages/account/SavedAddresses";
 import AccountDashboard from "../pages/account/AccountDashboard";
 import Profile from "../pages/account/Profile";
 import OrderDetails from "../pages/account/OrderDetails";
+import Favorites from "../pages/public/Favorites/Favorites";
 
 function PublicRoutes() {
   return (
@@ -121,6 +122,8 @@ function PublicRoutes() {
       <Route path="/SavedAddresses" element={<SavedAddresses />} />
       <Route path="/account/orders/:orderId" element={<OrderDetails />} />
       <Route path="/OrderDetails" element={<OrderDetails />} />
+      <Route path="/favorites" element={<Favorites />} />
+      <Route path="/Favorites" element={<Favorites />} />
     </Routes>
   );
 }
