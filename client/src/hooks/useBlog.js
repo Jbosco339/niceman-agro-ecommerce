@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useContext } from "react";
+import { BlogContext } from "../context/BlogContext";
 
 const dummyBlogs = [
   {
@@ -93,40 +94,42 @@ const dummyBlogs = [
 ];
 
 function useBlog() {
+  const ctx = useContext(BlogContext);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  const source = ctx?.posts || dummyBlogs;
+
   const categories = useMemo(() => {
-    return [
-      "All",
-      ...new Set(dummyBlogs.map((blog) => blog.category)),
-    ];
-  }, []);
+    return ["All", ...new Set(source.map((blog) => blog.category))];
+  }, [source]);
 
   const filteredBlogs = useMemo(() => {
-    return dummyBlogs.filter((blog) => {
+    return source.filter((blog) => {
       const matchesCategory =
-        selectedCategory === "All" ||
-        blog.category === selectedCategory;
+        selectedCategory === "All" || blog.category === selectedCategory;
 
       const search = searchTerm.toLowerCase();
 
       const matchesSearch =
-        blog.title.toLowerCase().includes(search) ||
-        blog.excerpt.toLowerCase().includes(search) ||
-        blog.category.toLowerCase().includes(search);
+        (blog.title || "").toLowerCase().includes(search) ||
+        (blog.excerpt || "").toLowerCase().includes(search) ||
+        (blog.category || "").toLowerCase().includes(search);
 
       return matchesCategory && matchesSearch;
     });
-  }, [searchTerm, selectedCategory]);
+  }, [searchTerm, selectedCategory, source]);
 
   const getBlogBySlug = (slug) => {
-    return dummyBlogs.find((blog) => blog.slug === slug);
+    return source.find(
+      (blog) => blog.slug === slug || String(blog.id) === String(slug),
+    );
   };
 
   return {
     blogs: filteredBlogs,
-    allBlogs: dummyBlogs,
+    allBlogs: source,
     categories,
     searchTerm,
     setSearchTerm,

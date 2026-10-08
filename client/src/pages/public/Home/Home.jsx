@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import useProducts from "../../../hooks/useProducts";
 import { useCategoryContext } from "../../../context/CategoryContext";
+import useWebsiteContent from "../../../hooks/useWebsiteContent";
+import { reviewsSeed } from "../../../data/mockData";
 
 const blogPosts = [
   {
@@ -47,26 +49,39 @@ const faqs = [
 function Home() {
   const { products } = useProducts();
   const { activeCategories } = useCategoryContext();
-  const slides = [
-    {
-      image: "/images/hero/agro12.jpg",
-      title: ["Growing Better Crops.", "Building a Better Future."],
-      description:
-        "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farms.",
-    },
-    {
-      image: "/images/hero/6.jpg",
-      title: ["Trusted Inputs.", "Sustainable Practices."],
-      description:
-        "Reliable products and expert guidance to support sustainable farming and increase yields.",
-    },
-    {
-      image: "/images/hero/5.jpg",
-      title: ["From Seed to Harvest.", "We Grow With You."],
-      description:
-        "Comprehensive farm inputs and resources designed to deliver consistent results across each growing season.",
-    },
-  ];
+  const { content: siteContent } = useWebsiteContent();
+
+  const slides =
+    siteContent && siteContent.hero
+      ? [
+          {
+            image: siteContent.hero.image,
+            title: [siteContent.hero.title],
+            description: siteContent.hero.subtitle,
+            buttonText: siteContent.hero.buttonText,
+            buttonLink: siteContent.hero.buttonLink,
+          },
+        ]
+      : [
+          {
+            image: "/images/hero/agro12.jpg",
+            title: ["Growing Better Crops.", "Building a Better Future."],
+            description:
+              "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farms.",
+          },
+          {
+            image: "/images/hero/6.jpg",
+            title: ["Trusted Inputs.", "Sustainable Practices."],
+            description:
+              "Reliable products and expert guidance to support sustainable farming and increase yields.",
+          },
+          {
+            image: "/images/hero/5.jpg",
+            title: ["From Seed to Harvest.", "We Grow With You."],
+            description:
+              "Comprehensive farm inputs and resources designed to deliver consistent results across each growing season.",
+          },
+        ];
 
   const [active, setActive] = useState(0);
 
@@ -129,14 +144,14 @@ function Home() {
 
                   <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
                     <Link
-                      to="/shop"
+                      to={slide.buttonLink || "/shop"}
                       className="inline-flex min-h-12 items-center justify-center rounded-md bg-green-700 px-7 font-semibold text-white transition hover:bg-green-800"
                     >
-                      Shop Products
+                      {slide.buttonText || "Shop Products"}
                     </Link>
 
                     <Link
-                      to="/shop"
+                      to={slide.buttonLink || "/shop"}
                       className="inline-flex min-h-12 items-center justify-center rounded-md border border-white px-7 font-semibold text-white transition hover:bg-white hover:text-green-800"
                     >
                       Explore Products
@@ -383,6 +398,83 @@ function Home() {
                   </Link>
                 </div>
               </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Customer Reviews */}
+      <section className="bg-white py-16 sm:py-20">
+        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
+          <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-[0.15em] text-green-700">
+                Reviews
+              </span>
+
+              <h2 className="mt-2 text-3xl font-bold text-green-950 sm:text-4xl">
+                What Our Customers Are Saying
+              </h2>
+
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+                Real feedback from customers who use our products and services.
+              </p>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-3">
+              <a
+                href="/reviews"
+                className="inline-flex items-center rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
+              >
+                Read All Reviews
+              </a>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {(reviewsSeed || []).slice(0, 6).map((r, i) => (
+              <figure
+                key={r.id || i}
+                className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="h-12 w-12 shrink-0 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
+                    {r.customer
+                      ? r.customer
+                          .split(" ")
+                          .map((n) => n[0])
+                          .slice(0, 2)
+                          .join("")
+                      : (r.customer || r.name || "U").slice(0, 2)}
+                  </div>
+
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-green-950">
+                          {r.customer || r.name || "Anonymous"}
+                        </p>
+                        <div className="mt-1 flex items-center gap-1 text-yellow-500">
+                          {Array.from({ length: 5 }).map((_, idx) => (
+                            <svg
+                              key={idx}
+                              className={`h-4 w-4 ${idx < (r.rating || 5) ? "fill-current text-yellow-400" : "text-gray-200 stroke-current"}`}
+                              viewBox="0 0 20 20"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.562-.955L10 0l2.95 5.955 6.562.955-4.756 4.635 1.122 6.545z" />
+                            </svg>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <blockquote className="mt-4 text-sm text-slate-700">
+                      "{r.comment || r.review || r.comment || "Great product!"}"
+                    </blockquote>
+                  </div>
+                </div>
+              </figure>
             ))}
           </div>
         </div>

@@ -1,55 +1,17 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  categoriesSeed,
+  readLocalStorage,
+  writeLocalStorage,
+} from "../data/mockData";
 
-export const initialCategories = [
-  {
-    id: 1,
-    name: "Fertilizers",
-    slug: "fertilizers",
-    description: "Nutrient-rich fertilizer solutions for healthy crop growth.",
-    image: "/images/categories/fertiliser.jpg",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Herbicides",
-    slug: "herbicides",
-    description: "Effective crop protection products for weed control.",
-    image: "/images/categories/herbicides.jpg",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Insecticides",
-    slug: "insecticides",
-    description: "Reliable solutions for tackling common agricultural pests.",
-    image: "/images/categories/18.jpg",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Fungicides",
-    slug: "fungicides",
-    description: "Crop protection products for disease and fungal control.",
-    image: "/images/categories/fungicide.jpg",
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Seeds",
-    slug: "seeds",
-    description: "High-quality seeds selected for productive farming.",
-    image: "/images/categories/12.jpg",
-    status: "Active",
-  },
-  {
-    id: 6,
-    name: "Farm Equipment",
-    slug: "farm-equipment",
-    description: "Practical farm tools and equipment for daily operations.",
-    image: "/images/categories/tools.jpg",
-    status: "Active",
-  },
-];
+export const initialCategories = categoriesSeed;
 
 const slugify = (value = "") =>
   value
@@ -63,8 +25,15 @@ const slugify = (value = "") =>
 export const CategoryContext = createContext(null);
 
 export function CategoryProvider({ children }) {
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState(() => {
+    const saved = readLocalStorage("niceman-categories", categoriesSeed);
+    return saved.length ? saved : categoriesSeed;
+  });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    writeLocalStorage("niceman-categories", categories);
+  }, [categories]);
 
   const addCategory = (category) => {
     const nextCategory = {

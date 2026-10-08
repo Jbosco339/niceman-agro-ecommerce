@@ -2,8 +2,6 @@ import { useContext, useState, useMemo } from "react";
 import { ProductContext, initialProducts } from "../context/ProductContext";
 
 export default function useProducts() {
-  // Read shared product context (if provided). We still initialize
-  // local hooks so hook call order stays consistent across renders.
   const ctx = useContext(ProductContext);
 
   const [products, setProducts] = useState(initialProducts);
@@ -15,6 +13,8 @@ export default function useProducts() {
       id: Date.now(),
       price: Number(product.price),
       stock: Number(product.stock),
+      featured: Boolean(product.featured),
+      sku: product.sku || `NAG-${Date.now()}`,
     };
 
     setProducts((current) => [...current, newProduct]);
@@ -31,6 +31,8 @@ export default function useProducts() {
               ...updatedProduct,
               price: Number(updatedProduct.price ?? product.price),
               stock: Number(updatedProduct.stock ?? product.stock),
+              featured: Boolean(updatedProduct.featured ?? product.featured),
+              sku: updatedProduct.sku || product.sku || `NAG-${Date.now()}`,
             }
           : product,
       ),
@@ -103,7 +105,6 @@ export default function useProducts() {
     setProducts,
     loading,
     setLoading,
-
     addProduct,
     updateProduct,
     deleteProduct,
@@ -111,7 +112,6 @@ export default function useProducts() {
     getProductsByCategory,
     toggleStatus,
     updateStock,
-
     activeProducts,
     inactiveProducts,
     inStockProducts,

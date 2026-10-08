@@ -6,11 +6,13 @@ import useProducts from "../../../hooks/useProducts";
 const emptyProduct = {
   name: "",
   category: "",
+  sku: "",
   price: "",
   stock: "",
   description: "",
   image: "",
   status: "Active",
+  featured: false,
 };
 
 export default function EditProduct() {
@@ -26,11 +28,13 @@ export default function EditProduct() {
       ? {
           name: existingProduct.name,
           category: existingProduct.category,
+          sku: existingProduct.sku || "",
           price: String(existingProduct.price),
           stock: String(existingProduct.stock),
           description: existingProduct.description,
-          image: existingProduct.image,
+          image: existingProduct.image || "",
           status: existingProduct.status,
+          featured: Boolean(existingProduct.featured),
         }
       : emptyProduct,
   );
@@ -55,11 +59,11 @@ export default function EditProduct() {
   }
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
 
     if (name === "image") {
@@ -74,6 +78,9 @@ export default function EditProduct() {
       ...formData,
       price: Number(formData.price),
       stock: Number(formData.stock),
+      featured: Boolean(formData.featured),
+      image: formData.image || "/images/products/placeholder.jpg",
+      sku: formData.sku || `NAG-${Date.now()}`,
     });
 
     navigate("/admin/products");
@@ -141,6 +148,22 @@ export default function EditProduct() {
             </select>
           </div>
 
+          {/* SKU */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              SKU
+            </label>
+
+            <input
+              type="text"
+              name="sku"
+              value={formData.sku}
+              onChange={handleChange}
+              placeholder="NAG-123456"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+            />
+          </div>
+
           {/* Price */}
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">
@@ -190,6 +213,27 @@ export default function EditProduct() {
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
             </select>
+          </div>
+
+          {/* Featured */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              Featured
+            </label>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                name="featured"
+                checked={formData.featured}
+                onChange={handleChange}
+                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-600"
+              />
+
+              <span className="ml-2 text-sm text-gray-600">
+                Mark as featured product
+              </span>
+            </div>
           </div>
 
           {/* Image URL */}

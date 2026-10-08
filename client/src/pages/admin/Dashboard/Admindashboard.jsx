@@ -1,4 +1,7 @@
 import { Link } from "react-router-dom";
+import useProducts from "../../../hooks/useProducts";
+import useOrders from "../../../hooks/useOrders";
+import useCustomers from "../../../hooks/useCustomers";
 
 const stats = [
   {
@@ -27,39 +30,9 @@ const stats = [
   },
 ];
 
-const recentOrders = [
-  {
-    id: "NA-2026-00125",
-    customer: "John Doe",
-    amount: 53500,
-    status: "Delivered",
-    date: "Oct 6, 2026",
-  },
-  {
-    id: "NA-2026-00124",
-    customer: "Sarah Williams",
-    amount: 78000,
-    status: "Processing",
-    date: "Oct 5, 2026",
-  },
-  {
-    id: "NA-2026-00123",
-    customer: "Michael Johnson",
-    amount: 32000,
-    status: "Pending",
-    date: "Oct 5, 2026",
-  },
-  {
-    id: "NA-2026-00122",
-    customer: "Grace Okafor",
-    amount: 45000,
-    status: "Delivered",
-    date: "Oct 4, 2026",
-  },
-];
+// recentOrders derived from orders store at runtime
 
-const formatCurrency = (amount) =>
-  `₦${amount.toLocaleString("en-NG")}`;
+const formatCurrency = (amount) => `₦${amount.toLocaleString("en-NG")}`;
 
 const statusStyle = {
   Delivered: "bg-green-100 text-green-700",
@@ -69,13 +42,34 @@ const statusStyle = {
 };
 
 export default function AdminDashboard() {
+  const { products } = useProducts();
+  const lowStockCount = products.filter(
+    (product) => product.stock > 0 && product.stock <= 10,
+  ).length;
+  const { orders } = useOrders();
+  const { customers } = useCustomers();
+  const recentOrders = orders.slice(0, 4);
+  const pendingCount = orders.filter((o) => o.status === "Pending").length;
+
+  const statsWithCustomers = stats.map((s) =>
+    s.title === "Customers" ? { ...s, value: String(customers.length) } : s,
+  );
+
+  const computeOrderAmount = (order) => {
+    if (!order) return 0;
+    if (order.amount) return order.amount;
+    const itemsTotal = (order.items || []).reduce(
+      (sum, it) => sum + (it.price || 0) * (it.quantity || 1),
+      0,
+    );
+    return itemsTotal + (order.deliveryFee || 0);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Admin Dashboard
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="mt-1 text-sm text-gray-500">
           Welcome back. Here's what's happening with your store.
         </p>
@@ -83,19 +77,15 @@ export default function AdminDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statsWithCustomers.map((stat) => (
           <div
             key={stat.title}
             className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
           >
-            <p className="text-sm font-medium text-gray-500">
-              {stat.title}
-            </p>
+            <p className="text-sm font-medium text-gray-500">{stat.title}</p>
 
             <div className="mt-3 flex items-end justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {stat.value}
-              </h2>
+              <h2 className="text-2xl font-bold text-gray-900">{stat.value}</h2>
 
               <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
                 {stat.change}
@@ -107,9 +97,7 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-900">
-          Quick Actions
-        </h2>
+        <h2 className="text-lg font-bold text-gray-900">Quick Actions</h2>
 
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Link
@@ -148,12 +136,8 @@ export default function AdminDashboard() {
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:col-span-2">
           <div className="flex items-center justify-between border-b px-5 py-4">
             <div>
-              <h2 className="font-bold text-gray-900">
-                Recent Orders
-              </h2>
-              <p className="text-sm text-gray-500">
-                Latest customer orders
-              </p>
+              <h2 className="font-bold text-gray-900">Recent Orders</h2>
+              <p className="text-sm text-gray-500">Latest customer orders</p>
             </div>
 
             <Link
@@ -188,10 +172,7 @@ export default function AdminDashboard() {
 
               <tbody className="divide-y divide-gray-100">
                 {recentOrders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-gray-50"
-                  >
+                  <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-5 py-4">
                       <Link
                         to={`/admin/orders/${order.id}`}
@@ -202,11 +183,11 @@ export default function AdminDashboard() {
                     </td>
 
                     <td className="px-5 py-4 text-sm text-gray-700">
-                      {order.customer}
+                      {order.customer?.name || order.customer || "-"}
                     </td>
 
                     <td className="px-5 py-4 text-sm font-semibold text-gray-900">
-                      {formatCurrency(order.amount)}
+                      {formatCurrency(computeOrderAmount(order))}
                     </td>
 
                     <td className="px-5 py-4">
@@ -229,18 +210,14 @@ export default function AdminDashboard() {
 
         {/* Store Overview */}
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="font-bold text-gray-900">
-            Store Overview
-          </h2>
+          <h2 className="font-bold text-gray-900">Store Overview</h2>
 
           <div className="mt-5 space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">
-                  Pending Orders
-                </p>
+                <p className="text-sm text-gray-500">Pending Orders</p>
                 <p className="mt-1 text-xl font-bold text-gray-900">
-                  18
+                  {pendingCount}
                 </p>
               </div>
 
@@ -254,11 +231,9 @@ export default function AdminDashboard() {
 
             <div className="border-t pt-5">
               <div>
-                <p className="text-sm text-gray-500">
-                  Low Stock Products
-                </p>
+                <p className="text-sm text-gray-500">Low Stock Products</p>
                 <p className="mt-1 text-xl font-bold text-orange-600">
-                  7
+                  {lowStockCount}
                 </p>
               </div>
 
@@ -272,11 +247,9 @@ export default function AdminDashboard() {
 
             <div className="border-t pt-5">
               <div>
-                <p className="text-sm text-gray-500">
-                  New Customers
-                </p>
+                <p className="text-sm text-gray-500">New Customers</p>
                 <p className="mt-1 text-xl font-bold text-purple-600">
-                  24
+                  {customers.length}
                 </p>
               </div>
 
@@ -290,12 +263,8 @@ export default function AdminDashboard() {
 
             <div className="border-t pt-5">
               <div>
-                <p className="text-sm text-gray-500">
-                  Blog Posts
-                </p>
-                <p className="mt-1 text-xl font-bold text-blue-600">
-                  12
-                </p>
+                <p className="text-sm text-gray-500">Blog Posts</p>
+                <p className="mt-1 text-xl font-bold text-blue-600">12</p>
               </div>
 
               <Link
@@ -313,17 +282,13 @@ export default function AdminDashboard() {
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-bold text-gray-900">
-              Sales Performance
-            </h2>
+            <h2 className="font-bold text-gray-900">Sales Performance</h2>
             <p className="text-sm text-gray-500">
               Overview of this month's sales
             </p>
           </div>
 
-          <span className="text-sm font-semibold text-green-600">
-            +12.5%
-          </span>
+          <span className="text-sm font-semibold text-green-600">+12.5%</span>
         </div>
 
         <div className="mt-6 flex h-48 items-end gap-3">
@@ -337,20 +302,18 @@ export default function AdminDashboard() {
                   className="w-full rounded-t-md bg-green-600"
                   style={{ height: `${height}%` }}
                 />
-                <span className="text-xs text-gray-400">
-                  {index + 1}
-                </span>
+                <span className="text-xs text-gray-400">{index + 1}</span>
               </div>
-            )
+            ),
           )}
         </div>
       </div>
 
       {/* Backend note */}
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> The dashboard currently uses sample
-        data. Connect these statistics, orders, customers, products,
-        and sales data to your backend API later.
+        <strong>Note:</strong> The dashboard currently uses sample data. Connect
+        these statistics, orders, customers, products, and sales data to your
+        backend API later.
       </div>
     </div>
   );

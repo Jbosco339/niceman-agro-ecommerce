@@ -1,72 +1,24 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import useOrders from "../../../hooks/useOrders";
 
-const initialOrders = [
-  {
-    id: "NA-2026-00125",
-    customer: "John Doe",
-    email: "johndoe@example.com",
-    items: 2,
-    total: 53500,
-    payment: "Paid",
-    status: "Processing",
-    date: "Oct 6, 2026",
-  },
-  {
-    id: "NA-2026-00124",
-    customer: "Sarah Williams",
-    email: "sarah@example.com",
-    items: 3,
-    total: 78000,
-    payment: "Paid",
-    status: "Delivered",
-    date: "Oct 5, 2026",
-  },
-  {
-    id: "NA-2026-00123",
-    customer: "Michael Johnson",
-    email: "michael@example.com",
-    items: 1,
-    total: 32000,
-    payment: "Pending",
-    status: "Pending",
-    date: "Oct 5, 2026",
-  },
-  {
-    id: "NA-2026-00122",
-    customer: "Grace Okafor",
-    email: "grace@example.com",
-    items: 4,
-    total: 45000,
-    payment: "Paid",
-    status: "Delivered",
-    date: "Oct 4, 2026",
-  },
-  {
-    id: "NA-2026-00121",
-    customer: "David Williams",
-    email: "david@example.com",
-    items: 2,
-    total: 67000,
-    payment: "Paid",
-    status: "Cancelled",
-    date: "Oct 3, 2026",
-  },
-];
-
-const formatCurrency = (amount) =>
-  `₦${amount.toLocaleString("en-NG")}`;
+const formatCurrency = (amount) => `₦${amount.toLocaleString("en-NG")}`;
 
 export default function Orders() {
-  const [orders, setOrders] = useState(initialOrders);
+  const { orders, updateOrder } = useOrders();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
   const filteredOrders = orders.filter((order) => {
+    const lower = search.toLowerCase();
+    const customerName = order.customer?.name || "";
+
     const matchesSearch =
-      order.id.toLowerCase().includes(search.toLowerCase()) ||
-      order.customer.toLowerCase().includes(search.toLowerCase()) ||
-      order.email.toLowerCase().includes(search.toLowerCase());
+      String(order.id).toLowerCase().includes(lower) ||
+      customerName.toLowerCase().includes(lower) ||
+      String(order.customer?.email || "")
+        .toLowerCase()
+        .includes(lower);
 
     const matchesStatus =
       statusFilter === "All" || order.status === statusFilter;
@@ -74,34 +26,22 @@ export default function Orders() {
     return matchesSearch && matchesStatus;
   });
 
-  const updateStatus = (id, newStatus) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === id
-          ? { ...order, status: newStatus }
-          : order
-      )
-    );
-  };
-
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(
-    (order) => order.status === "Pending"
+    (order) => order.status === "Pending",
   ).length;
   const processingOrders = orders.filter(
-    (order) => order.status === "Processing"
+    (order) => order.status === "Processing",
   ).length;
   const deliveredOrders = orders.filter(
-    (order) => order.status === "Delivered"
+    (order) => order.status === "Delivered",
   ).length;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Orders
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
         <p className="mt-1 text-sm text-gray-500">
           Manage and track all customer orders.
         </p>
@@ -111,9 +51,7 @@ export default function Orders() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">Total Orders</p>
-          <p className="mt-2 text-2xl font-bold text-gray-900">
-            {totalOrders}
-          </p>
+          <p className="mt-2 text-2xl font-bold text-gray-900">{totalOrders}</p>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -199,10 +137,7 @@ export default function Orders() {
             <tbody className="divide-y divide-gray-100">
               {filteredOrders.length > 0 ? (
                 filteredOrders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-gray-50"
-                  >
+                  <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <Link
                         to={`/admin/orders/${order.id}`}
@@ -214,15 +149,17 @@ export default function Orders() {
 
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-gray-900">
-                        {order.customer}
+                        {order.customer?.name}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {order.email}
+                        {order.customer?.email}
                       </p>
                     </td>
 
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {order.items}
+                      {Array.isArray(order.items)
+                        ? order.items.length
+                        : order.items}
                     </td>
 
                     <td className="px-6 py-4 text-sm font-semibold text-gray-900">
@@ -232,12 +169,12 @@ export default function Orders() {
                     <td className="px-6 py-4">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          order.payment === "Paid"
+                          order.paymentStatus === "Paid"
                             ? "bg-green-100 text-green-700"
                             : "bg-yellow-100 text-yellow-700"
                         }`}
                       >
-                        {order.payment}
+                        {order.paymentStatus}
                       </span>
                     </td>
 
@@ -245,10 +182,7 @@ export default function Orders() {
                       <select
                         value={order.status}
                         onChange={(e) =>
-                          updateStatus(
-                            order.id,
-                            e.target.value
-                          )
+                          updateOrder(order.id, { status: e.target.value })
                         }
                         className={`rounded-full border-0 px-3 py-1 text-xs font-semibold outline-none ${
                           order.status === "Delivered"
@@ -261,15 +195,9 @@ export default function Orders() {
                         }`}
                       >
                         <option value="Pending">Pending</option>
-                        <option value="Processing">
-                          Processing
-                        </option>
-                        <option value="Delivered">
-                          Delivered
-                        </option>
-                        <option value="Cancelled">
-                          Cancelled
-                        </option>
+                        <option value="Processing">Processing</option>
+                        <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
                       </select>
                     </td>
 
@@ -304,9 +232,8 @@ export default function Orders() {
 
       {/* Backend Note */}
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> Orders currently use sample data.
-        Connect the orders and status updates to your backend API
-        later.
+        <strong>Note:</strong> Orders currently use sample data. Connect the
+        orders and status updates to your backend API later.
       </div>
     </div>
   );

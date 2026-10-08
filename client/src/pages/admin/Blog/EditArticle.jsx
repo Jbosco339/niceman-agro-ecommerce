@@ -1,20 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import useBlogPosts from "../../../hooks/useBlogPosts";
 
 const EditArticle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const { getPostById, updatePost } = useBlogPosts();
+
   const [formData, setFormData] = useState({
-    title: "5 Benefits of Eating Fresh Farm Produce",
-    category: "Healthy Living",
-    author: "Admin",
-    excerpt: "Discover the benefits of eating fresh farm produce.",
-    content:
-      "Fresh farm produce provides essential nutrients and supports a healthy lifestyle.",
-    image: "/images/blog/fresh-produce.jpg",
-    status: "Published",
+    title: "",
+    category: "Agriculture",
+    author: "",
+    excerpt: "",
+    content: "",
+    image: "",
+    status: "Draft",
   });
+
+  useEffect(() => {
+    const post = getPostById(id);
+    if (post) {
+      setFormData({
+        title: post.title || "",
+        category: post.category || "Agriculture",
+        author: post.author || "",
+        excerpt: post.excerpt || "",
+        content: post.content || "",
+        image: post.image || "",
+        status: post.status || "Draft",
+      });
+    }
+  }, [id, getPostById]);
 
   const [saving, setSaving] = useState(false);
 
@@ -40,15 +57,12 @@ const EditArticle = () => {
     setSaving(true);
 
     // Connect to backend API here later
-    console.log("Updated Article:", {
-      id,
-      ...formData,
-    });
+    updatePost(id, formData);
 
     setTimeout(() => {
       setSaving(false);
       navigate("/admin/blog");
-    }, 1000);
+    }, 200);
   };
 
   return (

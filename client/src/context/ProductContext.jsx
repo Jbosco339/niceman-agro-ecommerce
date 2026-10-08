@@ -1,66 +1,30 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  productsSeed,
+  readLocalStorage,
+  writeLocalStorage,
+} from "../data/mockData";
 
-// Single shared seed list for the app's product data. All product consumers
-// should read from ProductProvider/useProducts rather than maintain their own copy.
-export const initialProducts = [
-  {
-    id: 1,
-    name: "Fresh Tomatoes",
-    category: "Fertilizers",
-    price: 3500,
-    stock: 45,
-    description:
-      "Fresh, locally sourced tomatoes suitable for everyday cooking.",
-    image: "/images/products/tomatoes.jpg",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Premium Rice",
-    category: "Herbicides",
-    price: 45000,
-    stock: 8,
-    description: "High-quality premium rice for everyday meals.",
-    image: "/images/products/rice.jpg",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Irish Potatoes",
-    category: "Insecticides",
-    price: 6000,
-    stock: 0,
-    description: "Fresh Irish potatoes sourced from trusted farms.",
-    image: "/images/products/potatoes.jpg",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Fresh Chicken",
-    category: "Seeds",
-    price: 8500,
-    stock: 25,
-    description: "Fresh and quality poultry products.",
-    image: "/images/products/chicken.jpg",
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Fresh Mangoes",
-    category: "Farm Equipment",
-    price: 5000,
-    stock: 12,
-    description: "Fresh, sweet and naturally sourced mangoes.",
-    image: "/images/products/mangoes.jpg",
-    status: "Inactive",
-  },
-];
+export const initialProducts = productsSeed;
 
 export const ProductContext = createContext(null);
 
 export function ProductProvider({ children }) {
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState(() => {
+    const saved = readLocalStorage("niceman-products", productsSeed);
+    return saved.length ? saved : productsSeed;
+  });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    writeLocalStorage("niceman-products", products);
+  }, [products]);
 
   const addProduct = (product) => {
     const newProduct = {
@@ -68,6 +32,8 @@ export function ProductProvider({ children }) {
       id: Date.now(),
       price: Number(product.price),
       stock: Number(product.stock),
+      featured: Boolean(product.featured),
+      sku: product.sku || `NAG-${Date.now()}`,
     };
 
     setProducts((current) => [...current, newProduct]);
@@ -84,6 +50,8 @@ export function ProductProvider({ children }) {
               ...updatedProduct,
               price: Number(updatedProduct.price ?? product.price),
               stock: Number(updatedProduct.stock ?? product.stock),
+              featured: Boolean(updatedProduct.featured ?? product.featured),
+              sku: updatedProduct.sku || product.sku || `NAG-${Date.now()}`,
             }
           : product,
       ),
@@ -155,7 +123,6 @@ export function ProductProvider({ children }) {
     setProducts,
     loading,
     setLoading,
-
     addProduct,
     updateProduct,
     deleteProduct,
@@ -163,7 +130,6 @@ export function ProductProvider({ children }) {
     getProductsByCategory,
     toggleStatus,
     updateStock,
-
     activeProducts,
     inactiveProducts,
     inStockProducts,

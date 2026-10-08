@@ -1,57 +1,20 @@
 import { useState } from "react";
+import useWebsiteContent from "../../../hooks/useWebsiteContent";
 
 export default function WebsiteContent() {
   const [activeTab, setActiveTab] = useState("hero");
 
-  const [content, setContent] = useState({
-    hero: {
-      title: "Fresh From Our Farm to Your Table",
-      subtitle:
-        "Quality farm produce delivered fresh to your doorstep.",
-      buttonText: "Shop Now",
-      buttonLink: "/shop",
-      image: "/images/hero-bg.jpg",
-    },
-
-    about: {
-      title: "About Niceman Agro & Farms",
-      description:
-        "We provide fresh, quality agricultural products sourced from trusted farms and delivered to customers with care.",
-      image: "/images/about.jpg",
-    },
-
-    contact: {
-      phone: "+234 801 234 5678",
-      email: "info@nicemanagro.com",
-      address: "Lagos, Nigeria",
-      whatsapp: "+234 801 234 5678",
-    },
-
-    footer: {
-      description:
-        "Quality farm produce delivered fresh to your doorstep.",
-      copyright: "© 2026 Niceman Agro & Farms. All rights reserved.",
-    },
-  });
+  const { content, updateSection } = useWebsiteContent();
 
   const updateContent = (section, field, value) => {
-    setContent((current) => ({
-      ...current,
-      [section]: {
-        ...current[section],
-        [field]: value,
-      },
-    }));
+    updateSection(section, { [field]: value });
   };
 
   const handleSave = (section) => {
-    console.log(`Saving ${section} content:`, content[section]);
-
+    // content is already persisted via the provider
     alert(
-      `${section.charAt(0).toUpperCase() + section.slice(1)} content saved successfully.`
+      `${section.charAt(0).toUpperCase() + section.slice(1)} content saved successfully.`,
     );
-
-    // Connect to backend API here later.
   };
 
   const tabs = [
@@ -65,9 +28,7 @@ export default function WebsiteContent() {
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Website Content
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">Website Content</h1>
 
         <p className="mt-1 text-sm text-gray-500">
           Manage the content displayed across your website.
@@ -114,9 +75,7 @@ export default function WebsiteContent() {
               <input
                 type="text"
                 value={content.hero.title}
-                onChange={(e) =>
-                  updateContent("hero", "title", e.target.value)
-                }
+                onChange={(e) => updateContent("hero", "title", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
               />
             </div>
@@ -174,9 +133,7 @@ export default function WebsiteContent() {
               <input
                 type="text"
                 value={content.hero.image}
-                onChange={(e) =>
-                  updateContent("hero", "image", e.target.value)
-                }
+                onChange={(e) => updateContent("hero", "image", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
               />
             </div>
@@ -400,8 +357,8 @@ export default function WebsiteContent() {
 
       {/* Backend Note */}
       <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        Website content is currently stored locally for development.
-        Connect these sections to the backend API when the server is ready.
+        Website content is currently stored locally for development. Connect
+        these sections to the backend API when the server is ready.
       </div>
     </div>
   );

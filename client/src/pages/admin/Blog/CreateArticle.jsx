@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import useBlogPosts from "../../../hooks/useBlogPosts";
 
 const CreateArticle = () => {
   const navigate = useNavigate();
+
+  const { addPost } = useBlogPosts();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -37,13 +40,13 @@ const CreateArticle = () => {
 
     setSaving(true);
 
-    // Connect to backend API here later
-    console.log("Article:", formData);
+    // Save to local blog store for now
+    addPost(formData);
 
     setTimeout(() => {
       setSaving(false);
       navigate("/admin/blog");
-    }, 1000);
+    }, 300);
   };
 
   return (
@@ -227,8 +230,8 @@ const CreateArticle = () => {
             {saving
               ? "Saving..."
               : formData.status === "Published"
-              ? "Publish Article"
-              : "Save Draft"}
+                ? "Publish Article"
+                : "Save Draft"}
           </button>
         </div>
       </form>

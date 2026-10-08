@@ -1,32 +1,8 @@
 import { useState } from "react";
+import useBlogPosts from "../../../hooks/useBlogPosts";
 
 const BlogManagement = () => {
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      title: "5 Benefits of Eating Fresh Farm Produce",
-      category: "Healthy Living",
-      author: "Admin",
-      date: "Oct 2, 2026",
-      status: "Published",
-    },
-    {
-      id: 2,
-      title: "How to Store Fresh Vegetables Properly",
-      category: "Farming Tips",
-      author: "Admin",
-      date: "Sep 28, 2026",
-      status: "Published",
-    },
-    {
-      id: 3,
-      title: "Understanding Sustainable Agriculture",
-      category: "Agriculture",
-      author: "Admin",
-      date: "Sep 20, 2026",
-      status: "Draft",
-    },
-  ]);
+  const { posts, addPost, updatePost, deletePost } = useBlogPosts();
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -53,8 +29,7 @@ const BlogManagement = () => {
       .toLowerCase()
       .includes(search.toLowerCase());
 
-    const matchesCategory =
-      category === "All" || post.category === category;
+    const matchesCategory = category === "All" || post.category === category;
 
     return matchesSearch && matchesCategory;
   });
@@ -70,22 +45,15 @@ const BlogManagement = () => {
     e.preventDefault();
 
     if (editingPost) {
-      setPosts(
-        posts.map((post) =>
-          post.id === editingPost.id
-            ? {
-                ...post,
-                title: formData.title,
-                category: formData.category,
-                author: formData.author,
-                status: formData.status,
-              }
-            : post
-        )
-      );
+      updatePost(editingPost.id, {
+        title: formData.title,
+        category: formData.category,
+        author: formData.author,
+        status: formData.status,
+      });
     } else {
       const newPost = {
-        id: Date.now(),
+        // id will be assigned by addPost if not provided
         title: formData.title,
         category: formData.category,
         author: formData.author || "Admin",
@@ -97,7 +65,7 @@ const BlogManagement = () => {
         status: formData.status,
       };
 
-      setPosts([newPost, ...posts]);
+      addPost(newPost);
     }
 
     resetForm();
@@ -132,21 +100,16 @@ const BlogManagement = () => {
 
   const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this post?")) {
-      setPosts(posts.filter((post) => post.id !== id));
+      deletePost(id);
     }
   };
 
   const toggleStatus = (id) => {
-    setPosts(
-      posts.map((post) =>
-        post.id === id
-          ? {
-              ...post,
-              status: post.status === "Published" ? "Draft" : "Published",
-            }
-          : post
-      )
-    );
+    const p = posts.find((x) => String(x.id) === String(id));
+    if (!p) return;
+    updatePost(id, {
+      status: p.status === "Published" ? "Draft" : "Published",
+    });
   };
 
   return (
@@ -223,7 +186,7 @@ const BlogManagement = () => {
       {/* Blog Table */}
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px]">
+          <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="text-left px-6 py-4 text-sm font-semibold">
@@ -255,17 +218,11 @@ const BlogManagement = () => {
                       {post.title}
                     </td>
 
-                    <td className="px-6 py-4 text-gray-600">
-                      {post.category}
-                    </td>
+                    <td className="px-6 py-4 text-gray-600">{post.category}</td>
 
-                    <td className="px-6 py-4 text-gray-600">
-                      {post.author}
-                    </td>
+                    <td className="px-6 py-4 text-gray-600">{post.author}</td>
 
-                    <td className="px-6 py-4 text-gray-600">
-                      {post.date}
-                    </td>
+                    <td className="px-6 py-4 text-gray-600">{post.date}</td>
 
                     <td className="px-6 py-4">
                       <button
@@ -301,10 +258,7 @@ const BlogManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan="6"
-                    className="text-center py-10 text-gray-500"
-                  >
+                  <td colSpan="6" className="text-center py-10 text-gray-500">
                     No blog posts found.
                   </td>
                 </tr>
@@ -399,9 +353,7 @@ const BlogManagement = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Status
-                </label>
+                <label className="block text-sm font-medium mb-2">Status</label>
 
                 <select
                   name="status"

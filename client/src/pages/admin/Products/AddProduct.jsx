@@ -11,21 +11,23 @@ export default function AddProduct() {
   const [formData, setFormData] = useState({
     name: "",
     category: "",
+    sku: "",
     price: "",
     stock: "",
     description: "",
     image: "",
     status: "Active",
+    featured: false,
   });
 
   const [preview, setPreview] = useState("");
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
 
     if (name === "image") {
@@ -40,6 +42,9 @@ export default function AddProduct() {
       ...formData,
       price: Number(formData.price),
       stock: Number(formData.stock),
+      featured: Boolean(formData.featured),
+      sku: formData.sku || `NAG-${Date.now()}`,
+      image: formData.image || "/images/products/placeholder.jpg",
     };
 
     addProduct(newProduct);
@@ -109,6 +114,22 @@ export default function AddProduct() {
             </select>
           </div>
 
+          {/* SKU */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              SKU
+            </label>
+
+            <input
+              type="text"
+              name="sku"
+              value={formData.sku}
+              onChange={handleChange}
+              placeholder="e.g. NAG-FRT-001"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+            />
+          </div>
+
           {/* Price */}
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">
@@ -160,6 +181,20 @@ export default function AddProduct() {
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
             </select>
+          </div>
+
+          {/* Featured */}
+          <div className="flex items-center gap-3 rounded-lg border border-gray-300 px-4 py-3">
+            <input
+              type="checkbox"
+              name="featured"
+              checked={formData.featured}
+              onChange={handleChange}
+              className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+            />
+            <label className="text-sm font-medium text-gray-700">
+              Mark as featured product
+            </label>
           </div>
 
           {/* Image URL */}
