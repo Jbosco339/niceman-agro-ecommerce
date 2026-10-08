@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 
-// Initial products copied from src/hooks/useProducts.js to preserve existing product data
-const initialProducts = [
+// Single shared seed list for the app's product data. All product consumers
+// should read from ProductProvider/useProducts rather than maintain their own copy.
+export const initialProducts = [
   {
     id: 1,
     name: "Fresh Tomatoes",

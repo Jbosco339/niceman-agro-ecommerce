@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useCategories from "../../../hooks/useCategories";
+import useProducts from "../../../hooks/useProducts";
 
 export default function AddProduct() {
   const navigate = useNavigate();
   const { activeCategories } = useCategories();
+  const { addProduct } = useProducts();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -34,9 +36,13 @@ export default function AddProduct() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Connect to backend API here later
-    console.log("Product to create:", formData);
+    const newProduct = {
+      ...formData,
+      price: Number(formData.price),
+      stock: Number(formData.stock),
+    };
 
+    addProduct(newProduct);
     navigate("/admin/products");
   };
 

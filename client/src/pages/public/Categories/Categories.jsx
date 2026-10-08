@@ -55,7 +55,7 @@ const Categories = () => {
             {activeCategories.map((category) => (
               <Link
                 key={category.name}
-                to={`/shop?category=${encodeURIComponent(category.name)}`}
+                to={`/categories/${encodeURIComponent(category.slug)}`}
                 className="group overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 {/* Image */}

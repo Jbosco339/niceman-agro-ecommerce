@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import useCategories from "../../../hooks/useCategories";
+import useProducts from "../../../hooks/useProducts";
 
-const sampleProduct = {
-  name: "Fresh Tomatoes",
-  category: "Fertilizers",
-  price: "3500",
-  stock: "45",
-  description: "Fresh, locally sourced tomatoes suitable for everyday cooking.",
-  image: "/images/products/tomatoes.jpg",
+const emptyProduct = {
+  name: "",
+  category: "",
+  price: "",
+  stock: "",
+  description: "",
+  image: "",
   status: "Active",
 };
 
@@ -16,9 +17,42 @@ export default function EditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { activeCategories } = useCategories();
+  const { getProduct, updateProduct } = useProducts();
 
-  const [formData, setFormData] = useState(sampleProduct);
-  const [preview, setPreview] = useState(sampleProduct.image);
+  const existingProduct = getProduct(id) || null;
+
+  const [formData, setFormData] = useState(() =>
+    existingProduct
+      ? {
+          name: existingProduct.name,
+          category: existingProduct.category,
+          price: String(existingProduct.price),
+          stock: String(existingProduct.stock),
+          description: existingProduct.description,
+          image: existingProduct.image,
+          status: existingProduct.status,
+        }
+      : emptyProduct,
+  );
+  const [preview, setPreview] = useState(existingProduct?.image || "");
+
+  if (!existingProduct) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Link
+            to="/admin/products"
+            className="text-sm font-medium text-green-600 hover:text-green-800"
+          >
+            ← Back to Products
+          </Link>
+          <h1 className="mt-2 text-2xl font-bold text-gray-900">
+            Product Not Found
+          </h1>
+        </div>
+      </div>
+    );
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,10 +70,10 @@ export default function EditProduct() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Connect to backend API here later
-    console.log("Product to update:", {
-      id,
+    updateProduct(id, {
       ...formData,
+      price: Number(formData.price),
+      stock: Number(formData.stock),
     });
 
     navigate("/admin/products");

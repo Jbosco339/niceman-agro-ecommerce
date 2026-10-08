@@ -3,7 +3,7 @@ import useProducts from "../../../hooks/useProducts";
 import useCategories from "../../../hooks/useCategories";
 
 const CategoryByProduct = () => {
-  const { category: slug } = useParams();
+  const { slug } = useParams();
 
   const { getCategoryBySlug } = useCategories();
   const { getProductsByCategory } = useProducts();

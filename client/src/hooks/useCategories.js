@@ -1,57 +1,9 @@
-import { useState } from "react";
-
-const initialCategories = [
-  {
-    id: 1,
-    name: "Fertilizers",
-    slug: "fertilizers",
-    description: "Nutrient-rich fertilizer solutions for healthy crop growth.",
-    image: "/images/categories/fertiliser.jpg",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Herbicides",
-    slug: "herbicides",
-    description: "Effective crop protection products for weed control.",
-    image: "/images/categories/herbicides.jpg",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Insecticides",
-    slug: "insecticides",
-    description: "Reliable solutions for tackling common agricultural pests.",
-    image: "/images/categories/18.jpg",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Fungicides",
-    slug: "fungicides",
-    description: "Crop protection products for disease and fungal control.",
-    image: "/images/categories/fungicide.jpg",
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Seeds",
-    slug: "seeds",
-    description: "High-quality seeds selected for productive farming.",
-    image: "/images/categories/12.jpg",
-    status: "Active",
-  },
-  {
-    id: 6,
-    name: "Farm Equipment",
-    slug: "farm-equipment",
-    description: "Practical farm tools and equipment for daily operations.",
-    image: "/images/categories/tools.jpg",
-    status: "Active",
-  },
-];
+import { useContext, useMemo, useState } from "react";
+import { CategoryContext, initialCategories } from "../context/CategoryContext";
 
 export default function useCategories() {
+  const ctx = useContext(CategoryContext);
+
   const [categories, setCategories] = useState(initialCategories);
   const [loading, setLoading] = useState(false);
 
@@ -59,10 +11,11 @@ export default function useCategories() {
     const newCategory = {
       ...category,
       id: Date.now(),
+      slug: category.slug || category.name?.toLowerCase().replace(/\s+/g, "-"),
+      status: category.status || "Active",
     };
 
     setCategories((current) => [...current, newCategory]);
-
     return newCategory;
   };
 
@@ -70,7 +23,16 @@ export default function useCategories() {
     setCategories((current) =>
       current.map((category) =>
         category.id === Number(id)
-          ? { ...category, ...updatedCategory }
+          ? {
+              ...category,
+              ...updatedCategory,
+              slug:
+                updatedCategory.slug ||
+                (updatedCategory.name || category.name)
+                  ?.toLowerCase()
+                  .replace(/\s+/g, "-"),
+              status: updatedCategory.status || category.status,
+            }
           : category,
       ),
     );
@@ -87,7 +49,10 @@ export default function useCategories() {
   };
 
   const getCategoryBySlug = (slug) => {
-    return categories.find((category) => category.slug === slug);
+    return categories.find(
+      (category) =>
+        String(category.slug).toLowerCase() === String(slug).toLowerCase(),
+    );
   };
 
   const toggleStatus = (id) => {
@@ -103,15 +68,17 @@ export default function useCategories() {
     );
   };
 
-  const activeCategories = categories.filter(
-    (category) => category.status === "Active",
+  const activeCategories = useMemo(
+    () => categories.filter((category) => category.status === "Active"),
+    [categories],
   );
 
-  const inactiveCategories = categories.filter(
-    (category) => category.status === "Inactive",
+  const inactiveCategories = useMemo(
+    () => categories.filter((category) => category.status === "Inactive"),
+    [categories],
   );
 
-  return {
+  const localValue = {
     categories,
     activeCategories,
     inactiveCategories,
@@ -124,4 +91,6 @@ export default function useCategories() {
     getCategoryBySlug,
     toggleStatus,
   };
+
+  return ctx || localValue;
 }
