@@ -1,54 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import useProducts from "../../../hooks/useProducts";
+import useCategories from "../../../hooks/useCategories";
 
 export default function Products() {
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Fresh Tomatoes",
-      category: "Fresh Vegetables",
-      price: 3500,
-      stock: 45,
-      status: "Active",
-      image: "/images/products/tomatoes.jpg",
-    },
-    {
-      id: 2,
-      name: "Premium Rice",
-      category: "Grains & Cereals",
-      price: 45000,
-      stock: 8,
-      status: "Active",
-      image: "/images/products/rice.jpg",
-    },
-    {
-      id: 3,
-      name: "Irish Potatoes",
-      category: "Tubers",
-      price: 6000,
-      stock: 0,
-      status: "Active",
-      image: "/images/products/potatoes.jpg",
-    },
-    {
-      id: 4,
-      name: "Fresh Chicken",
-      category: "Poultry",
-      price: 8500,
-      stock: 25,
-      status: "Active",
-      image: "/images/products/chicken.jpg",
-    },
-    {
-      id: 5,
-      name: "Fresh Mangoes",
-      category: "Fruits",
-      price: 5000,
-      stock: 12,
-      status: "Inactive",
-      image: "/images/products/mangoes.jpg",
-    },
-  ]);
+  const {
+    products,
+    toggleStatus: toggleStatusHook,
+    deleteProduct: deleteProductHook,
+  } = useProducts();
+  const { activeCategories } = useCategories();
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -68,26 +29,19 @@ export default function Products() {
   };
 
   const toggleStatus = (id) => {
-    setProducts((current) =>
-      current.map((product) =>
-        product.id === id
-          ? {
-              ...product,
-              status: product.status === "Active" ? "Inactive" : "Active",
-            }
-          : product
-      )
-    );
+    // delegate to shared product hook
+    toggleStatusHook(id);
   };
 
   const deleteProduct = (id) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this product?"
+      "Are you sure you want to delete this product?",
     );
 
     if (!confirmed) return;
 
-    setProducts((current) => current.filter((product) => product.id !== id));
+    // delegate to shared product hook
+    deleteProductHook(id);
   };
 
   const filteredProducts = products.filter((product) => {
@@ -106,10 +60,10 @@ export default function Products() {
 
   const totalProducts = products.length;
   const activeProducts = products.filter(
-    (product) => product.status === "Active"
+    (product) => product.status === "Active",
   ).length;
   const lowStock = products.filter(
-    (product) => product.stock > 0 && product.stock <= 10
+    (product) => product.stock > 0 && product.stock <= 10,
   ).length;
   const outOfStock = products.filter((product) => product.stock === 0).length;
 
@@ -166,9 +120,7 @@ export default function Products() {
 
         <div className="rounded-xl bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">Out of Stock</p>
-          <h2 className="mt-2 text-2xl font-bold text-red-600">
-            {outOfStock}
-          </h2>
+          <h2 className="mt-2 text-2xl font-bold text-red-600">{outOfStock}</h2>
         </div>
       </div>
 
@@ -189,12 +141,11 @@ export default function Products() {
             className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-green-600"
           >
             <option value="All">All Categories</option>
-            <option value="Fresh Vegetables">Fresh Vegetables</option>
-            <option value="Fruits">Fruits</option>
-            <option value="Grains & Cereals">Grains & Cereals</option>
-            <option value="Tubers">Tubers</option>
-            <option value="Livestock">Livestock</option>
-            <option value="Poultry">Poultry</option>
+            {activeCategories.map((c) => (
+              <option key={c.id} value={c.name}>
+                {c.name}
+              </option>
+            ))}
           </select>
 
           <select

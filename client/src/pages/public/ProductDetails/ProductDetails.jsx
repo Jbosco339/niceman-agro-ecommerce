@@ -10,6 +10,7 @@ import {
   Star,
 } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
+import { useFavorites } from "../../../context/FavoritesContext";
 import useProducts from "../../../hooks/useProducts";
 
 function ProductDetails() {
@@ -19,9 +20,10 @@ function ProductDetails() {
   const product = getProduct(id);
 
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+
   const [addFeedback, setAddFeedback] = useState("");
   const { addToCart, cartItems } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   const formatPrice = (price) => `₦${price.toLocaleString("en-NG")}`;
 
@@ -204,18 +206,20 @@ function ProductDetails() {
 
               <button
                 type="button"
-                onClick={() => setIsWishlisted((current) => !current)}
+                onClick={() => {
+                  toggleFavorite(product);
+                }}
                 className={`flex items-center justify-center gap-2 rounded-lg border px-5 py-3.5 font-semibold transition ${
-                  isWishlisted
+                  isFavorite(product.id)
                     ? "border-red-200 bg-red-50 text-red-600"
                     : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 <Heart
                   size={19}
-                  fill={isWishlisted ? "currentColor" : "none"}
+                  fill={isFavorite(product.id) ? "currentColor" : "none"}
                 />
-                {isWishlisted ? "Saved" : "Wishlist"}
+                {isFavorite(product.id) ? "Saved" : "Wishlist"}
               </button>
             </div>
 

@@ -1,53 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import useCategories from "../../../hooks/useCategories";
 
 const Categories = () => {
   const navigate = useNavigate();
 
-  const [categories, setCategories] = useState([
-    {
-      id: 1,
-      name: "Fresh Vegetables",
-      description: "Fresh farm-grown vegetables.",
-      products: 24,
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Fruits",
-      description: "Fresh and nutritious fruits.",
-      products: 18,
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Grains & Cereals",
-      description: "Quality grains and cereals.",
-      products: 15,
-      status: "Active",
-    },
-    {
-      id: 4,
-      name: "Tubers",
-      description: "Fresh yam, cassava and other tubers.",
-      products: 12,
-      status: "Active",
-    },
-    {
-      id: 5,
-      name: "Livestock",
-      description: "Healthy farm livestock.",
-      products: 8,
-      status: "Inactive",
-    },
-    {
-      id: 6,
-      name: "Poultry",
-      description: "Quality poultry products.",
-      products: 10,
-      status: "Active",
-    },
-  ]);
+  const { categories, deleteCategory, toggleStatus } = useCategories();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -69,22 +27,12 @@ const Categories = () => {
     );
 
     if (confirmed) {
-      setCategories(categories.filter((category) => category.id !== id));
+      deleteCategory(id);
     }
   };
 
-  const toggleStatus = (id) => {
-    setCategories(
-      categories.map((category) =>
-        category.id === id
-          ? {
-              ...category,
-              status: category.status === "Active" ? "Inactive" : "Active",
-            }
-          : category,
-      ),
-    );
-  };
+  // delegate status toggling to canonical categories hook
+  // (function name intentionally same as previously declared above)
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">

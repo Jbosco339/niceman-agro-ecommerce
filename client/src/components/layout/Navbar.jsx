@@ -1,9 +1,19 @@
 import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
+import { useFavorites } from "../../context/FavoritesContext";
 
 function Navbar() {
-  const { cartItems } = useCart();
+  const { cartItems, cartTotal } = useCart();
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  const formattedCartTotal = new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(cartTotal) || 0);
+
+  const { favoritesCount } = useFavorites();
 
   return (
     <nav className="bg-white">
@@ -212,6 +222,24 @@ function Navbar() {
             )}
           </Link>
 
+          <span className="ml-1 text-sm font-semibold text-slate-700">
+            {formattedCartTotal}
+          </span>
+
+          {/* Favorites */}
+          <Link
+            to="/favorites"
+            className="relative ml-3 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-green-600 hover:text-green-700"
+            aria-label="Favorites"
+          >
+            <span className="text-lg">❤</span>
+
+            {favoritesCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-700 px-1 text-[10px] font-bold text-white">
+                {favoritesCount}
+              </span>
+            )}
+          </Link>
           {/* Customer Account */}
           <Link
             to="/login"

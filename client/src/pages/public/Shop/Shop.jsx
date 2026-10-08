@@ -11,6 +11,7 @@ import {
   Check,
 } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
+import { useFavorites } from "../../../context/FavoritesContext";
 import useProducts from "../../../hooks/useProducts";
 import useCategories from "../../../hooks/useCategories";
 
@@ -26,6 +27,7 @@ function Shop() {
   const [sortOption, setSortOption] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
   const { addToCart } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
   const [addedProductId, setAddedProductId] = useState(null);
 
   const handleAddToCart = (product) => {
@@ -268,10 +270,16 @@ function Shop() {
 
                         <button
                           type="button"
+                          onClick={() => toggleFavorite(product)}
                           className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm transition hover:text-red-500"
-                          aria-label={`Add ${product.name} to wishlist`}
+                          aria-label={`Toggle favorite for ${product.name}`}
                         >
-                          <Heart size={17} />
+                          <Heart
+                            size={17}
+                            fill={
+                              isFavorite(product.id) ? "currentColor" : "none"
+                            }
+                          />
                         </button>
                       </div>
 

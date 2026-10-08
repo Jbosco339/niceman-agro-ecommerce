@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useContext, useState, useMemo } from "react";
+import { ProductContext } from "../context/ProductContext";
 
 const initialProducts = [
   {
@@ -55,6 +56,10 @@ const initialProducts = [
 ];
 
 export default function useProducts() {
+  // Read shared product context (if provided). We still initialize
+  // local hooks so hook call order stays consistent across renders.
+  const ctx = useContext(ProductContext);
+
   const [products, setProducts] = useState(initialProducts);
   const [loading, setLoading] = useState(false);
 
@@ -119,32 +124,35 @@ export default function useProducts() {
     setProducts((current) =>
       current.map((product) =>
         product.id === Number(id)
-          ? {
-              ...product,
-              stock: Math.max(0, product.stock + Number(quantity)),
-            }
+          ? { ...product, stock: Math.max(0, product.stock + Number(quantity)) }
           : product,
       ),
     );
   };
 
-  const activeProducts = products.filter(
-    (product) => product.status === "Active",
+  const activeProducts = useMemo(
+    () => products.filter((product) => product.status === "Active"),
+    [products],
+  );
+  const inactiveProducts = useMemo(
+    () => products.filter((product) => product.status === "Inactive"),
+    [products],
+  );
+  const inStockProducts = useMemo(
+    () => products.filter((product) => product.stock > 10),
+    [products],
+  );
+  const lowStockProducts = useMemo(
+    () =>
+      products.filter((product) => product.stock > 0 && product.stock <= 10),
+    [products],
+  );
+  const outOfStockProducts = useMemo(
+    () => products.filter((product) => product.stock === 0),
+    [products],
   );
 
-  const inactiveProducts = products.filter(
-    (product) => product.status === "Inactive",
-  );
-
-  const inStockProducts = products.filter((product) => product.stock > 10);
-
-  const lowStockProducts = products.filter(
-    (product) => product.stock > 0 && product.stock <= 10,
-  );
-
-  const outOfStockProducts = products.filter((product) => product.stock === 0);
-
-  return {
+  const localValue = {
     products,
     setProducts,
     loading,
@@ -164,4 +172,6 @@ export default function useProducts() {
     lowStockProducts,
     outOfStockProducts,
   };
+
+  return ctx || localValue;
 }
