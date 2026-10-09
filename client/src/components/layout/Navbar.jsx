@@ -46,40 +46,40 @@ function Navbar() {
           <img
             src="/images/NicemanAgroLogoGreen.png"
             alt="Niceman Agro & Farms"
-            className="h-12 w-auto object-contain"
+            className="h-8 w-auto object-contain sm:h-10 lg:h-12"
           />
         </Link>
         {/* Desktop Navigation (visible on lg) */}
         <div className="hidden items-center gap-7 lg:flex">
           <Link
             to="/"
-            className="text-sm font-semibold text-green-800 transition hover:text-green-600"
+            className="text-sm font-semibold text-green-800 transition-colors duration-200 hover:text-green-700"
           >
             Home
           </Link>
 
           <Link
             to="/shop"
-            className="text-sm font-medium text-slate-700 transition hover:text-green-700"
+            className="text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-green-700"
           >
             Shop
           </Link>
 
           <div className="relative group">
             <Link
-              to="/resources"
-              className="flex items-center gap-1 text-sm font-medium text-slate-700 transition hover:text-green-700"
+              to="/blog"
+              className="flex items-center gap-1 text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-green-700"
             >
               Resources
               <span className="text-xs">▼</span>
             </Link>
 
             {/* Resources Dropdown */}
-            <div className="absolute left-0 top-full z-50 hidden w-48 pt-3 group-hover:block">
-              <div className="rounded-lg bg-[#659d7d] py-2 shadow-lg">
+            <div className="absolute left-0 top-full z-50 hidden w-48 pt-2 group-hover:block">
+              <div className="rounded-md bg-[#1A4329] py-1 shadow-lg">
                 <Link
                   to="/blog"
-                  className="block px-6 py-4 text-lg font-medium text-white hover:bg-white/10"
+                  className="block px-4 py-2 text-sm font-medium text-white rounded transition-colors duration-150 hover:bg-[#123320]"
                 >
                   Blog
                 </Link>
@@ -91,43 +91,43 @@ function Navbar() {
             <div className="relative group">
               <Link
                 to="/about"
-                className="flex items-center gap-1 text-sm font-medium text-slate-700 transition hover:text-green-700"
+                className="flex items-center gap-1 text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-green-700"
               >
                 About Us
                 <span className="text-xs">▼</span>
               </Link>
 
               {/* About Dropdown */}
-              <div className="absolute left-0 top-full z-50 hidden w-64 pt-3 group-hover:block">
-                <div className="rounded-lg bg-[#659d7d] py-2 shadow-lg">
+              <div className="absolute left-0 top-full z-50 hidden w-64 pt-2 group-hover:block">
+                <div className="rounded-md bg-[#1A4329] py-1 shadow-lg">
                   {/* Our Company */}
                   <Link
                     to="/about/company"
-                    className="block px-6 py-4 text-lg font-medium text-white hover:bg-white/10"
+                    className="block px-4 py-2 text-sm font-medium text-white rounded transition-colors duration-150 hover:bg-[#123320]"
                   >
                     Our Company
                   </Link>
 
                   {/* Governance Submenu */}
                   <div className="relative group/governance">
-                    <div className="flex cursor-pointer items-center justify-between px-6 py-4 text-lg font-medium text-white hover:bg-white/10">
+                    <div className="flex cursor-pointer items-center justify-between px-4 py-2 text-sm font-medium text-white rounded transition-colors duration-150 hover:bg-[#123320]">
                       <span>Governance</span>
                       <span className="text-sm">▶</span>
                     </div>
 
                     {/* Governance Submenu */}
                     <div className="absolute left-full top-0 hidden w-64 pl-2 group-hover/governance:block">
-                      <div className="rounded-lg bg-[#659d7d] py-2 shadow-lg">
+                      <div className="rounded-md bg-[#1A4329] py-1 shadow-lg">
                         <Link
                           to="/about/board-of-directors"
-                          className="block px-6 py-4 text-lg font-medium text-white hover:bg-white/10"
+                          className="block px-4 py-2 text-sm font-medium text-white rounded transition-colors duration-150 hover:bg-[#123320]"
                         >
                           Board of Directors
                         </Link>
 
                         <Link
                           to="/about/management-team"
-                          className="block px-6 py-4 text-lg font-medium text-white hover:bg-white/10"
+                          className="block px-4 py-2 text-sm font-medium text-white rounded transition-colors duration-150 hover:bg-[#123320]"
                         >
                           Management Team
                         </Link>
@@ -141,7 +141,7 @@ function Navbar() {
 
           <Link
             to="/contact"
-            className="text-sm font-medium text-slate-700 transition hover:text-green-700"
+            className="text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-green-700"
           >
             Contact
           </Link>
@@ -150,43 +150,43 @@ function Navbar() {
             {/* Training */}
             <Link
               to="/training"
-              className="flex items-center gap-1 text-sm font-medium text-slate-700 transition hover:text-green-700"
+              className="flex items-center gap-1 text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-green-700"
             >
               Training
               <span className="text-xs">▼</span>
             </Link>
 
             {/* Training Dropdown */}
-            <div className="absolute left-0 top-full z-50 hidden w-64 pt-3 group-hover:block">
-              <div className="rounded-lg bg-[#659d7d] py-2 shadow-lg">
+            <div className="absolute left-0 top-full z-50 hidden w-64 pt-2 group-hover:block">
+              <div className="rounded-md bg-[#1A4329] py-1 shadow-lg">
                 {/* Farmer Training */}
                 <Link
                   to="/training/farmer-training"
-                  className="block px-6 py-4 text-lg font-medium text-white hover:bg-white/10"
+                  className="block px-4 py-2 text-sm font-medium text-white rounded transition-colors duration-150 hover:bg-[#123320]"
                 >
                   Farmer Training
                 </Link>
 
                 {/* Agricultural Courses + Submenu */}
                 <div className="relative group/courses">
-                  <div className="flex cursor-pointer items-center justify-between px-6 py-4 text-lg font-medium text-white hover:bg-white/10">
+                  <div className="flex cursor-pointer items-center justify-between px-4 py-2 text-sm font-medium text-white rounded transition-colors duration-150 hover:bg-[#123320]">
                     <span>Agricultural Courses</span>
                     <span className="text-sm">▶</span>
                   </div>
 
                   {/* Agricultural Courses Submenu */}
                   <div className="absolute left-full top-0 hidden w-64 pl-2 group-hover/courses:block">
-                    <div className="rounded-lg bg-[#659d7d] py-2 shadow-lg">
+                    <div className="rounded-md bg-[#1A4329] py-1 shadow-lg">
                       <Link
                         to="/training/courses/online"
-                        className="block px-6 py-4 text-lg font-medium text-white hover:bg-white/10"
+                        className="block px-4 py-2 text-sm font-medium text-white rounded transition-colors duration-150 hover:bg-[#123320]"
                       >
                         Online Courses
                       </Link>
 
                       <Link
                         to="/training/courses/in-person"
-                        className="block px-6 py-4 text-lg font-medium text-white hover:bg-white/10"
+                        className="block px-4 py-2 text-sm font-medium text-white rounded transition-colors duration-150 hover:bg-[#123320]"
                       >
                         In-Person Training
                       </Link>
@@ -197,7 +197,7 @@ function Navbar() {
                 {/* Workshops */}
                 <Link
                   to="/training/workshops"
-                  className="block px-6 py-4 text-lg font-medium text-white hover:bg-white/10"
+                  className="block px-4 py-2 text-sm font-medium text-white rounded transition-colors duration-150 hover:bg-[#123320]"
                 >
                   Workshops
                 </Link>
@@ -330,7 +330,7 @@ function Navbar() {
             <Link
               to="/"
               onClick={closeMobileMenu}
-              className="block text-sm font-semibold text-green-800 transition hover:bg-green-50 hover:text-green-600 px-2 py-2 rounded"
+              className="block rounded px-2 py-2 text-sm font-semibold text-green-800 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
             >
               Home
             </Link>
@@ -339,7 +339,7 @@ function Navbar() {
             <Link
               to="/shop"
               onClick={closeMobileMenu}
-              className="block text-sm font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+              className="block rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
             >
               Shop
             </Link>
@@ -348,7 +348,7 @@ function Navbar() {
             <Link
               to="/categories"
               onClick={closeMobileMenu}
-              className="block text-sm font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+              className="block rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
             >
               Categories
             </Link>
@@ -358,7 +358,7 @@ function Navbar() {
               <button
                 type="button"
                 onClick={() => toggleMobileSubmenu("resources")}
-                className="flex w-full items-center justify-between text-sm font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                className="flex w-full items-center justify-between rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
               >
                 Resources
                 <span
@@ -372,11 +372,11 @@ function Navbar() {
 
               {/* Resources Submenu */}
               {mobileSubmenuOpen.resources && (
-                <div className="pl-4 space-y-1 border-l-2 border-green-200">
+                <div className="space-y-1 border-l-2 border-green-200 pl-4">
                   <Link
                     to="/blog"
                     onClick={closeMobileMenu}
-                    className="block text-xs font-medium text-slate-600 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                    className="block rounded px-2 py-2 text-xs font-medium text-slate-600 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
                   >
                     Blog
                   </Link>
@@ -389,7 +389,7 @@ function Navbar() {
               <button
                 type="button"
                 onClick={() => toggleMobileSubmenu("about")}
-                className="flex w-full items-center justify-between text-sm font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                className="flex w-full items-center justify-between rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
               >
                 About Us
                 <span
@@ -403,7 +403,7 @@ function Navbar() {
 
               {/* About Submenu with smooth collapse */}
               <div
-                className="overflow-hidden transition-all duration-200 pl-4 border-l-2 border-green-200"
+                className="overflow-hidden border-l-2 border-green-200 pl-4 transition-all duration-200"
                 style={{
                   maxHeight: mobileSubmenuOpen.about ? "1000px" : "0px",
                 }}
@@ -412,7 +412,7 @@ function Navbar() {
                   <Link
                     to="/about/company"
                     onClick={closeMobileMenu}
-                    className="block text-xs font-medium text-slate-600 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                    className="block rounded px-2 py-2 text-xs font-medium text-slate-600 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
                   >
                     Our Company
                   </Link>
@@ -422,7 +422,7 @@ function Navbar() {
                     <button
                       type="button"
                       onClick={() => toggleMobileSubmenu("governance")}
-                      className="flex w-full items-center justify-between text-xs font-medium text-slate-600 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                      className="flex w-full items-center justify-between rounded px-2 py-2 text-xs font-medium text-slate-600 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
                     >
                       Governance
                       <span
@@ -436,7 +436,7 @@ function Navbar() {
 
                     {/* Governance Sub-submenu with smooth collapse */}
                     <div
-                      className="overflow-hidden transition-all duration-200 pl-4 border-l-2 border-green-100"
+                      className="overflow-hidden border-l-2 border-green-100 pl-4 transition-all duration-200"
                       style={{
                         maxHeight: mobileSubmenuOpen.governance
                           ? "600px"
@@ -447,7 +447,7 @@ function Navbar() {
                         <Link
                           to="/about/board-of-directors"
                           onClick={closeMobileMenu}
-                          className="block text-[11px] font-medium text-slate-500 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                          className="block rounded px-2 py-2 text-[11px] font-medium text-slate-500 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
                         >
                           Board of Directors
                         </Link>
@@ -455,7 +455,7 @@ function Navbar() {
                         <Link
                           to="/about/management-team"
                           onClick={closeMobileMenu}
-                          className="block text-[11px] font-medium text-slate-500 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                          className="block rounded px-2 py-2 text-[11px] font-medium text-slate-500 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
                         >
                           Management Team
                         </Link>
@@ -470,7 +470,7 @@ function Navbar() {
             <Link
               to="/faq"
               onClick={closeMobileMenu}
-              className="block text-sm font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+              className="block rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
             >
               FAQ
             </Link>
@@ -479,7 +479,7 @@ function Navbar() {
             <Link
               to="/contact"
               onClick={closeMobileMenu}
-              className="block text-sm font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+              className="block rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
             >
               Contact
             </Link>
@@ -489,7 +489,7 @@ function Navbar() {
               <button
                 type="button"
                 onClick={() => toggleMobileSubmenu("training")}
-                className="flex w-full items-center justify-between text-sm font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                className="flex w-full items-center justify-between rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
               >
                 Training
                 <span
@@ -503,7 +503,7 @@ function Navbar() {
 
               {/* Training submenu with smooth collapse */}
               <div
-                className="overflow-hidden transition-all duration-200 pl-4 border-l-2 border-green-200"
+                className="overflow-hidden border-l-2 border-green-200 pl-4 transition-all duration-200"
                 style={{
                   maxHeight: mobileSubmenuOpen.training ? "1000px" : "0px",
                 }}
@@ -512,7 +512,7 @@ function Navbar() {
                   <Link
                     to="/training/farmer-training"
                     onClick={closeMobileMenu}
-                    className="block text-xs font-medium text-slate-600 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                    className="block rounded px-2 py-2 text-xs font-medium text-slate-600 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
                   >
                     Farmer Training
                   </Link>
@@ -522,7 +522,7 @@ function Navbar() {
                     <button
                       type="button"
                       onClick={() => toggleMobileSubmenu("courses")}
-                      className="flex w-full items-center justify-between text-xs font-medium text-slate-600 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                      className="flex w-full items-center justify-between rounded px-2 py-2 text-xs font-medium text-slate-600 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
                     >
                       Agricultural Courses
                       <span
@@ -536,7 +536,7 @@ function Navbar() {
 
                     {/* Agricultural Courses Sub-submenu with smooth collapse */}
                     <div
-                      className="overflow-hidden transition-all duration-200 pl-4 border-l-2 border-green-100"
+                      className="overflow-hidden border-l-2 border-green-100 pl-4 transition-all duration-200"
                       style={{
                         maxHeight: mobileSubmenuOpen.courses ? "600px" : "0px",
                       }}
@@ -545,7 +545,7 @@ function Navbar() {
                         <Link
                           to="/training/courses/online"
                           onClick={closeMobileMenu}
-                          className="block text-[11px] font-medium text-slate-500 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                          className="block rounded px-2 py-2 text-[11px] font-medium text-slate-500 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
                         >
                           Online Courses
                         </Link>
@@ -553,7 +553,7 @@ function Navbar() {
                         <Link
                           to="/training/courses/in-person"
                           onClick={closeMobileMenu}
-                          className="block text-[11px] font-medium text-slate-500 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                          className="block rounded px-2 py-2 text-[11px] font-medium text-slate-500 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
                         >
                           In-Person Training
                         </Link>
@@ -564,7 +564,7 @@ function Navbar() {
                   <Link
                     to="/training/workshops"
                     onClick={closeMobileMenu}
-                    className="block text-xs font-medium text-slate-600 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                    className="block rounded px-2 py-2 text-xs font-medium text-slate-600 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
                   >
                     Workshops
                   </Link>
@@ -573,11 +573,11 @@ function Navbar() {
             </div>
 
             {/* Divider */}
-            <div className="border-t border-slate-200 pt-3 mt-3">
+            <div className="mt-3 border-t border-slate-200 pt-3">
               <Link
                 to="/cart"
                 onClick={closeMobileMenu}
-                className="block text-sm font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                className="block rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
               >
                 Cart
               </Link>
@@ -585,7 +585,7 @@ function Navbar() {
               <Link
                 to="/favorites"
                 onClick={closeMobileMenu}
-                className="block text-sm font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                className="block rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
               >
                 Favorites
               </Link>
@@ -593,7 +593,7 @@ function Navbar() {
               <Link
                 to="/login"
                 onClick={closeMobileMenu}
-                className="block text-sm font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 px-2 py-2 rounded"
+                className="block rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
               >
                 Login
               </Link>

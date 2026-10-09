@@ -387,26 +387,47 @@ export const reviewsSeed = [
 
 export const websiteContentSeed = {
   hero: {
+    // Maintain backward-compatible top-level hero fields while introducing
+    // a slides array so we can support multiple hero slides in the admin.
+    // The existing content is preserved as Slide 1.
+    slides: [
+      {
+        title: "Fresh From Our Farm to Your Table",
+        subtitle: "Quality farm produce delivered fresh to your doorstep.",
+        buttonText: "Shop Now",
+        buttonLink: "/shop",
+        image: "/images/5.jpg",
+      },
+      {
+        title: "Discover Our Farm Products",
+        subtitle: "Naturally grown and carefully selected produce.",
+        buttonText: "Learn More",
+        buttonLink: "/about",
+        image: "/images/hero-2.jpg",
+      },
+    ],
+    // Keep the original top-level keys for compatibility with existing
+    // components that read `content.hero.title`, etc. These mirror Slide 1.
     title: "Fresh From Our Farm to Your Table",
     subtitle: "Quality farm produce delivered fresh to your doorstep.",
     buttonText: "Shop Now",
     buttonLink: "/shop",
-    image: "/images/hero-bg.jpg",
+    image: "/images/5.jpg",
   },
   about: {
     title: "About Niceman Agro & Farms",
     description:
-      "We provide fresh, quality agricultural products sourced from trusted farms and delivered to customers with care.",
-    image: "/images/about.jpg",
+      "We provide farm inputs and fresh, quality agricultural products sourced from trusted farms and delivered to customers with care.",
+    image: "/images/6.jpg",
   },
   contact: {
-    phone: "+234 801 234 5678",
+    phone: "+234 8067030126",
     email: "info@nicemanagro.com",
-    address: "Lagos, Nigeria",
-    whatsapp: "+234 801 234 5678",
+    address: "Uyo, Nigeria",
+    whatsapp: "+234 8067030126",
   },
   footer: {
-    description: "Quality farm produce delivered fresh to your doorstep.",
+    description: "Quality inputs delivered to your doorstep.",
     copyright: "© 2026 Niceman Agro & Farms. All rights reserved.",
   },
 };

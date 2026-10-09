@@ -38,6 +38,8 @@ import OrderDetails from "../pages/account/OrderDetails";
 import Favorites from "../pages/public/Favorites/Favorites";
 import WriteReview from "../pages/public/WriteReview";
 import Reviews from "../pages/public/Reviews";
+import PrivacyPolicy from "../pages/public/Legal/PrivacyPolicy";
+import TermsAndConditions from "../pages/public/Legal/TermsAndConditions";
 
 function PublicRoutes() {
   return (
@@ -130,6 +132,8 @@ function PublicRoutes() {
       <Route path="/Reviews" element={<Reviews />} />
       <Route path="/write-review" element={<WriteReview />} />
       <Route path="/WriteReview" element={<WriteReview />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsAndConditions />} />
     </Routes>
   );
 }

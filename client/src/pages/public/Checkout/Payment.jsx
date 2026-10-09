@@ -18,14 +18,12 @@ const Payment = () => {
 
     // Connect Paystack/backend here later
     setTimeout(() => {
-      navigate("/order-confirmation", {
+      navigate("/checkout/order-confirmation", {
         state: {
           order: {
             ...order,
             paymentMethod:
-              paymentMethod === "paystack"
-                ? "Paystack"
-                : "Cash on Delivery",
+              paymentMethod === "paystack" ? "Paystack" : "Cash on Delivery",
             paymentStatus:
               paymentMethod === "paystack" ? "Paid" : "Payment Pending",
           },
@@ -88,9 +86,7 @@ const Payment = () => {
                   />
 
                   <div>
-                    <h3 className="font-semibold text-gray-900">
-                      Paystack
-                    </h3>
+                    <h3 className="font-semibold text-gray-900">Paystack</h3>
                     <p className="text-sm text-gray-500 mt-1">
                       Pay securely with your card, bank transfer or USSD.
                     </p>
@@ -144,8 +140,8 @@ const Payment = () => {
               {processing
                 ? "Processing..."
                 : paymentMethod === "paystack"
-                ? `Pay ₦${Number(total).toLocaleString()}`
-                : "Place Order"}
+                  ? `Pay ₦${Number(total).toLocaleString()}`
+                  : "Place Order"}
             </button>
           </div>
 
@@ -163,9 +159,7 @@ const Payment = () => {
                     className="flex justify-between gap-3"
                   >
                     <div>
-                      <p className="font-medium text-gray-800">
-                        {item.name}
-                      </p>
+                      <p className="font-medium text-gray-800">{item.name}</p>
                       <p className="text-sm text-gray-500">
                         Qty: {item.quantity}
                       </p>

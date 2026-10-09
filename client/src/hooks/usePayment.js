@@ -30,7 +30,7 @@ export default function usePayment() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       if (paymentMethod === "Paystack") {
-        navigate("/payment-success", {
+        navigate("/payment/success", {
           state: {
             order: {
               ...paymentData,
@@ -39,7 +39,7 @@ export default function usePayment() {
           },
         });
       } else {
-        navigate("/order-confirmation", {
+        navigate("/checkout/order-confirmation", {
           state: {
             order: {
               ...paymentData,
@@ -62,7 +62,7 @@ export default function usePayment() {
   const retryPayment = (order = {}) => {
     setError("");
 
-    navigate("/payment", {
+    navigate("/checkout/payment", {
       state: {
         order,
       },
@@ -70,7 +70,7 @@ export default function usePayment() {
   };
 
   const cancelPayment = (order = {}) => {
-    navigate("/payment-cancelled", {
+    navigate("/payment/cancelled", {
       state: {
         order,
       },

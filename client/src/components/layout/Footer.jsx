@@ -6,6 +6,10 @@ function Footer() {
 
   const footer = content?.footer || {};
   const contact = content?.contact || {};
+  const socials = footer?.socials || {};
+  const facebookUrl = socials.facebook || footer.facebook || null;
+  const twitterUrl = socials.x || socials.twitter || footer.twitter || null;
+  const instagramUrl = socials.instagram || footer.instagram || null;
 
   return (
     <footer className="bg-green-950 text-white">
@@ -28,27 +32,84 @@ function Footer() {
 
           <div className="mt-5 flex gap-3">
             <a
-              href="#"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-sm transition hover:bg-white hover:text-green-900"
-              aria-label="Facebook"
+              href={facebookUrl || "#"}
+              target={facebookUrl ? "_blank" : undefined}
+              rel={facebookUrl ? "noopener noreferrer" : undefined}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white transition-colors duration-150 hover:bg-[#1A4329]"
+              aria-label={
+                facebookUrl ? "Facebook" : "Facebook (placeholder - update URL)"
+              }
+              data-placeholder={
+                !facebookUrl ? "MISSING_FACEBOOK_URL" : undefined
+              }
+              title={
+                facebookUrl
+                  ? "Visit our Facebook"
+                  : "Update footer.socials.facebook with URL"
+              }
             >
-              f
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 5 3.66 9.12 8.44 9.88v-6.99H7.9v-2.89h2.54V9.41c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.46h-1.25c-1.23 0-1.61.77-1.61 1.56v1.88h2.74l-.44 2.89h-2.3V21.88C18.34 21.12 22 17 22 12z" />
+              </svg>
             </a>
 
             <a
-              href="#"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-sm transition hover:bg-white hover:text-green-900"
-              aria-label="Instagram"
+              href={twitterUrl || "#"}
+              target={twitterUrl ? "_blank" : undefined}
+              rel={twitterUrl ? "noopener noreferrer" : undefined}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white transition-colors duration-150 hover:bg-[#1A4329]"
+              aria-label={
+                twitterUrl ? "X (Twitter)" : "X (placeholder - update URL)"
+              }
+              data-placeholder={!twitterUrl ? "MISSING_X_URL" : undefined}
+              title={
+                twitterUrl
+                  ? "Visit our X profile"
+                  : "Update footer.socials.x with URL"
+              }
             >
-              ◎
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path d="M20.285 7.708a1 1 0 0 0-1.414-1.414L12 13.165 5.129 6.293A1 1 0 0 0 3.714 7.708L10.586 14.58 3.714 21.452a1 1 0 1 0 1.415 1.415L12 15.995l6.87 6.872a1 1 0 0 0 1.414-1.415L13.414 14.58l6.871-6.872z" />
+              </svg>
             </a>
 
             <a
-              href="#"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-sm transition hover:bg-white hover:text-green-900"
-              aria-label="WhatsApp"
+              href={instagramUrl || "#"}
+              target={instagramUrl ? "_blank" : undefined}
+              rel={instagramUrl ? "noopener noreferrer" : undefined}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white transition-colors duration-150 hover:bg-[#1A4329]"
+              aria-label={
+                instagramUrl
+                  ? "Instagram"
+                  : "Instagram (placeholder - update URL)"
+              }
+              data-placeholder={
+                !instagramUrl ? "MISSING_INSTAGRAM_URL" : undefined
+              }
+              title={
+                instagramUrl
+                  ? "Visit our Instagram"
+                  : "Update footer.socials.instagram with URL"
+              }
             >
-              W
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm5 6.5A4.5 4.5 0 0010.5 13 4.5 4.5 0 0012 16.5 4.5 4.5 0 0015.5 13 4.5 4.5 0 0012 8.5zM17.5 6a1 1 0 110 2 1 1 0 010-2z" />
+              </svg>
             </a>
           </div>
         </div>
@@ -82,11 +143,11 @@ function Footer() {
               </Link>
             </li>
 
-            <li>
+            {/* <li>
               <Link to="/orders" className="transition hover:text-white">
                 Track Order
               </Link>
-            </li>
+            </li> */}
           </ul>
         </div>
 

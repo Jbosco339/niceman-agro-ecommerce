@@ -94,7 +94,7 @@ export default function useCheckout() {
 
       // Connect to backend API here later.
 
-      navigate("/payment", {
+      navigate("/checkout/payment", {
         state: {
           order: checkoutData,
         },

@@ -1,4 +1,3 @@
-import React from "react";
 
 const Contact = () => {
   return (
@@ -55,7 +54,7 @@ const Contact = () => {
                   <p className="mt-1 text-slate-600">
                     Niceman Agro & Farms
                     <br />
-                    Nigeria
+                    145 Aka Obot Idim Road, Uyo Akwa Ibom State
                   </p>
                 </div>
               </div>
@@ -69,10 +68,10 @@ const Contact = () => {
                 <div>
                   <h3 className="font-bold text-slate-900">Phone</h3>
                   <a
-                    href="tel:+2340000000000"
+                    href="tel:+234 812 797 1171"
                     className="mt-1 block text-slate-600 hover:text-green-700"
                   >
-                    +234 000 000 0000
+                    +234 812 797 1171
                   </a>
                 </div>
               </div>
@@ -103,9 +102,9 @@ const Contact = () => {
                 <div>
                   <h3 className="font-bold text-slate-900">Business Hours</h3>
                   <p className="mt-1 text-slate-600">
-                    Monday – Friday: 8:00 AM – 5:00 PM
+                    Monday – Friday: 8:00 AM – 8:00 PM
                     <br />
-                    Saturday: 9:00 AM – 2:00 PM
+                    Saturday: 9:00 AM – 7:30 PM
                   </p>
                 </div>
               </div>

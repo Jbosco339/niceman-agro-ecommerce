@@ -63,45 +63,66 @@ function Home() {
   const reviews = approvedGeneralReviews.slice(0, 6);
 
   const slides =
-    siteContent && siteContent.hero
-      ? [
-          {
-            image: siteContent.hero.image,
-            title: [siteContent.hero.title],
-            description: siteContent.hero.subtitle,
-            buttonText: siteContent.hero.buttonText,
-            buttonLink: siteContent.hero.buttonLink,
-          },
-        ]
-      : [
-          {
-            image: "/images/hero/agro12.jpg",
-            title: ["Growing Better Crops.", "Building a Better Future."],
-            description:
-              "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farms.",
-          },
-          {
-            image: "/images/hero/6.jpg",
-            title: ["Trusted Inputs.", "Sustainable Practices."],
-            description:
-              "Reliable products and expert guidance to support sustainable farming and increase yields.",
-          },
-          {
-            image: "/images/hero/5.jpg",
-            title: ["From Seed to Harvest.", "We Grow With You."],
-            description:
-              "Comprehensive farm inputs and resources designed to deliver consistent results across each growing season.",
-          },
-        ];
+    siteContent && siteContent.hero && siteContent.hero.slides
+      ? siteContent.hero.slides.map((s) => ({
+          image: s.image || (siteContent.hero && siteContent.hero.image),
+          // allow title to be stored as string or array
+          title: Array.isArray(s.title)
+            ? s.title
+            : [s.title || (siteContent.hero && siteContent.hero.title) || ""],
+          description:
+            s.subtitle || (siteContent.hero && siteContent.hero.subtitle),
+          buttonText:
+            s.buttonText || (siteContent.hero && siteContent.hero.buttonText),
+          buttonLink:
+            s.buttonLink || (siteContent.hero && siteContent.hero.buttonLink),
+        }))
+      : siteContent && siteContent.hero
+        ? [
+            {
+              image: siteContent.hero.image,
+              title: Array.isArray(siteContent.hero.title)
+                ? siteContent.hero.title
+                : [siteContent.hero.title],
+              description: siteContent.hero.subtitle,
+              buttonText: siteContent.hero.buttonText,
+              buttonLink: siteContent.hero.buttonLink,
+            },
+          ]
+        : [
+            {
+              image: "/images/hero/agro12.jpg",
+              title: ["Growing Better Crops.", "Building a Better Future."],
+              description:
+                "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farms.",
+            },
+            {
+              image: "/images/hero/6.jpg",
+              title: ["Trusted Inputs.", "Sustainable Practices."],
+              description:
+                "Reliable products and expert guidance to support sustainable farming and increase yields.",
+            },
+            {
+              image: "/images/hero/5.jpg",
+              title: ["From Seed to Harvest.", "We Grow With You."],
+              description:
+                "Comprehensive farm inputs and resources designed to deliver consistent results across each growing season.",
+            },
+          ];
 
   const [active, setActive] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
+    if (!slides.length) return undefined;
+    if (isPaused) return undefined;
+
     const id = setInterval(() => {
       setActive((s) => (s + 1) % slides.length);
     }, 5000);
+
     return () => clearInterval(id);
-  }, [slides.length]);
+  }, [slides.length, isPaused]);
 
   const activeProducts = (products || []).filter((p) => p.status === "Active");
   const productsToShow = activeProducts.slice(0, 4);
@@ -109,12 +130,16 @@ function Home() {
   return (
     <main className="overflow-hidden bg-white text-slate-800">
       {/* HERO */}
-      <section className="relative flex min-h-155 items-center justify-center overflow-hidden pt-16">
+      <section
+        className="relative flex min-h-155 items-center justify-center overflow-hidden pt-16"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
         {/* Slides (backgrounds) */}
         <div className="absolute inset-0">
           {slides.map((slide, i) => (
             <div
-              key={slide.image}
+              key={i}
               className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out z-0 ${
                 i === active ? "opacity-100" : "opacity-0"
               }`}
@@ -141,12 +166,16 @@ function Home() {
                   </span>
 
                   <h1 className="text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-7xl">
-                    {slide.title.map((line, idx) => (
-                      <span key={idx}>
-                        {line}
-                        <br />
-                      </span>
-                    ))}
+                    {Array.isArray(slide.title) ? (
+                      slide.title.map((line, idx) => (
+                        <span key={idx}>
+                          {line}
+                          <br />
+                        </span>
+                      ))
+                    ) : (
+                      <span>{slide.title}</span>
+                    )}
                   </h1>
 
                   <p className="mt-6 max-w-xl text-base leading-7 text-white/90 sm:text-lg">
@@ -172,6 +201,20 @@ function Home() {
               </div>
             </div>
           ))}
+
+          {/* Slide indicators */}
+          <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActive(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+                className={`h-2 w-8 rounded-full transition-all duration-300 ${
+                  idx === active ? "w-8 bg-white/90" : "w-2 bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </section>
 

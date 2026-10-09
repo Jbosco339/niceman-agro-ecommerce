@@ -1,6 +1,7 @@
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import AppRoutes from "./routes/AppRoutes";
+import ScrollToTop from "./components/ScrollToTop";
 import { useLocation } from "react-router-dom";
 
 function App() {
@@ -10,15 +11,19 @@ function App() {
   const showPublicLayout = !isAdminRoute;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      {showPublicLayout && <Header />}
+    <>
+      <ScrollToTop />
 
-      <main className="flex-1">
-        <AppRoutes />
-      </main>
+      <div className="flex min-h-screen flex-col">
+        {showPublicLayout && <Header />}
 
-      {showPublicLayout && <Footer />}
-    </div>
+        <main className="flex-1">
+          <AppRoutes />
+        </main>
+
+        {showPublicLayout && <Footer />}
+      </div>
+    </>
   );
 }
 
