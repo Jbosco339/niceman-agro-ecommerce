@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import useCategories from "../../../hooks/useCategories";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 const slugify = (value = "") =>
   value
@@ -24,6 +25,8 @@ export default function EditCategory() {
     image: category?.image || "",
     status: category?.status || "Active",
   });
+
+  const [preview, setPreview] = useState(category?.image || "");
 
   if (!category) {
     return (
@@ -49,6 +52,17 @@ export default function EditCategory() {
       [name]: value,
       ...(name === "name" && !prev.slug ? { slug: slugify(value) } : {}),
     }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
+      setFormData((prev) => ({ ...prev, image: nextImage }));
+      setPreview(nextImage);
+    });
+
+    if (!dataUrl && formData.image) {
+      setPreview(formData.image);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -131,21 +145,24 @@ export default function EditCategory() {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
-                Category Image URL
+                Category Image
               </label>
               <input
-                type="text"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="/images/categories/vegetables.jpg"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
               />
-              {formData.image && (
+
+              <p className="mt-2 text-xs text-gray-500">
+                Upload a new category image to replace the current image.
+              </p>
+
+              {preview && (
                 <img
-                  src={formData.image}
+                  src={preview}
                   alt="Category preview"
-                  className="mt-4 h-48 w-full rounded-xl object-cover"
+                  className="mt-4 h-48 w-48 rounded-xl border border-gray-200 bg-gray-50 object-cover"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                   }}

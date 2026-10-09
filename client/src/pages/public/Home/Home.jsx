@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import useProducts from "../../../hooks/useProducts";
 import { useCategoryContext } from "../../../context/CategoryContext";
 import useWebsiteContent from "../../../hooks/useWebsiteContent";
-import { reviewsSeed } from "../../../data/mockData";
+import useReviews from "../../../hooks/useReviews";
 
 const blogPosts = [
   {
@@ -50,6 +50,17 @@ function Home() {
   const { products } = useProducts();
   const { activeCategories } = useCategoryContext();
   const { content: siteContent } = useWebsiteContent();
+  const { getGeneralReviews } = useReviews();
+  const approvedGeneralReviews = getGeneralReviews()
+    .filter(
+      (review) => review.type === "general" && review.status === "Approved",
+    )
+    .sort((a, b) => {
+      const aTime = a.date ? new Date(a.date).getTime() : 0;
+      const bTime = b.date ? new Date(b.date).getTime() : 0;
+      return bTime - aTime;
+    });
+  const reviews = approvedGeneralReviews.slice(0, 6);
 
   const slides =
     siteContent && siteContent.hero
@@ -422,60 +433,78 @@ function Home() {
             </div>
 
             <div className="hidden sm:flex items-center gap-3">
-              <a
-                href="/reviews"
+              <Link
+                to="/write-review"
+                className="inline-flex items-center rounded-md border border-green-700 bg-white px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
+              >
+                Write a Review
+              </Link>
+              <Link
+                to="/reviews"
                 className="inline-flex items-center rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
               >
                 Read All Reviews
-              </a>
+              </Link>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {(reviewsSeed || []).slice(0, 6).map((r, i) => (
-              <figure
-                key={r.id || i}
-                className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="h-12 w-12 shrink-0 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
-                    {r.customer
-                      ? r.customer
-                          .split(" ")
-                          .map((n) => n[0])
-                          .slice(0, 2)
-                          .join("")
-                      : (r.customer || r.name || "U").slice(0, 2)}
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-green-950">
-                          {r.customer || r.name || "Anonymous"}
-                        </p>
-                        <div className="mt-1 flex items-center gap-1 text-yellow-500">
-                          {Array.from({ length: 5 }).map((_, idx) => (
-                            <svg
-                              key={idx}
-                              className={`h-4 w-4 ${idx < (r.rating || 5) ? "fill-current text-yellow-400" : "text-gray-200 stroke-current"}`}
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.562-.955L10 0l2.95 5.955 6.562.955-4.756 4.635 1.122 6.545z" />
-                            </svg>
-                          ))}
-                        </div>
-                      </div>
+            {reviews.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-green-200 bg-green-50 p-6 text-sm text-green-900 sm:col-span-2 lg:col-span-3">
+                <p className="font-semibold">
+                  No approved customer reviews yet.
+                </p>
+                <p className="mt-2 text-green-800/80">
+                  Be the first to share your experience with Niceman Agro &
+                  Farms.
+                </p>
+              </div>
+            ) : (
+              (reviews || []).map((r, i) => (
+                <figure
+                  key={r.id || i}
+                  className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="h-12 w-12 shrink-0 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
+                      {r.customer
+                        ? r.customer
+                            .split(" ")
+                            .map((n) => n[0])
+                            .slice(0, 2)
+                            .join("")
+                        : (r.customer || r.name || "U").slice(0, 2)}
                     </div>
 
-                    <blockquote className="mt-4 text-sm text-slate-700">
-                      "{r.comment || r.review || r.comment || "Great product!"}"
-                    </blockquote>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-green-950">
+                            {r.customer || r.name || "Anonymous"}
+                          </p>
+                          <div className="mt-1 flex items-center gap-1 text-yellow-500">
+                            {Array.from({ length: 5 }).map((_, idx) => (
+                              <svg
+                                key={idx}
+                                className={`h-4 w-4 ${idx < (r.rating || 5) ? "fill-current text-yellow-400" : "text-gray-200 stroke-current"}`}
+                                viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.562-.955L10 0l2.95 5.955 6.562.955-4.756 4.635 1.122 6.545z" />
+                              </svg>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <blockquote className="mt-4 text-sm text-slate-700">
+                        "{r.comment || r.review || "Great product!"}"
+                      </blockquote>
+                    </div>
                   </div>
-                </div>
-              </figure>
-            ))}
+                </figure>
+              ))
+            )}
           </div>
         </div>
       </section>

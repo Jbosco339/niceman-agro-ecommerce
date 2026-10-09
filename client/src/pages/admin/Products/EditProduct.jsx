@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import useCategories from "../../../hooks/useCategories";
 import useProducts from "../../../hooks/useProducts";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 const emptyProduct = {
   name: "",
@@ -71,13 +72,24 @@ export default function EditProduct() {
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
+      setFormData((prev) => ({ ...prev, image: nextImage }));
+      setPreview(nextImage);
+    });
+
+    if (!dataUrl && formData.image) {
+      setPreview(formData.image);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
     updateProduct(id, {
       ...formData,
       price: Number(formData.price),
-      stock: Number(formData.stock),
+      stock: formData.stock ? Number(formData.stock) : 0,
       featured: Boolean(formData.featured),
       image: formData.image || "/images/products/placeholder.jpg",
       sku: formData.sku || `NAG-${Date.now()}`,
@@ -184,7 +196,7 @@ export default function EditProduct() {
           {/* Stock */}
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">
-              Stock Quantity
+              Stock Quantity (Optional)
             </label>
 
             <input
@@ -193,9 +205,11 @@ export default function EditProduct() {
               value={formData.stock}
               onChange={handleChange}
               min="0"
-              required
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              Stock management will be enabled after backend integration.
+            </p>
           </div>
 
           {/* Status */}
@@ -236,20 +250,22 @@ export default function EditProduct() {
             </div>
           </div>
 
-          {/* Image URL */}
-          <div>
+          {/* Image Upload */}
+          <div className="lg:col-span-2">
             <label className="mb-2 block text-sm font-semibold text-gray-700">
-              Product Image URL
+              Product Image
             </label>
 
             <input
-              type="text"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              placeholder="/images/products/product.jpg"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
             />
+
+            <p className="mt-2 text-xs text-gray-500">
+              Upload a new product image to replace the current image.
+            </p>
           </div>
 
           {/* Description */}

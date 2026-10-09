@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useBlogPosts from "../../../hooks/useBlogPosts";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 const CreateArticle = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const CreateArticle = () => {
     status: "Draft",
   });
 
+  const [preview, setPreview] = useState("");
   const [saving, setSaving] = useState(false);
 
   const categories = [
@@ -33,6 +35,17 @@ const CreateArticle = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
+      setFormData((prev) => ({ ...prev, image: nextImage }));
+      setPreview(nextImage);
+    });
+
+    if (!dataUrl && formData.image) {
+      setPreview(formData.image);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -163,17 +176,36 @@ const CreateArticle = () => {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Featured Image URL
+                Featured Image
               </label>
 
               <input
-                type="text"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="/images/blog/article.jpg"
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
               />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Upload a local image or keep an existing image URL if already
+                saved.
+              </p>
+
+              {preview && (
+                <div className="mt-4">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">
+                    Image Preview
+                  </p>
+                  <img
+                    src={preview}
+                    alt="Article preview"
+                    className="h-48 w-full rounded-xl object-cover border border-gray-200 bg-gray-50"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <div>

@@ -6,18 +6,18 @@ import { useLocation } from "react-router-dom";
 function App() {
   const location = useLocation();
 
-  // Hide the public Footer on admin pages (path starts with /admin)
   const isAdminRoute = location.pathname.startsWith("/admin");
+  const showPublicLayout = !isAdminRoute;
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      {showPublicLayout && <Header />}
 
       <main className="flex-1">
         <AppRoutes />
       </main>
 
-      {!isAdminRoute && <Footer />}
+      {showPublicLayout && <Footer />}
     </div>
   );
 }

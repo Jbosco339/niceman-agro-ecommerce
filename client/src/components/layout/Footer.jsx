@@ -13,16 +13,12 @@ function Footer() {
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 px-5 py-14 sm:px-8 md:grid-cols-2 lg:grid-cols-4 lg:px-10">
         {/* Company */}
         <div>
-          <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-2xl text-green-800">
-              🌱
-            </div>
-
-            <div className="leading-tight">
-              <span className="block text-lg font-bold">Niceman Agro</span>
-
-              <span className="block text-xs text-green-200">& Farms</span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <img
+              src="/images/NicemanAgroLogoWhite.png"
+              alt="Niceman Agro & Farms"
+              className="h-14 w-auto object-contain"
+            />
           </Link>
 
           <p className="mt-5 max-w-xs text-sm leading-6 text-green-100/75">

@@ -1,13 +1,30 @@
 import { useState } from "react";
 import useWebsiteContent from "../../../hooks/useWebsiteContent";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 export default function WebsiteContent() {
   const [activeTab, setActiveTab] = useState("hero");
+  const [heroBannerPreview, setHeroBannerPreview] = useState("");
 
   const { content, updateSection } = useWebsiteContent();
 
   const updateContent = (section, field, value) => {
     updateSection(section, { [field]: value });
+  };
+
+  const handleImageUpload = async (section, field, e) => {
+    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
+      updateContent(section, field, nextImage);
+      if (section === "hero" && field === "image") {
+        setHeroBannerPreview(nextImage);
+      }
+    });
+
+    if (!dataUrl && content[section]?.[field]) {
+      if (section === "hero" && field === "image") {
+        setHeroBannerPreview(content[section][field]);
+      }
+    }
   };
 
   const handleSave = (section) => {
@@ -127,15 +144,36 @@ export default function WebsiteContent() {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
-                Hero Image URL
+                Hero Image
               </label>
 
               <input
-                type="text"
-                value={content.hero.image}
-                onChange={(e) => updateContent("hero", "image", e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload("hero", "image", e)}
+                className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
               />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Upload a local hero banner image or keep an existing image URL
+                if already saved.
+              </p>
+
+              {(heroBannerPreview || content.hero.image) && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    Preview
+                  </p>
+                  <img
+                    src={heroBannerPreview || content.hero.image}
+                    alt="Hero banner preview"
+                    className="w-full h-48 rounded-lg object-cover border border-gray-200 bg-gray-50"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
 

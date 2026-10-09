@@ -108,16 +108,12 @@ function Register() {
 
         <div className="relative z-10 flex flex-col justify-between w-full p-12 xl:p-16 text-white">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
-              <span className="text-2xl">🌱</span>
-            </div>
-
-            <div>
-              <h1 className="font-bold text-xl">Niceman Agro</h1>
-
-              <p className="text-xs text-green-200">& Farms</p>
-            </div>
+          <Link to="/" className="flex items-center w-fit">
+            <img
+              src="/images/NicemanAgroLogoWhite.png"
+              alt="Niceman Agro & Farms"
+              className="h-16 w-auto object-contain"
+            />
           </Link>
 
           {/* Main message */}

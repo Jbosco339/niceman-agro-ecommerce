@@ -2,37 +2,10 @@ import { Link } from "react-router-dom";
 import useProducts from "../../../hooks/useProducts";
 import useOrders from "../../../hooks/useOrders";
 import useCustomers from "../../../hooks/useCustomers";
+import useCategories from "../../../hooks/useCategories";
 
-const stats = [
-  {
-    title: "Total Sales",
-    value: "₦1,245,000",
-    change: "+12.5%",
-    color: "green",
-  },
-  {
-    title: "Total Orders",
-    value: "156",
-    change: "+8.2%",
-    color: "blue",
-  },
-  {
-    title: "Customers",
-    value: "84",
-    change: "+5.4%",
-    color: "purple",
-  },
-  {
-    title: "Products",
-    value: "97",
-    change: "+3.1%",
-    color: "orange",
-  },
-];
-
-// recentOrders derived from orders store at runtime
-
-const formatCurrency = (amount) => `₦${amount.toLocaleString("en-NG")}`;
+const formatCurrency = (amount) =>
+  `₦${Number(amount || 0).toLocaleString("en-NG")}`;
 
 const statusStyle = {
   Delivered: "bg-green-100 text-green-700",
@@ -43,26 +16,92 @@ const statusStyle = {
 
 export default function AdminDashboard() {
   const { products } = useProducts();
-  const lowStockCount = products.filter(
-    (product) => product.stock > 0 && product.stock <= 10,
-  ).length;
   const { orders } = useOrders();
   const { customers } = useCustomers();
-  const recentOrders = orders.slice(0, 4);
-  const pendingCount = orders.filter((o) => o.status === "Pending").length;
+  const { categories } = useCategories();
 
-  const statsWithCustomers = stats.map((s) =>
-    s.title === "Customers" ? { ...s, value: String(customers.length) } : s,
+  const recentOrders = orders.slice(0, 4);
+  const pendingOrders = orders.filter((order) => order.status === "Pending");
+  const paidOrders = orders.filter(
+    (order) => order.paymentStatus === "Paid" || order.status === "Delivered",
   );
+
+  const totalSales = paidOrders.reduce((sum, order) => {
+    const orderTotal = (() => {
+      if (order.total != null) return Number(order.total);
+      const itemsTotal = (order.items || []).reduce(
+        (total, item) =>
+          total + Number(item.price || 0) * Number(item.quantity || 1),
+        0,
+      );
+      return itemsTotal + Number(order.deliveryFee || 0);
+    })();
+
+    return sum + orderTotal;
+  }, 0);
+
+  const stats = [
+    {
+      title: "Total Sales",
+      value: formatCurrency(totalSales),
+      change: `${
+        paidOrders.length > 0
+          ? Math.min(
+              99,
+              Math.round(
+                (paidOrders.length / Math.max(orders.length, 1)) * 100,
+              ),
+            )
+          : 0
+      }%`,
+      color: "green",
+    },
+    {
+      title: "Total Orders",
+      value: String(orders.length),
+      change: `${
+        orders.length > 0
+          ? Math.round((pendingOrders.length / orders.length) * 100)
+          : 0
+      }% pending`,
+      color: "blue",
+    },
+    {
+      title: "Customers",
+      value: String(customers.length),
+      change: `${
+        customers.length > 0
+          ? Math.min(
+              99,
+              Math.round(
+                (customers.filter((customer) => customer.status === "Active")
+                  .length /
+                  customers.length) *
+                  100,
+              ),
+            )
+          : 0
+      }% active`,
+      color: "purple",
+    },
+    {
+      title: "Products",
+      value: String(products.length),
+      change: `${categories.filter((cat) => cat.status === "Active").length} active categories`,
+      color: "orange",
+    },
+  ];
 
   const computeOrderAmount = (order) => {
     if (!order) return 0;
-    if (order.amount) return order.amount;
+    if (order.total != null) return Number(order.total);
+
     const itemsTotal = (order.items || []).reduce(
-      (sum, it) => sum + (it.price || 0) * (it.quantity || 1),
+      (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
       0,
     );
-    return itemsTotal + (order.deliveryFee || 0);
+
+    return itemsTotal + Number(order.deliveryFee || 0);
   };
 
   return (
@@ -71,20 +110,20 @@ export default function AdminDashboard() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Welcome back. Here's what's happening with your store.
+          Welcome back. Here is the live summary of your store.
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {statsWithCustomers.map((stat) => (
+        {stats.map((stat) => (
           <div
             key={stat.title}
             className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
           >
             <p className="text-sm font-medium text-gray-500">{stat.title}</p>
 
-            <div className="mt-3 flex items-end justify-between">
+            <div className="mt-3 flex items-end justify-between gap-3">
               <h2 className="text-2xl font-bold text-gray-900">{stat.value}</h2>
 
               <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
@@ -192,7 +231,7 @@ export default function AdminDashboard() {
 
                     <td className="px-5 py-4">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyle[order.status]}`}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyle[order.status] || "bg-gray-100 text-gray-700"}`}
                       >
                         {order.status}
                       </span>
@@ -217,7 +256,7 @@ export default function AdminDashboard() {
               <div>
                 <p className="text-sm text-gray-500">Pending Orders</p>
                 <p className="mt-1 text-xl font-bold text-gray-900">
-                  {pendingCount}
+                  {pendingOrders.length}
                 </p>
               </div>
 
@@ -226,22 +265,6 @@ export default function AdminDashboard() {
                 className="text-sm font-medium text-green-600"
               >
                 View
-              </Link>
-            </div>
-
-            <div className="border-t pt-5">
-              <div>
-                <p className="text-sm text-gray-500">Low Stock Products</p>
-                <p className="mt-1 text-xl font-bold text-orange-600">
-                  {lowStockCount}
-                </p>
-              </div>
-
-              <Link
-                to="/admin/products"
-                className="mt-2 inline-block text-sm font-medium text-green-600"
-              >
-                Manage Products
               </Link>
             </div>
 
@@ -263,57 +286,25 @@ export default function AdminDashboard() {
 
             <div className="border-t pt-5">
               <div>
-                <p className="text-sm text-gray-500">Blog Posts</p>
-                <p className="mt-1 text-xl font-bold text-blue-600">12</p>
+                <p className="text-sm text-gray-500">Active Categories</p>
+                <p className="mt-1 text-xl font-bold text-blue-600">
+                  {
+                    categories.filter(
+                      (category) => category.status === "Active",
+                    ).length
+                  }
+                </p>
               </div>
 
               <Link
-                to="/admin/blog"
+                to="/admin/categories"
                 className="mt-2 inline-block text-sm font-medium text-green-600"
               >
-                Manage Blog
+                Manage Categories
               </Link>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Performance */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-bold text-gray-900">Sales Performance</h2>
-            <p className="text-sm text-gray-500">
-              Overview of this month's sales
-            </p>
-          </div>
-
-          <span className="text-sm font-semibold text-green-600">+12.5%</span>
-        </div>
-
-        <div className="mt-6 flex h-48 items-end gap-3">
-          {[35, 50, 42, 65, 55, 78, 68, 85, 72, 90, 82, 100].map(
-            (height, index) => (
-              <div
-                key={index}
-                className="flex flex-1 flex-col items-center gap-2"
-              >
-                <div
-                  className="w-full rounded-t-md bg-green-600"
-                  style={{ height: `${height}%` }}
-                />
-                <span className="text-xs text-gray-400">{index + 1}</span>
-              </div>
-            ),
-          )}
-        </div>
-      </div>
-
-      {/* Backend note */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> The dashboard currently uses sample data. Connect
-        these statistics, orders, customers, products, and sales data to your
-        backend API later.
       </div>
     </div>
   );

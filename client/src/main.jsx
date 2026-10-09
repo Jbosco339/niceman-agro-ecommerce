@@ -9,6 +9,7 @@ import { CustomerProvider } from "./context/CustomerContext";
 import { CategoryProvider } from "./context/CategoryContext";
 import { BlogProvider } from "./context/BlogContext";
 import { WebsiteContentProvider } from "./context/WebsiteContentContext";
+import { ReviewProvider } from "./context/ReviewContext";
 import "./index.css";
 import App from "./App";
 
@@ -23,7 +24,9 @@ createRoot(document.getElementById("root")).render(
                 <BlogProvider>
                   <FavoritesProvider>
                     <CartProvider>
-                      <App />
+                      <ReviewProvider>
+                        <App />
+                      </ReviewProvider>
                     </CartProvider>
                   </FavoritesProvider>
                 </BlogProvider>

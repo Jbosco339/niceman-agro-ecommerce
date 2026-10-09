@@ -40,22 +40,14 @@ function Navbar() {
         {/* Logo */}
         <Link
           to="/"
-          className="flex items-center gap-3"
+          className="flex items-center"
           aria-label="Niceman Agro & Farms Home"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-700 text-xl text-white">
-            🌱
-          </div>
-
-          <div className="leading-tight">
-            <span className="block text-base font-bold text-green-900">
-              Niceman Agro
-            </span>
-
-            <span className="block text-xs font-medium text-green-700">
-              & Farms
-            </span>
-          </div>
+          <img
+            src="/images/NicemanAgroLogoGreen.png"
+            alt="Niceman Agro & Farms"
+            className="h-12 w-auto object-contain"
+          />
         </Link>
         {/* Desktop Navigation (visible on lg) */}
         <div className="hidden items-center gap-7 lg:flex">
@@ -245,15 +237,6 @@ function Navbar() {
 
         {/* Right Side */}
         <div className="hidden items-center gap-3 lg:flex">
-          {/* Search */}
-          <button
-            type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-green-600 hover:text-green-700"
-            aria-label="Search"
-          >
-            <span className="text-lg">⌕</span>
-          </button>
-
           {/* Cart */}
           <Link
             to="/cart"
