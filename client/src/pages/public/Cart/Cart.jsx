@@ -96,28 +96,39 @@ function Cart() {
             {cartItems.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-sm sm:flex-row sm:items-center"
+                className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm"
               >
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="h-28 w-full rounded-xl object-cover sm:w-28"
-                />
-
-                <div className="flex-1">
-                  <h2 className="font-bold text-gray-900">{item.name}</h2>
-
-                  <p className="mt-1 text-sm text-gray-500">{item.category}</p>
-
-                  <p className="mt-2 font-semibold text-green-800">
-                    ₦{item.price.toLocaleString()}
-                  </p>
-
-                  <p className="mt-1 text-sm text-gray-600">
-                    Item total: ₦{(item.price * item.quantity).toLocaleString()}
-                  </p>
+                {/* Image box */}
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="max-h-full max-w-full object-contain"
+                  />
                 </div>
 
+                {/* Main details */}
+                <div className="flex-1 min-w-0">
+                  <h2 className="font-bold text-gray-900 truncate">
+                    {item.name}
+                  </h2>
+
+                  <p className="mt-1 text-sm text-gray-500 truncate">
+                    {item.category}
+                  </p>
+
+                  <div className="mt-2 flex items-center gap-4">
+                    <p className="font-semibold text-green-800">
+                      ₦{item.price.toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Item total: ₦
+                      {(item.price * item.quantity).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quantity controls */}
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
@@ -142,10 +153,11 @@ function Cart() {
                   </button>
                 </div>
 
+                {/* Remove button */}
                 <button
                   type="button"
                   onClick={() => removeFromCart(item.id)}
-                  className="text-red-600 hover:text-red-800"
+                  className="text-red-600 hover:text-red-800 ml-2"
                   aria-label={`Remove ${item.name}`}
                 >
                   <Trash2 className="h-5 w-5" />

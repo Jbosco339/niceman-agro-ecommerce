@@ -221,9 +221,11 @@ function Navbar() {
             )}
           </Link>
 
-          <span className="ml-1 text-sm font-semibold text-slate-700 truncate max-w-[90px]">
+          {/* cart amount for mobile view */}
+
+          {/* <span className="ml-1 text-sm font-semibold text-slate-700 truncate max-w-22.5">
             {formattedCartTotal}
-          </span>
+          </span> */}
 
           <Link
             to="/login"

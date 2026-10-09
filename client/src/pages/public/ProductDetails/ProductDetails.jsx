@@ -21,10 +21,10 @@ function ProductDetails() {
 
   const product = getProduct(id);
 
-  const { addToCart, cartItems } = useCart();
+  const { addToCart, cartItems, updateQuantity, removeFromCart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
 
-  const [quantity, setQuantity] = useState(1);
+  // Remove local `quantity` state; derive from cartItems (single source of truth)
   const [addFeedback, setAddFeedback] = useState("");
   const [reviewForm, setReviewForm] = useState({
     customer: "",
@@ -95,20 +95,42 @@ function ProductDetails() {
   }
 
   const increaseQuantity = () => {
-    setQuantity((current) => current + 1);
+    const existing = cartItems.find((item) => item.id === product.id);
+    if (existing) {
+      const next = existing.quantity + 1;
+      updateQuantity(product.id, next);
+    } else {
+      addToCart(product, 1);
+    }
   };
 
   const decreaseQuantity = () => {
-    setQuantity((current) => Math.max(1, current - 1));
+    const existing = cartItems.find((item) => item.id === product.id);
+    if (existing) {
+      const currentQty = existing.quantity;
+      if (currentQty > 1) {
+        updateQuantity(product.id, currentQty - 1);
+      } else if (currentQty === 1) {
+        removeFromCart(product.id);
+      }
+    }
   };
 
   const isProductInCart = cartItems.find((item) => item.id === product.id);
+  const quantity = isProductInCart ? isProductInCart.quantity : 0;
 
   const handleAddToCart = () => {
-    addToCart(product, quantity);
-    const existingQty = isProductInCart ? isProductInCart.quantity : 0;
-    const nextQty = existingQty + quantity;
-    setAddFeedback(`${product.name} added to cart (${nextQty} in cart)`);
+    if (isProductInCart) {
+      // increase existing quantity by 1
+      updateQuantity(product.id, isProductInCart.quantity + 1);
+      setAddFeedback(
+        `${product.name} quantity increased (${isProductInCart.quantity + 1} in cart)`,
+      );
+    } else {
+      // add new product with quantity 1
+      addToCart(product, 1);
+      setAddFeedback(`${product.name} added to cart (1 in cart)`);
+    }
 
     window.setTimeout(() => setAddFeedback(""), 1200);
   };
