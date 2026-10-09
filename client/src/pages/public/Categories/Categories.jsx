@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import useCategories from "../../../hooks/useCategories";
+import { useCategoryContext } from "../../../context/CategoryContext";
 
 const Categories = () => {
-  const { activeCategories } = useCategories();
+  const { activeCategories } = useCategoryContext();
 
   return (
     <main className="bg-white">

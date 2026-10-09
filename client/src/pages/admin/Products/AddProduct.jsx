@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useCategories from "../../../hooks/useCategories";
 import useProducts from "../../../hooks/useProducts";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -11,25 +12,38 @@ export default function AddProduct() {
   const [formData, setFormData] = useState({
     name: "",
     category: "",
+    sku: "",
     price: "",
     stock: "",
     description: "",
     image: "",
     status: "Active",
+    featured: false,
   });
 
   const [preview, setPreview] = useState("");
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
 
     if (name === "image") {
       setPreview(value);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
+      setFormData((prev) => ({ ...prev, image: nextImage }));
+      setPreview(nextImage);
+    });
+
+    if (!dataUrl && formData.image) {
+      setPreview(formData.image);
     }
   };
 
@@ -39,7 +53,10 @@ export default function AddProduct() {
     const newProduct = {
       ...formData,
       price: Number(formData.price),
-      stock: Number(formData.stock),
+      stock: formData.stock ? Number(formData.stock) : 0,
+      featured: Boolean(formData.featured),
+      sku: formData.sku || `NAG-${Date.now()}`,
+      image: formData.image || "/images/products/placeholder.jpg",
     };
 
     addProduct(newProduct);
@@ -109,6 +126,22 @@ export default function AddProduct() {
             </select>
           </div>
 
+          {/* SKU */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              SKU
+            </label>
+
+            <input
+              type="text"
+              name="sku"
+              value={formData.sku}
+              onChange={handleChange}
+              placeholder="e.g. NAG-FRT-001"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+            />
+          </div>
+
           {/* Price */}
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">
@@ -130,7 +163,7 @@ export default function AddProduct() {
           {/* Stock */}
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">
-              Stock Quantity
+              Stock Quantity (Optional)
             </label>
 
             <input
@@ -140,9 +173,11 @@ export default function AddProduct() {
               onChange={handleChange}
               placeholder="e.g. 50"
               min="0"
-              required
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              Stock management will be enabled after backend integration.
+            </p>
           </div>
 
           {/* Status */}
@@ -162,20 +197,37 @@ export default function AddProduct() {
             </select>
           </div>
 
-          {/* Image URL */}
-          <div>
+          {/* Featured */}
+          <div className="flex items-center gap-3 rounded-lg border border-gray-300 px-4 py-3">
+            <input
+              type="checkbox"
+              name="featured"
+              checked={formData.featured}
+              onChange={handleChange}
+              className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+            />
+            <label className="text-sm font-medium text-gray-700">
+              Mark as featured product
+            </label>
+          </div>
+
+          {/* Image Upload */}
+          <div className="lg:col-span-2">
             <label className="mb-2 block text-sm font-semibold text-gray-700">
-              Product Image URL
+              Product Image
             </label>
 
             <input
-              type="url"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              placeholder="https://example.com/product.jpg"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
             />
+
+            <p className="mt-2 text-xs text-gray-500">
+              Upload a local image or keep an existing image URL if already
+              saved.
+            </p>
           </div>
 
           {/* Description */}
@@ -189,7 +241,6 @@ export default function AddProduct() {
               value={formData.description}
               onChange={handleChange}
               rows="5"
-              placeholder="Describe the product..."
               required
               className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
             />
@@ -205,7 +256,7 @@ export default function AddProduct() {
               <div className="h-48 w-48 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
                 <img
                   src={preview}
-                  alt="Product preview"
+                  alt={formData.name || "Product preview"}
                   className="h-full w-full object-cover"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
@@ -229,7 +280,7 @@ export default function AddProduct() {
             type="submit"
             className="rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-800"
           >
-            Save Product
+            Add Product
           </button>
         </div>
       </form>

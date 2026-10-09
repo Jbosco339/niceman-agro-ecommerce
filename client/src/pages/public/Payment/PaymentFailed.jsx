@@ -24,13 +24,11 @@ const PaymentFailed = () => {
           </svg>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-900">
-          Payment Failed
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900">Payment Failed</h1>
 
         <p className="text-gray-600 mt-3 leading-relaxed">
-          Unfortunately, your payment could not be completed. Please check
-          your payment details and try again.
+          Unfortunately, your payment could not be completed. Please check your
+          payment details and try again.
         </p>
 
         {order?.orderNumber && (
@@ -45,7 +43,7 @@ const PaymentFailed = () => {
         {/* Actions */}
         <div className="mt-8 flex flex-col sm:flex-row gap-3">
           <Link
-            to="/payment"
+            to="/checkout/payment"
             state={{ order }}
             className="flex-1 bg-green-700 hover:bg-green-800 text-white font-semibold py-3 rounded-xl transition"
           >

@@ -3,22 +3,22 @@
 const ManagementTeam = () => {
   const team = [
     {
-      name: "Manager's Name",
+      name: "Emem Akpan",
       role: "Managing Director",
       image: "/images/team/16.jpg",
     },
     {
-      name: "Manager's Name",
+      name: "Rosemary Akanimo",
       role: "Operations Manager",
       image: "/images/team/8.jpg",
     },
     {
-      name: "Manager's Name",
+      name: "Nnwaeka Idoreyin",
       role: "Farm Manager",
       image: "/images/team/11.jpg",
     },
     {
-      name: "Manager's Name",
+      name: "Habib Shola",
       role: "Business Development Manager",
       image: "/images/team/13.jpg",
     },

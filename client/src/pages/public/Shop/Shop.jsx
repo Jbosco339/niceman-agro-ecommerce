@@ -13,7 +13,7 @@ import {
 import { useCart } from "../../../context/CartContext";
 import { useFavorites } from "../../../context/FavoritesContext";
 import useProducts from "../../../hooks/useProducts";
-import useCategories from "../../../hooks/useCategories";
+import { useCategoryContext } from "../../../context/CategoryContext";
 
 function formatPrice(price) {
   return `₦${price.toLocaleString("en-NG")}`;
@@ -21,7 +21,8 @@ function formatPrice(price) {
 
 function Shop() {
   const { products } = useProducts();
-  const { activeCategories } = useCategories();
+  // use the direct category context to guarantee shared provider usage
+  const { activeCategories } = useCategoryContext();
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("featured");

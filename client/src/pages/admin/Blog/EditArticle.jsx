@@ -1,20 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import useBlogPosts from "../../../hooks/useBlogPosts";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 const EditArticle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const { getPostById, updatePost } = useBlogPosts();
+
   const [formData, setFormData] = useState({
-    title: "5 Benefits of Eating Fresh Farm Produce",
-    category: "Healthy Living",
-    author: "Admin",
-    excerpt: "Discover the benefits of eating fresh farm produce.",
-    content:
-      "Fresh farm produce provides essential nutrients and supports a healthy lifestyle.",
-    image: "/images/blog/fresh-produce.jpg",
-    status: "Published",
+    title: "",
+    category: "Agriculture",
+    author: "",
+    excerpt: "",
+    content: "",
+    image: "",
+    status: "Draft",
   });
+
+  const [preview, setPreview] = useState("");
+
+  useEffect(() => {
+    const post = getPostById(id);
+    if (post) {
+      setFormData({
+        title: post.title || "",
+        category: post.category || "Agriculture",
+        author: post.author || "",
+        excerpt: post.excerpt || "",
+        content: post.content || "",
+        image: post.image || "",
+        status: post.status || "Draft",
+      });
+      setPreview(post.image || "");
+    }
+  }, [id, getPostById]);
 
   const [saving, setSaving] = useState(false);
 
@@ -34,21 +55,29 @@ const EditArticle = () => {
     }));
   };
 
+  const handleImageUpload = async (e) => {
+    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
+      setFormData((prev) => ({ ...prev, image: nextImage }));
+      setPreview(nextImage);
+    });
+
+    if (!dataUrl && formData.image) {
+      setPreview(formData.image);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
     setSaving(true);
 
     // Connect to backend API here later
-    console.log("Updated Article:", {
-      id,
-      ...formData,
-    });
+    updatePost(id, formData);
 
     setTimeout(() => {
       setSaving(false);
       navigate("/admin/blog");
-    }, 1000);
+    }, 200);
   };
 
   return (
@@ -162,17 +191,35 @@ const EditArticle = () => {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Featured Image URL
+                Featured Image
               </label>
 
               <input
-                type="text"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="/images/blog/article.jpg"
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
               />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Upload a new article image to replace the current image.
+              </p>
+
+              {preview && (
+                <div className="mt-4">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">
+                    Image Preview
+                  </p>
+                  <img
+                    src={preview}
+                    alt="Article preview"
+                    className="h-48 w-full rounded-xl object-cover border border-gray-200 bg-gray-50"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <div>

@@ -28,17 +28,19 @@ const AdminLogin = () => {
       <div className="relative z-10 w-full max-w-md">
         {/* Brand */}
         <div className="text-center mb-6">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-green-800 text-xl font-extrabold text-white shadow-lg">
-            NA
-          </div>
+          <Link to="/" className="flex justify-center mb-3">
+            <img
+              src="/images/NicemanAgroLogoGreen.png"
+              alt="Niceman Agro & Farms"
+              className="h-16 w-auto object-contain"
+            />
+          </Link>
 
           <h1 className="text-2xl font-extrabold text-green-900">
             Niceman Agro & Farms
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Admin Management Portal
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Admin Management Portal</p>
         </div>
 
         {/* Login Card */}
@@ -111,10 +113,7 @@ const AdminLogin = () => {
             {/* Options */}
             <div className="mb-6 flex items-center justify-between text-sm">
               <label className="flex cursor-pointer items-center gap-2 text-gray-500">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-green-700"
-                />
+                <input type="checkbox" className="h-4 w-4 accent-green-700" />
                 Remember me
               </label>
 

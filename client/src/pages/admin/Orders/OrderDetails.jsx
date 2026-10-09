@@ -1,46 +1,42 @@
 import { Link, useParams } from "react-router-dom";
+import useOrders from "../../../hooks/useOrders";
 
-const order = {
-  id: "NA-2026-00125",
-  customer: {
-    name: "John Doe",
-    email: "johndoe@example.com",
-    phone: "+234 801 234 5678",
-    address: "12 Farm Road, Lagos, Nigeria",
-  },
-  date: "October 6, 2026",
-  status: "Processing",
-  paymentMethod: "Paystack",
-  paymentStatus: "Paid",
-  deliveryFee: 3000,
-  items: [
-    {
-      id: 1,
-      name: "Fresh Tomatoes",
-      quantity: 2,
-      price: 3500,
-    },
-    {
-      id: 2,
-      name: "Premium Rice",
-      quantity: 1,
-      price: 45000,
-    },
-  ],
-};
-
-const formatCurrency = (amount) =>
-  `₦${amount.toLocaleString("en-NG")}`;
+const formatCurrency = (amount) => `₦${amount.toLocaleString("en-NG")}`;
 
 export default function OrderDetails() {
   const { id } = useParams();
+  const { getOrder, updateOrder } = useOrders();
+  const order = getOrder(id) || null;
 
   const subtotal = order.items.reduce(
     (total, item) => total + item.price * item.quantity,
-    0
+    0,
   );
 
   const total = subtotal + order.deliveryFee;
+
+  if (!order) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Link
+            to="/admin/orders"
+            className="text-sm font-medium text-green-600 hover:text-green-800"
+          >
+            ← Back to Orders
+          </Link>
+
+          <h1 className="mt-2 text-2xl font-bold text-gray-900">
+            Order Not Found
+          </h1>
+        </div>
+      </div>
+    );
+  }
+
+  const handleStatusChange = (newStatus) => {
+    updateOrder(order.id, { status: newStatus });
+  };
 
   return (
     <div className="space-y-6">
@@ -58,14 +54,20 @@ export default function OrderDetails() {
             Order Details
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Order #{id || order.id}
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Order #{id || order.id}</p>
         </div>
 
-        <span className="w-fit rounded-full bg-yellow-100 px-4 py-2 text-sm font-semibold text-yellow-700">
-          {order.status}
-        </span>
+        <select
+          value={order.status}
+          onChange={(e) => handleStatusChange(e.target.value)}
+          className="w-fit rounded-full bg-yellow-100 px-4 py-2 text-sm font-semibold text-yellow-700"
+        >
+          <option value="Pending">Pending</option>
+          <option value="Processing">Processing</option>
+          <option value="Shipped">Shipped</option>
+          <option value="Delivered">Delivered</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
       </div>
 
       {/* Order Summary */}
@@ -152,18 +154,14 @@ export default function OrderDetails() {
               <p className="text-xs font-semibold uppercase text-gray-400">
                 Order Date
               </p>
-              <p className="mt-1 text-sm text-gray-700">
-                {order.date}
-              </p>
+              <p className="mt-1 text-sm text-gray-700">{order.date}</p>
             </div>
           </div>
         </div>
 
         {/* Order Total */}
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900">
-            Order Summary
-          </h2>
+          <h2 className="text-lg font-bold text-gray-900">Order Summary</h2>
 
           <div className="mt-5 space-y-3">
             <div className="flex justify-between text-sm">
@@ -182,9 +180,7 @@ export default function OrderDetails() {
 
             <div className="border-t pt-3">
               <div className="flex justify-between">
-                <span className="font-bold text-gray-900">
-                  Total
-                </span>
+                <span className="font-bold text-gray-900">Total</span>
                 <span className="text-xl font-bold text-green-600">
                   {formatCurrency(total)}
                 </span>
@@ -197,9 +193,7 @@ export default function OrderDetails() {
       {/* Products */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="border-b px-5 py-4">
-          <h2 className="font-bold text-gray-900">
-            Ordered Products
-          </h2>
+          <h2 className="font-bold text-gray-900">Ordered Products</h2>
         </div>
 
         <div className="overflow-x-auto">
@@ -225,9 +219,7 @@ export default function OrderDetails() {
               {order.items.map((item) => (
                 <tr key={item.id}>
                   <td className="px-5 py-4">
-                    <p className="font-semibold text-gray-900">
-                      {item.name}
-                    </p>
+                    <p className="font-semibold text-gray-900">{item.name}</p>
                   </td>
 
                   <td className="px-5 py-4 text-sm text-gray-700">
@@ -239,9 +231,7 @@ export default function OrderDetails() {
                   </td>
 
                   <td className="px-5 py-4 text-right text-sm font-semibold text-gray-900">
-                    {formatCurrency(
-                      item.price * item.quantity
-                    )}
+                    {formatCurrency(item.price * item.quantity)}
                   </td>
                 </tr>
               ))}
@@ -267,8 +257,8 @@ export default function OrderDetails() {
 
       {/* Backend Note */}
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> This page currently uses sample order
-        data. Connect the order ID to your backend API later.
+        <strong>Note:</strong> This page currently uses sample order data.
+        Connect the order ID to your backend API later.
       </div>
     </div>
   );

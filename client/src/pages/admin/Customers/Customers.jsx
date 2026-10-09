@@ -1,50 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import useCustomers from "../../../hooks/useCustomers";
 
-const initialCustomers = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "johndoe@example.com",
-    phone: "+234 801 234 5678",
-    orders: 8,
-    totalSpent: 245000,
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Sarah Williams",
-    email: "sarah@example.com",
-    phone: "+234 803 456 7890",
-    orders: 12,
-    totalSpent: 380000,
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Michael Johnson",
-    email: "michael@example.com",
-    phone: "+234 805 678 9012",
-    orders: 5,
-    totalSpent: 125000,
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Grace Okafor",
-    email: "grace@example.com",
-    phone: "+234 806 789 0123",
-    orders: 3,
-    totalSpent: 87000,
-    status: "Inactive",
-  },
-];
-
-const formatCurrency = (amount) =>
-  `₦${amount.toLocaleString("en-NG")}`;
+const formatCurrency = (amount) => `₦${amount.toLocaleString("en-NG")}`;
 
 export default function Customers() {
-  const [customers, setCustomers] = useState(initialCustomers);
+  const { customers, updateCustomer, deleteCustomer } = useCustomers();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
@@ -61,33 +22,25 @@ export default function Customers() {
   });
 
   const toggleStatus = (id) => {
-    setCustomers((prev) =>
-      prev.map((customer) =>
-        customer.id === id
-          ? {
-              ...customer,
-              status:
-                customer.status === "Active" ? "Inactive" : "Active",
-            }
-          : customer
-      )
-    );
+    const c = customers.find((x) => String(x.id) === String(id));
+    if (!c) return;
+    updateCustomer(id, {
+      status: c.status === "Active" ? "Inactive" : "Active",
+    });
   };
 
-  const deleteCustomer = (id) => {
+  const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this customer?")) {
-      setCustomers((prev) =>
-        prev.filter((customer) => customer.id !== id)
-      );
+      deleteCustomer(id);
     }
   };
 
   const totalCustomers = customers.length;
   const activeCustomers = customers.filter(
-    (customer) => customer.status === "Active"
+    (customer) => customer.status === "Active",
   ).length;
   const inactiveCustomers = customers.filter(
-    (customer) => customer.status === "Inactive"
+    (customer) => customer.status === "Inactive",
   ).length;
 
   return (
@@ -152,7 +105,7 @@ export default function Customers() {
       {/* Customers Table */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px]">
+          <table className="w-full">
             <thead className="border-b bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-500">
@@ -179,10 +132,7 @@ export default function Customers() {
             <tbody className="divide-y divide-gray-100">
               {filteredCustomers.length > 0 ? (
                 filteredCustomers.map((customer) => (
-                  <tr
-                    key={customer.id}
-                    className="hover:bg-gray-50"
-                  >
+                  <tr key={customer.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-semibold text-gray-900">
@@ -238,7 +188,7 @@ export default function Customers() {
                         </button>
 
                         <button
-                          onClick={() => deleteCustomer(customer.id)}
+                          onClick={() => handleDelete(customer.id)}
                           className="text-sm font-medium text-red-600 hover:text-red-800"
                         >
                           Delete

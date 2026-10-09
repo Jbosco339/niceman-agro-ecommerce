@@ -24,9 +24,7 @@ const PaymentCancelled = () => {
           </svg>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-900">
-          Payment Cancelled
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900">Payment Cancelled</h1>
 
         <p className="text-gray-600 mt-3 leading-relaxed">
           Your payment was cancelled or could not be completed. Your order has
@@ -45,7 +43,7 @@ const PaymentCancelled = () => {
         {/* Actions */}
         <div className="mt-8 flex flex-col sm:flex-row gap-3">
           <Link
-            to="/payment"
+            to="/checkout/payment"
             state={{ order }}
             className="flex-1 bg-green-700 hover:bg-green-800 text-white font-semibold py-3 rounded-xl transition"
           >

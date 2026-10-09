@@ -1,56 +1,14 @@
-import { useState } from "react";
-
-const initialOrders = [
-  {
-    id: "NA-2026-00125",
-    customerName: "John Doe",
-    email: "johndoe@example.com",
-    items: [
-      { name: "Fresh Tomatoes", quantity: 2, price: 3500 },
-      { name: "Premium Rice", quantity: 1, price: 45000 },
-    ],
-    total: 53500,
-    paymentMethod: "Paystack",
-    paymentStatus: "Paid",
-    status: "Processing",
-    date: "October 6, 2026",
-  },
-  {
-    id: "NA-2026-00124",
-    customerName: "Sarah Williams",
-    email: "sarah@example.com",
-    items: [
-      { name: "Premium Rice", quantity: 1, price: 45000 },
-      { name: "Fresh Mangoes", quantity: 2, price: 5000 },
-    ],
-    total: 78000,
-    paymentMethod: "Paystack",
-    paymentStatus: "Paid",
-    status: "Delivered",
-    date: "October 5, 2026",
-  },
-  {
-    id: "NA-2026-00123",
-    customerName: "Michael Johnson",
-    email: "michael@example.com",
-    items: [
-      { name: "Fresh Chicken", quantity: 1, price: 32000 },
-    ],
-    total: 32000,
-    paymentMethod: "Cash on Delivery",
-    paymentStatus: "Pending",
-    status: "Pending",
-    date: "October 5, 2026",
-  },
-];
+import { useContext, useState, useMemo } from "react";
+import { OrderContext, initialOrders } from "../context/OrderContext";
 
 export default function useOrders() {
+  const ctx = useContext(OrderContext);
+
   const [orders, setOrders] = useState(initialOrders);
   const [loading, setLoading] = useState(false);
 
-  const getOrder = (id) => {
-    return orders.find((order) => order.id === id);
-  };
+  const getOrder = (id) =>
+    orders.find((order) => String(order.id) === String(id));
 
   const addOrder = (order) => {
     const newOrder = {
@@ -73,48 +31,47 @@ export default function useOrders() {
   const updateOrder = (id, updatedData) => {
     setOrders((current) =>
       current.map((order) =>
-        order.id === id
-          ? { ...order, ...updatedData }
-          : order
-      )
+        String(order.id) === String(id) ? { ...order, ...updatedData } : order,
+      ),
     );
   };
 
-  const updateOrderStatus = (id, status) => {
-    updateOrder(id, { status });
-  };
+  const updateOrderStatus = (id, status) => updateOrder(id, { status });
 
-  const updatePaymentStatus = (id, paymentStatus) => {
+  const updatePaymentStatus = (id, paymentStatus) =>
     updateOrder(id, { paymentStatus });
-  };
 
-  const deleteOrder = (id) => {
+  const deleteOrder = (id) =>
     setOrders((current) =>
-      current.filter((order) => order.id !== id)
+      current.filter((order) => String(order.id) !== String(id)),
     );
-  };
 
-  const pendingOrders = orders.filter(
-    (order) => order.status === "Pending"
+  const pendingOrders = useMemo(
+    () => orders.filter((o) => o.status === "Pending"),
+    [orders],
+  );
+  const processingOrders = useMemo(
+    () => orders.filter((o) => o.status === "Processing"),
+    [orders],
+  );
+  const deliveredOrders = useMemo(
+    () => orders.filter((o) => o.status === "Delivered"),
+    [orders],
+  );
+  const cancelledOrders = useMemo(
+    () => orders.filter((o) => o.status === "Cancelled"),
+    [orders],
   );
 
-  const processingOrders = orders.filter(
-    (order) => order.status === "Processing"
+  const totalSales = useMemo(
+    () =>
+      orders
+        .filter((o) => o.paymentStatus === "Paid")
+        .reduce((s, o) => s + (o.total || 0), 0),
+    [orders],
   );
 
-  const deliveredOrders = orders.filter(
-    (order) => order.status === "Delivered"
-  );
-
-  const cancelledOrders = orders.filter(
-    (order) => order.status === "Cancelled"
-  );
-
-  const totalSales = orders
-    .filter((order) => order.paymentStatus === "Paid")
-    .reduce((total, order) => total + order.total, 0);
-
-  return {
+  const localValue = {
     orders,
     setOrders,
     loading,
@@ -131,4 +88,6 @@ export default function useOrders() {
     cancelledOrders,
     totalSales,
   };
+
+  return ctx || localValue;
 }

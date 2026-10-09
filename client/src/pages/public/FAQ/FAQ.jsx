@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const faqs = [
   {
@@ -160,12 +161,12 @@ const FAQ = () => {
             contact our team.
           </p>
 
-          <a
-            href="/contact"
+          <Link
+            to="/contact"
             className="mt-8 inline-block rounded-lg bg-white px-7 py-3 font-semibold text-green-800 transition hover:bg-green-50"
           >
             Contact Us
-          </a>
+          </Link>
         </div>
       </section>
     </main>

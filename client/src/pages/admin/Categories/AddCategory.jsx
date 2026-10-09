@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import useCategories from "../../../hooks/useCategories";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 const AddCategory = () => {
   const navigate = useNavigate();
@@ -11,7 +13,9 @@ const AddCategory = () => {
     status: "Active",
   });
 
+  const [preview, setPreview] = useState("");
   const [saving, setSaving] = useState(false);
+  const { addCategory } = useCategories();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,18 +26,38 @@ const AddCategory = () => {
     }));
   };
 
+  const handleImageUpload = async (e) => {
+    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
+      setFormData((prev) => ({ ...prev, image: nextImage }));
+      setPreview(nextImage);
+    });
+
+    if (!dataUrl && formData.image) {
+      setPreview(formData.image);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
     setSaving(true);
 
-    // Connect to backend API here later
-    console.log("New Category:", formData);
+    try {
+      // add to shared CategoryContext
+      addCategory({
+        name: formData.name,
+        description: formData.description,
+        image: formData.image,
+        status: formData.status || "Active",
+      });
 
-    setTimeout(() => {
       setSaving(false);
       navigate("/admin/categories");
-    }, 1000);
+    } catch (err) {
+      // keep original UI behavior: stop saving and log
+      console.error("Failed to add category", err);
+      setSaving(false);
+    }
   };
 
   return (
@@ -98,23 +122,26 @@ const AddCategory = () => {
           {/* Image */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Category Image URL
+              Category Image
             </label>
 
             <input
-              type="text"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              placeholder="/images/categories/vegetables.jpg"
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
             />
 
-            {formData.image && (
+            <p className="mt-2 text-xs text-gray-500">
+              Upload a local image or keep an existing image URL if already
+              saved.
+            </p>
+
+            {preview && (
               <img
-                src={formData.image}
+                src={preview}
                 alt="Category preview"
-                className="mt-4 w-full h-48 object-cover rounded-xl"
+                className="mt-4 w-48 h-48 object-cover rounded-xl border border-gray-200 bg-gray-50"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}

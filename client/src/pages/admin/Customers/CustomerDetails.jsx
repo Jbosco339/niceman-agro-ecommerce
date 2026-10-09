@@ -1,41 +1,32 @@
 import { Link, useLocation, useParams } from "react-router-dom";
+import useCustomers from "../../../hooks/useCustomers";
+import useOrders from "../../../hooks/useOrders";
 
 const CustomerDetails = () => {
   const { id } = useParams();
   const location = useLocation();
 
-  const customer = location.state?.customer || {
-    id,
-    name: "John Doe",
-    email: "johndoe@example.com",
-    phone: "+234 801 234 5678",
-    address: "12 Farm Road, Lagos, Nigeria",
-    joined: "September 15, 2026",
-    orders: 8,
-    totalSpent: 245000,
-    status: "Active",
-  };
+  const { getCustomer } = useCustomers();
+  const { orders: allOrders } = useOrders();
 
-  const orders = [
-    {
-      id: "NA-2026-00121",
-      date: "Oct 2, 2026",
-      total: 45000,
-      status: "Delivered",
-    },
-    {
-      id: "NA-2026-00105",
-      date: "Sep 24, 2026",
-      total: 78000,
-      status: "Delivered",
-    },
-    {
-      id: "NA-2026-00087",
-      date: "Sep 12, 2026",
-      total: 32000,
-      status: "Processing",
-    },
-  ];
+  const ctxCustomer = getCustomer(id);
+
+  const customer = ctxCustomer ||
+    location.state?.customer || {
+      id,
+      name: "Unknown",
+      email: "",
+      phone: "",
+      address: "",
+      joined: "",
+      orders: 0,
+      totalSpent: 0,
+      status: "Inactive",
+    };
+
+  const orders = allOrders.filter(
+    (o) => o.customer && o.customer.email === customer.email,
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
@@ -86,16 +77,12 @@ const CustomerDetails = () => {
           <div className="space-y-5">
             <div>
               <p className="text-sm text-gray-500">Email</p>
-              <p className="font-medium text-gray-900 mt-1">
-                {customer.email}
-              </p>
+              <p className="font-medium text-gray-900 mt-1">{customer.email}</p>
             </div>
 
             <div>
               <p className="text-sm text-gray-500">Phone</p>
-              <p className="font-medium text-gray-900 mt-1">
-                {customer.phone}
-              </p>
+              <p className="font-medium text-gray-900 mt-1">{customer.phone}</p>
             </div>
 
             <div>
@@ -118,41 +105,57 @@ const CustomerDetails = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Stats */}
           <div className="grid sm:grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl border shadow-sm p-5">
-              <p className="text-sm text-gray-500">Total Orders</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                {customer.orders}
-              </p>
-            </div>
+            {(() => {
+              const totalOrders = orders.length || customer.orders || 0;
+              const totalSpent =
+                orders.length > 0
+                  ? orders.reduce((s, o) => {
+                      const itemsTotal = (o.items || []).reduce(
+                        (si, it) => si + (it.price || 0) * (it.quantity || 1),
+                        0,
+                      );
+                      return s + itemsTotal + (o.deliveryFee || 0);
+                    }, 0)
+                  : customer.totalSpent || 0;
 
-            <div className="bg-white rounded-xl border shadow-sm p-5">
-              <p className="text-sm text-gray-500">Total Spent</p>
-              <p className="text-2xl font-bold text-green-700 mt-1">
-                ₦{Number(customer.totalSpent).toLocaleString()}
-              </p>
-            </div>
+              const avg =
+                totalOrders > 0 ? Math.round(totalSpent / totalOrders) : 0;
 
-            <div className="bg-white rounded-xl border shadow-sm p-5">
-              <p className="text-sm text-gray-500">Average Order</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">
-                ₦
-                {Math.round(
-                  customer.totalSpent / customer.orders
-                ).toLocaleString()}
-              </p>
-            </div>
+              return (
+                <>
+                  <div className="bg-white rounded-xl border shadow-sm p-5">
+                    <p className="text-sm text-gray-500">Total Orders</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-1">
+                      {totalOrders}
+                    </p>
+                  </div>
+
+                  <div className="bg-white rounded-xl border shadow-sm p-5">
+                    <p className="text-sm text-gray-500">Total Spent</p>
+                    <p className="text-2xl font-bold text-green-700 mt-1">
+                      ₦{Number(totalSpent).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="bg-white rounded-xl border shadow-sm p-5">
+                    <p className="text-sm text-gray-500">Average Order</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-1">
+                      ₦{avg.toLocaleString()}
+                    </p>
+                  </div>
+                </>
+              );
+            })()}
           </div>
 
           {/* Order History */}
           <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
             <div className="p-6 border-b">
-              <h2 className="text-xl font-bold text-gray-900">
-                Order History
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900">Order History</h2>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[650px]">
+              <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="text-left px-6 py-4 text-sm font-semibold">
@@ -184,9 +187,7 @@ const CustomerDetails = () => {
                         {order.id}
                       </td>
 
-                      <td className="px-6 py-4 text-gray-600">
-                        {order.date}
-                      </td>
+                      <td className="px-6 py-4 text-gray-600">{order.date}</td>
 
                       <td className="px-6 py-4 font-medium">
                         ₦{order.total.toLocaleString()}

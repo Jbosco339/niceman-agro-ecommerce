@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import useProducts from "../../../hooks/useProducts";
-import useCategories from "../../../hooks/useCategories";
+import { useCategoryContext } from "../../../context/CategoryContext";
+import useWebsiteContent from "../../../hooks/useWebsiteContent";
+import useReviews from "../../../hooks/useReviews";
 
 const blogPosts = [
   {
@@ -46,36 +48,81 @@ const faqs = [
 
 function Home() {
   const { products } = useProducts();
-  const { activeCategories } = useCategories();
-  const slides = [
-    {
-      image: "/images/hero/agro12.jpg",
-      title: ["Growing Better Crops.", "Building a Better Future."],
-      description:
-        "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farms.",
-    },
-    {
-      image: "/images/hero/6.jpg",
-      title: ["Trusted Inputs.", "Sustainable Practices."],
-      description:
-        "Reliable products and expert guidance to support sustainable farming and increase yields.",
-    },
-    {
-      image: "/images/hero/5.jpg",
-      title: ["From Seed to Harvest.", "We Grow With You."],
-      description:
-        "Comprehensive farm inputs and resources designed to deliver consistent results across each growing season.",
-    },
-  ];
+  const { activeCategories } = useCategoryContext();
+  const { content: siteContent } = useWebsiteContent();
+  const { getGeneralReviews } = useReviews();
+  const approvedGeneralReviews = getGeneralReviews()
+    .filter(
+      (review) => review.type === "general" && review.status === "Approved",
+    )
+    .sort((a, b) => {
+      const aTime = a.date ? new Date(a.date).getTime() : 0;
+      const bTime = b.date ? new Date(b.date).getTime() : 0;
+      return bTime - aTime;
+    });
+  const reviews = approvedGeneralReviews.slice(0, 6);
+
+  const slides =
+    siteContent && siteContent.hero && siteContent.hero.slides
+      ? siteContent.hero.slides.map((s) => ({
+          image: s.image || (siteContent.hero && siteContent.hero.image),
+          // allow title to be stored as string or array
+          title: Array.isArray(s.title)
+            ? s.title
+            : [s.title || (siteContent.hero && siteContent.hero.title) || ""],
+          description:
+            s.subtitle || (siteContent.hero && siteContent.hero.subtitle),
+          buttonText:
+            s.buttonText || (siteContent.hero && siteContent.hero.buttonText),
+          buttonLink:
+            s.buttonLink || (siteContent.hero && siteContent.hero.buttonLink),
+        }))
+      : siteContent && siteContent.hero
+        ? [
+            {
+              image: siteContent.hero.image,
+              title: Array.isArray(siteContent.hero.title)
+                ? siteContent.hero.title
+                : [siteContent.hero.title],
+              description: siteContent.hero.subtitle,
+              buttonText: siteContent.hero.buttonText,
+              buttonLink: siteContent.hero.buttonLink,
+            },
+          ]
+        : [
+            {
+              image: "/images/hero/agro12.jpg",
+              title: ["Growing Better Crops.", "Building a Better Future."],
+              description:
+                "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farms.",
+            },
+            {
+              image: "/images/hero/6.jpg",
+              title: ["Trusted Inputs.", "Sustainable Practices."],
+              description:
+                "Reliable products and expert guidance to support sustainable farming and increase yields.",
+            },
+            {
+              image: "/images/hero/5.jpg",
+              title: ["From Seed to Harvest.", "We Grow With You."],
+              description:
+                "Comprehensive farm inputs and resources designed to deliver consistent results across each growing season.",
+            },
+          ];
 
   const [active, setActive] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
+    if (!slides.length) return undefined;
+    if (isPaused) return undefined;
+
     const id = setInterval(() => {
       setActive((s) => (s + 1) % slides.length);
     }, 5000);
+
     return () => clearInterval(id);
-  }, [slides.length]);
+  }, [slides.length, isPaused]);
 
   const activeProducts = (products || []).filter((p) => p.status === "Active");
   const productsToShow = activeProducts.slice(0, 4);
@@ -83,12 +130,16 @@ function Home() {
   return (
     <main className="overflow-hidden bg-white text-slate-800">
       {/* HERO */}
-      <section className="relative flex min-h-155 items-center justify-center overflow-hidden pt-16">
+      <section
+        className="relative flex min-h-155 items-center justify-center overflow-hidden pt-16"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
         {/* Slides (backgrounds) */}
         <div className="absolute inset-0">
           {slides.map((slide, i) => (
             <div
-              key={slide.image}
+              key={i}
               className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out z-0 ${
                 i === active ? "opacity-100" : "opacity-0"
               }`}
@@ -115,12 +166,16 @@ function Home() {
                   </span>
 
                   <h1 className="text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-7xl">
-                    {slide.title.map((line, idx) => (
-                      <span key={idx}>
-                        {line}
-                        <br />
-                      </span>
-                    ))}
+                    {Array.isArray(slide.title) ? (
+                      slide.title.map((line, idx) => (
+                        <span key={idx}>
+                          {line}
+                          <br />
+                        </span>
+                      ))
+                    ) : (
+                      <span>{slide.title}</span>
+                    )}
                   </h1>
 
                   <p className="mt-6 max-w-xl text-base leading-7 text-white/90 sm:text-lg">
@@ -129,14 +184,14 @@ function Home() {
 
                   <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
                     <Link
-                      to="/shop"
+                      to={slide.buttonLink || "/shop"}
                       className="inline-flex min-h-12 items-center justify-center rounded-md bg-green-700 px-7 font-semibold text-white transition hover:bg-green-800"
                     >
-                      Shop Products
+                      {slide.buttonText || "Shop Products"}
                     </Link>
 
                     <Link
-                      to="/shop"
+                      to={slide.buttonLink || "/shop"}
                       className="inline-flex min-h-12 items-center justify-center rounded-md border border-white px-7 font-semibold text-white transition hover:bg-white hover:text-green-800"
                     >
                       Explore Products
@@ -146,6 +201,20 @@ function Home() {
               </div>
             </div>
           ))}
+
+          {/* Slide indicators */}
+          <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActive(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+                className={`h-2 w-8 rounded-full transition-all duration-300 ${
+                  idx === active ? "w-8 bg-white/90" : "w-2 bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -384,6 +453,101 @@ function Home() {
                 </div>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Customer Reviews */}
+      <section className="bg-white py-16 sm:py-20">
+        <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
+          <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-[0.15em] text-green-700">
+                Reviews
+              </span>
+
+              <h2 className="mt-2 text-3xl font-bold text-green-950 sm:text-4xl">
+                What Our Customers Are Saying
+              </h2>
+
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+                Real feedback from customers who use our products and services.
+              </p>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-3">
+              <Link
+                to="/write-review"
+                className="inline-flex items-center rounded-md border border-green-700 bg-white px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
+              >
+                Write a Review
+              </Link>
+              <Link
+                to="/reviews"
+                className="inline-flex items-center rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
+              >
+                Read All Reviews
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {reviews.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-green-200 bg-green-50 p-6 text-sm text-green-900 sm:col-span-2 lg:col-span-3">
+                <p className="font-semibold">
+                  No approved customer reviews yet.
+                </p>
+                <p className="mt-2 text-green-800/80">
+                  Be the first to share your experience with Niceman Agro &
+                  Farms.
+                </p>
+              </div>
+            ) : (
+              (reviews || []).map((r, i) => (
+                <figure
+                  key={r.id || i}
+                  className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="h-12 w-12 shrink-0 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold">
+                      {r.customer
+                        ? r.customer
+                            .split(" ")
+                            .map((n) => n[0])
+                            .slice(0, 2)
+                            .join("")
+                        : (r.customer || r.name || "U").slice(0, 2)}
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-green-950">
+                            {r.customer || r.name || "Anonymous"}
+                          </p>
+                          <div className="mt-1 flex items-center gap-1 text-yellow-500">
+                            {Array.from({ length: 5 }).map((_, idx) => (
+                              <svg
+                                key={idx}
+                                className={`h-4 w-4 ${idx < (r.rating || 5) ? "fill-current text-yellow-400" : "text-gray-200 stroke-current"}`}
+                                viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path d="M10 15l-5.878 3.09 1.122-6.545L.488 6.91l6.562-.955L10 0l2.95 5.955 6.562.955-4.756 4.635 1.122 6.545z" />
+                              </svg>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <blockquote className="mt-4 text-sm text-slate-700">
+                        "{r.comment || r.review || "Great product!"}"
+                      </blockquote>
+                    </div>
+                  </div>
+                </figure>
+              ))
+            )}
           </div>
         </div>
       </section>

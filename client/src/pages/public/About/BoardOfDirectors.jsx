@@ -8,7 +8,7 @@ const BoardOfDirectors = () => {
       image: "/images/team/11.jpg",
     },
     {
-      name: "Akpanam Theophilos",
+      name: "Niceman Himself",
       role: "Operations",
       image: "/images/team/13.jpg",
     },
