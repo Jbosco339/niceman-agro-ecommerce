@@ -1,90 +1,42 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { deleteReview as removeReview, getReviews, updateReviewStatus } from "../../../services/adminService";
 
 export default function Reviews() {
-  const [reviews, setReviews] = useState([
-    {
-      id: 1,
-      customer: "John Doe",
-      email: "johndoe@example.com",
-      product: "Fresh Tomatoes",
-      rating: 5,
-      comment: "Very fresh tomatoes and excellent quality. Will order again.",
-      date: "Oct 5, 2026",
-      status: "Approved",
-    },
-    {
-      id: 2,
-      customer: "Sarah Williams",
-      email: "sarah@example.com",
-      product: "Premium Rice",
-      rating: 4,
-      comment: "Good quality rice and fast delivery.",
-      date: "Oct 4, 2026",
-      status: "Approved",
-    },
-    {
-      id: 3,
-      customer: "Michael Johnson",
-      email: "michael@example.com",
-      product: "Fresh Chicken",
-      rating: 3,
-      comment: "The product was okay but delivery took longer than expected.",
-      date: "Oct 3, 2026",
-      status: "Pending",
-    },
-    {
-      id: 4,
-      customer: "Grace Okafor",
-      email: "grace@example.com",
-      product: "Fresh Mangoes",
-      rating: 2,
-      comment: "The mangoes were not as fresh as I expected.",
-      date: "Oct 2, 2026",
-      status: "Pending",
-    },
-    {
-      id: 5,
-      customer: "David Williams",
-      email: "david@example.com",
-      product: "Irish Potatoes",
-      rating: 5,
-      comment: "Excellent quality. Everything arrived fresh.",
-      date: "Oct 1, 2026",
-      status: "Approved",
-    },
-  ]);
+  const [reviews, setReviews] = useState([]);
+  const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
   const [ratingFilter, setRatingFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  const approveReview = (id) => {
-    setReviews((current) =>
-      current.map((review) =>
-        review.id === id ? { ...review, status: "Approved" } : review
-      )
-    );
+  useEffect(() => {
+    getReviews()
+      .then(({ data }) => setReviews(data))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
+
+  const setReviewStatus = async (id, status) => {
+    try {
+      const { data } = await updateReviewStatus(id, status);
+      setReviews((current) => current.map((review) => review.id === id ? data : review));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
-  const rejectReview = (id) => {
-    setReviews((current) =>
-      current.map((review) =>
-        review.id === id ? { ...review, status: "Rejected" } : review
-      )
-    );
-  };
-
-  const deleteReview = (id) => {
+  const deleteReview = async (id) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this review?"
     );
 
     if (!confirmed) return;
 
-    setReviews((current) =>
-      current.filter((review) => review.id !== id)
-    );
+    try {
+      await removeReview(id);
+      setReviews((current) => current.filter((review) => review.id !== id));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   const filteredReviews = reviews.filter((review) => {
@@ -148,6 +100,7 @@ export default function Reviews() {
           Review and manage customer feedback about your products.
         </p>
       </div>
+      {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
       {/* Stats */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -279,14 +232,14 @@ export default function Reviews() {
                 {review.status === "Pending" && (
                   <>
                     <button
-                      onClick={() => approveReview(review.id)}
+                      onClick={() => setReviewStatus(review.id, "Approved")}
                       className="rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700"
                     >
                       Approve
                     </button>
 
                     <button
-                      onClick={() => rejectReview(review.id)}
+                      onClick={() => setReviewStatus(review.id, "Rejected")}
                       className="rounded-lg bg-red-600 px-3 py-2 text-xs font-medium text-white hover:bg-red-700"
                     >
                       Reject

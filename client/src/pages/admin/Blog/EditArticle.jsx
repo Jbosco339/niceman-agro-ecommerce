@@ -1,22 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { getBlogPost, updateBlogPost } from "../../../services/adminService";
 
 const EditArticle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    title: "5 Benefits of Eating Fresh Farm Produce",
-    category: "Healthy Living",
-    author: "Admin",
-    excerpt: "Discover the benefits of eating fresh farm produce.",
-    content:
-      "Fresh farm produce provides essential nutrients and supports a healthy lifestyle.",
-    image: "/images/blog/fresh-produce.jpg",
-    status: "Published",
-  });
+  const [formData, setFormData] = useState(null);
 
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!id) return;
+    getBlogPost(id)
+      .then(({ data }) => setFormData(data))
+      .catch((requestError) => setError(requestError.message));
+  }, [id]);
 
   const categories = [
     "Agriculture",
@@ -34,22 +34,24 @@ const EditArticle = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
     setSaving(true);
-
-    // Connect to backend API here later
-    console.log("Updated Article:", {
-      id,
-      ...formData,
-    });
-
-    setTimeout(() => {
-      setSaving(false);
+    setError("");
+    try {
+      await updateBlogPost(id, formData);
       navigate("/admin/blog");
-    }, 1000);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (!formData) {
+    const message = error || (id ? "Loading article…" : "Select an article from blog management to edit it.");
+    return <p role={error ? "alert" : "status"} className="p-6">{message}</p>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
@@ -76,6 +78,7 @@ const EditArticle = () => {
         onSubmit={handleSubmit}
         className="max-w-5xl mx-auto bg-white rounded-2xl shadow-sm border p-5 sm:p-8"
       >
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">

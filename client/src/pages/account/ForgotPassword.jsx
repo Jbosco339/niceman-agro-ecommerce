@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { forgotPassword } from "../../services/authService";
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -20,14 +21,10 @@ function ForgotPassword() {
     try {
       setLoading(true);
 
-      // TEMPORARY
-      // Replace this with your authService/useAuth
-      // password reset function when the backend is ready.
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      await forgotPassword(email);
       setSubmitted(true);
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

@@ -4,30 +4,23 @@ import { Link, useLocation } from "react-router-dom";
 const OrderConfirmation = () => {
   const location = useLocation();
 
-  const order = location.state?.order || {
-    orderNumber: "NA-2026-00125",
-    customerName: "Customer",
-    email: "customer@example.com",
-    total: 53500,
-    paymentMethod: "Paystack",
-    deliveryAddress: "Your delivery address",
-    items: [
-      {
-        id: 1,
-        name: "Fresh Tomatoes",
-        quantity: 2,
-        price: 3500,
-        image: "/images/products/tomatoes.jpg",
-      },
-      {
-        id: 2,
-        name: "Premium Rice",
-        quantity: 1,
-        price: 45000,
-        image: "/images/products/rice.jpg",
-      },
-    ],
-  };
+  const order = location.state?.order;
+
+  if (!order) {
+    return (
+      <main className="min-h-screen bg-gray-50 px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold text-gray-900">No order to display</h1>
+        <Link to="/checkout" className="mt-6 inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white">Return to checkout</Link>
+      </main>
+    );
+  }
+
+  const customerName = order.customerName || (typeof order.customer === "object" ? order.customer?.name : order.customer) || "Customer";
+  const customerEmail = order.email || order.customer?.email || "";
+  const deliveryAddress = typeof order.deliveryAddress === "string"
+    ? order.deliveryAddress
+    : [order.deliveryAddress?.address, order.deliveryAddress?.city, order.deliveryAddress?.state].filter(Boolean).join(", ");
+  const paid = order.paymentStatus === "Paid";
 
   const formatPrice = (price) => `₦${price.toLocaleString()}`;
 
@@ -41,12 +34,13 @@ const OrderConfirmation = () => {
           </div>
 
           <h1 className="mt-5 text-3xl font-extrabold text-gray-900 sm:text-4xl">
-            Order Confirmed!
+            {paid ? "Order Confirmed!" : "Order Received"}
           </h1>
 
           <p className="mx-auto mt-3 max-w-xl text-gray-500">
-            Thank you for your order. We have received your order and will
-            begin processing it shortly.
+            {paid
+              ? "Thank you for your order. Your payment has been received and we will begin processing it shortly."
+              : "Thank you for your order. Payment is still pending; we will process it after payment is confirmed."}
           </p>
         </div>
 
@@ -74,14 +68,14 @@ const OrderConfirmation = () => {
                 <div>
                   <p className="text-xs text-gray-400">Name</p>
                   <p className="mt-1 font-semibold text-gray-800">
-                    {order.customerName}
+                    {customerName}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-xs text-gray-400">Email</p>
                   <p className="mt-1 break-all font-semibold text-gray-800">
-                    {order.email}
+                    {customerEmail}
                   </p>
                 </div>
               </div>
@@ -96,14 +90,10 @@ const OrderConfirmation = () => {
               <div className="mt-4 space-y-4">
                 {order.items.map((item) => (
                   <div
-                    key={item.id}
+                    key={item.id || item.product || item.name}
                     className="flex items-center gap-4"
                   >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="h-16 w-16 rounded-lg object-cover"
-                    />
+                    {item.image && <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg object-cover" />}
 
                     <div className="min-w-0 flex-1">
                       <h4 className="truncate font-semibold text-gray-900">
@@ -130,7 +120,7 @@ const OrderConfirmation = () => {
               </h3>
 
               <p className="mt-3 text-sm leading-6 text-gray-500">
-                {order.deliveryAddress}
+                {deliveryAddress || "Address on file"}
               </p>
             </div>
 
@@ -148,7 +138,7 @@ const OrderConfirmation = () => {
 
               <div className="mt-4 flex items-center justify-between">
                 <span className="text-lg font-bold text-gray-900">
-                  Total Paid
+                  {paid ? "Total Paid" : "Order Total"}
                 </span>
 
                 <span className="text-2xl font-extrabold text-green-800">

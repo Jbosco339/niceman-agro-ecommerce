@@ -1,41 +1,25 @@
-import { Link, useLocation, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { getCustomer } from "../../../services/adminService";
 
 const CustomerDetails = () => {
   const { id } = useParams();
-  const location = useLocation();
+  const [customer, setCustomer] = useState(null);
+  const [error, setError] = useState("");
 
-  const customer = location.state?.customer || {
-    id,
-    name: "John Doe",
-    email: "johndoe@example.com",
-    phone: "+234 801 234 5678",
-    address: "12 Farm Road, Lagos, Nigeria",
-    joined: "September 15, 2026",
-    orders: 8,
-    totalSpent: 245000,
-    status: "Active",
-  };
+  useEffect(() => {
+    if (!id) return;
+    getCustomer(id)
+      .then(({ data }) => setCustomer(data))
+      .catch((requestError) => setError(requestError.message));
+  }, [id]);
 
-  const orders = [
-    {
-      id: "NA-2026-00121",
-      date: "Oct 2, 2026",
-      total: 45000,
-      status: "Delivered",
-    },
-    {
-      id: "NA-2026-00105",
-      date: "Sep 24, 2026",
-      total: 78000,
-      status: "Delivered",
-    },
-    {
-      id: "NA-2026-00087",
-      date: "Sep 12, 2026",
-      total: 32000,
-      status: "Processing",
-    },
-  ];
+  if (!customer) {
+    const message = error || (id ? "Loading customer…" : "Select a customer from the customers list to view details.");
+    return <p role={error ? "alert" : "status"} className="p-6">{message}</p>;
+  }
+
+  const orders = customer.orders ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
@@ -108,7 +92,7 @@ const CustomerDetails = () => {
             <div>
               <p className="text-sm text-gray-500">Customer Since</p>
               <p className="font-medium text-gray-900 mt-1">
-                {customer.joined}
+                {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString() : "—"}
               </p>
             </div>
           </div>
@@ -121,7 +105,7 @@ const CustomerDetails = () => {
             <div className="bg-white rounded-xl border shadow-sm p-5">
               <p className="text-sm text-gray-500">Total Orders</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">
-                {customer.orders}
+                {customer.orderCount}
               </p>
             </div>
 
@@ -137,7 +121,7 @@ const CustomerDetails = () => {
               <p className="text-2xl font-bold text-gray-900 mt-1">
                 ₦
                 {Math.round(
-                  customer.totalSpent / customer.orders
+                  customer.orderCount ? customer.totalSpent / customer.orderCount : 0
                 ).toLocaleString()}
               </p>
             </div>

@@ -1,72 +1,41 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-const initialOrders = [
-  {
-    id: "NA-2026-00125",
-    customer: "John Doe",
-    email: "johndoe@example.com",
-    items: 2,
-    total: 53500,
-    payment: "Paid",
-    status: "Processing",
-    date: "Oct 6, 2026",
-  },
-  {
-    id: "NA-2026-00124",
-    customer: "Sarah Williams",
-    email: "sarah@example.com",
-    items: 3,
-    total: 78000,
-    payment: "Paid",
-    status: "Delivered",
-    date: "Oct 5, 2026",
-  },
-  {
-    id: "NA-2026-00123",
-    customer: "Michael Johnson",
-    email: "michael@example.com",
-    items: 1,
-    total: 32000,
-    payment: "Pending",
-    status: "Pending",
-    date: "Oct 5, 2026",
-  },
-  {
-    id: "NA-2026-00122",
-    customer: "Grace Okafor",
-    email: "grace@example.com",
-    items: 4,
-    total: 45000,
-    payment: "Paid",
-    status: "Delivered",
-    date: "Oct 4, 2026",
-  },
-  {
-    id: "NA-2026-00121",
-    customer: "David Williams",
-    email: "david@example.com",
-    items: 2,
-    total: 67000,
-    payment: "Paid",
-    status: "Cancelled",
-    date: "Oct 3, 2026",
-  },
-];
+import { getOrders, updateOrderStatus } from "../../../services/adminService";
 
 const formatCurrency = (amount) =>
   `₦${amount.toLocaleString("en-NG")}`;
 
 export default function Orders() {
-  const [orders, setOrders] = useState(initialOrders);
+  const [orders, setOrders] = useState([]);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
+  useEffect(() => {
+    getOrders()
+      .then(({ data }) => {
+        setOrders(data.map((order) => ({
+          ...order,
+          customer: typeof order.customer === "string"
+            ? order.customer
+            : order.customer?.name ?? "",
+          items: Array.isArray(order.items) ? order.items.length : order.items ?? 0,
+          total: Number(order.total ?? 0),
+          date: order.date ?? order.createdAt ?? "",
+          payment: order.payment ?? order.paymentStatus ?? "",
+        })));
+      })
+      .catch((requestError) => setError(requestError.message));
+  }, []);
+
   const filteredOrders = orders.filter((order) => {
+    const customerName = typeof order.customer === "string"
+      ? order.customer
+      : order.customer?.name ?? "";
     const matchesSearch =
       order.id.toLowerCase().includes(search.toLowerCase()) ||
-      order.customer.toLowerCase().includes(search.toLowerCase()) ||
-      order.email.toLowerCase().includes(search.toLowerCase());
+      customerName.toLowerCase().includes(search.toLowerCase()) ||
+      (order.email ?? "").toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus =
       statusFilter === "All" || order.status === statusFilter;
@@ -74,14 +43,22 @@ export default function Orders() {
     return matchesSearch && matchesStatus;
   });
 
-  const updateStatus = (id, newStatus) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === id
-          ? { ...order, status: newStatus }
-          : order
-      )
-    );
+  const updateStatus = async (id, newStatus) => {
+    try {
+      const { data } = await updateOrderStatus(id, newStatus);
+      setOrders((prev) => prev.map((order) => order.id === id
+        ? {
+            ...data,
+            customer: typeof data.customer === "string" ? data.customer : data.customer?.name ?? "",
+            items: Array.isArray(data.items) ? data.items.length : data.items ?? 0,
+            total: Number(data.total ?? 0),
+            date: data.date ?? data.createdAt ?? "",
+            payment: data.payment ?? data.paymentStatus ?? "",
+          }
+        : order));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   const totalOrders = orders.length;
@@ -106,6 +83,7 @@ export default function Orders() {
           Manage and track all customer orders.
         </p>
       </div>
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -214,7 +192,7 @@ export default function Orders() {
 
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-gray-900">
-                        {order.customer}
+                        {typeof order.customer === "string" ? order.customer : order.customer?.name}
                       </p>
                       <p className="text-xs text-gray-500">
                         {order.email}
@@ -222,7 +200,7 @@ export default function Orders() {
                     </td>
 
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {order.items}
+                      {Array.isArray(order.items) ? order.items.length : order.items}
                     </td>
 
                     <td className="px-6 py-4 text-sm font-semibold text-gray-900">
@@ -302,12 +280,6 @@ export default function Orders() {
         </div>
       </div>
 
-      {/* Backend Note */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> Orders currently use sample data.
-        Connect the orders and status updates to your backend API
-        later.
-      </div>
     </div>
   );
 }

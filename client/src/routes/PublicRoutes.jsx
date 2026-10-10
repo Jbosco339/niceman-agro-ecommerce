@@ -35,6 +35,7 @@ import SavedAddresses from "../pages/account/SavedAddresses";
 import AccountDashboard from "../pages/account/AccountDashboard";
 import Profile from "../pages/account/Profile";
 import OrderDetails from "../pages/account/OrderDetails";
+import ResetPassword from "../pages/account/ResetPassword";
 
 function PublicRoutes() {
   return (
@@ -101,6 +102,7 @@ function PublicRoutes() {
       <Route path="/training/workshops" element={<Workshops />} />
       <Route path="/Workshops" element={<Workshops />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/Login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/Register" element={<Register />} />

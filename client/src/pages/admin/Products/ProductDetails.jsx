@@ -1,25 +1,28 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-
-const product = {
-  id: "1",
-  name: "Fresh Tomatoes",
-  category: "Fresh Vegetables",
-  price: 3500,
-  stock: 45,
-  status: "Active",
-  image: "/images/products/tomatoes.jpg",
-  description:
-    "Fresh, locally sourced tomatoes suitable for everyday cooking. Carefully selected for quality and freshness.",
-  createdAt: "September 20, 2026",
-  updatedAt: "October 5, 2026",
-  sales: 128,
-};
+import { getProduct } from "../../../services/adminService";
 
 const formatCurrency = (amount) =>
   `₦${amount.toLocaleString("en-NG")}`;
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const [product, setProduct] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!id) return;
+    getProduct(id)
+      .then(({ data }) => setProduct(data))
+      .catch((requestError) => setError(requestError.message));
+  }, [id]);
+
+  if (!product) {
+    const message = error || (id
+      ? "Loading product…"
+      : "Select a product from the products list to view details.");
+    return <p role={error ? "alert" : "status"} className="p-6">{message}</p>;
+  }
 
   const stockStatus =
     product.stock === 0
@@ -121,7 +124,7 @@ export default function ProductDetails() {
                 Units Sold
               </p>
               <p className="mt-1 text-xl font-bold text-gray-900">
-                {product.sales}
+                {product.sales ?? "—"}
               </p>
             </div>
           </div>

@@ -1,56 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-const initialProducts = [
-  {
-    id: 1,
-    name: "Fresh Tomatoes",
-    category: "Fresh Vegetables",
-    stock: 45,
-    price: 3500,
-    status: "In Stock",
-  },
-  {
-    id: 2,
-    name: "Premium Rice",
-    category: "Grains & Cereals",
-    stock: 8,
-    price: 45000,
-    status: "Low Stock",
-  },
-  {
-    id: 3,
-    name: "Irish Potatoes",
-    category: "Tubers",
-    stock: 0,
-    price: 6000,
-    status: "Out of Stock",
-  },
-  {
-    id: 4,
-    name: "Fresh Chicken",
-    category: "Poultry",
-    stock: 25,
-    price: 8500,
-    status: "In Stock",
-  },
-  {
-    id: 5,
-    name: "Fresh Mangoes",
-    category: "Fruits",
-    stock: 12,
-    price: 5000,
-    status: "Low Stock",
-  },
-];
+import { getProducts, updateProduct } from "../../../services/adminService";
 
 const formatCurrency = (amount) =>
   `₦${amount.toLocaleString("en-NG")}`;
 
 export default function Inventory() {
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  useEffect(() => {
+    getProducts()
+      .then(({ data }) => setProducts(data))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const getStockStatus = (stock) => {
     if (stock === 0) return "Out of Stock";
@@ -70,20 +35,18 @@ export default function Inventory() {
     return matchesSearch && matchesStatus;
   });
 
-  const updateStock = (id, amount) => {
-    setProducts((prev) =>
-      prev.map((product) => {
-        if (product.id !== id) return product;
-
-        const newStock = Math.max(0, product.stock + amount);
-
-        return {
-          ...product,
-          stock: newStock,
-          status: getStockStatus(newStock),
-        };
-      })
-    );
+  const updateStock = async (id, amount) => {
+    const current = products.find((product) => product.id === id);
+    if (!current) return;
+    try {
+      const { data } = await updateProduct(id, {
+        stock: Math.max(0, current.stock + amount),
+      });
+      setProducts((prev) => prev.map((product) => product.id === id ? data : product));
+      setError("");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   const totalProducts = products.length;
@@ -104,6 +67,7 @@ export default function Inventory() {
           Monitor and manage your product stock.
         </p>
       </div>
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

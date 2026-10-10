@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { createProduct } from "../../../services/adminService";
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ export default function AddProduct() {
   });
 
   const [preview, setPreview] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,13 +32,18 @@ export default function AddProduct() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Connect to backend API here later
-    console.log("Product to create:", formData);
-
-    navigate("/admin/products");
+    setSaving(true);
+    setError("");
+    try {
+      await createProduct(formData);
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -63,6 +71,7 @@ export default function AddProduct() {
         onSubmit={handleSubmit}
         className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
       >
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Product Name */}
           <div>
@@ -226,19 +235,14 @@ export default function AddProduct() {
 
           <button
             type="submit"
+            disabled={saving}
             className="rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700"
           >
-            Add Product
+            {saving ? "Saving…" : "Add Product"}
           </button>
         </div>
       </form>
 
-      {/* Backend Note */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> Product creation currently uses local
-        form data. Connect the submit action to your backend API
-        later.
-      </div>
     </div>
   );
 }

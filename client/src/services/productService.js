@@ -1,4 +1,5 @@
-import { get, post, put, del } from "./api";
+import { get } from "./api";
+import adminService from "./adminService";
 
 // ==================== PUBLIC PRODUCTS ====================
 
@@ -25,27 +26,23 @@ export const searchProducts = async (search) => {
 // ==================== ADMIN PRODUCTS ====================
 
 export const createProduct = async (product) => {
-  return post("/products", product);
+  return adminService.createProduct(product);
 };
 
 export const updateProduct = async (id, product) => {
-  return put(`/products/${id}`, product);
+  return adminService.updateProduct(id, product);
 };
 
 export const deleteProduct = async (id) => {
-  return del(`/products/${id}`);
+  return adminService.deleteProduct(id);
 };
 
 export const updateProductStock = async (id, stock) => {
-  return put(`/products/${id}/stock`, {
-    stock,
-  });
+  return adminService.updateProduct(id, { stock });
 };
 
 export const toggleProductStatus = async (id, status) => {
-  return put(`/products/${id}/status`, {
-    status,
-  });
+  return adminService.updateProduct(id, { status });
 };
 
 export default {

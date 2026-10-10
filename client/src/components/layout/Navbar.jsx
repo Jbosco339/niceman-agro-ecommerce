@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 
 function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false);
   const { cartItems } = useCart();
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
@@ -225,11 +228,40 @@ function Navbar() {
         <button
           type="button"
           className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-green-800 lg:hidden"
-          aria-label="Open navigation menu"
+          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setMenuOpen((open) => !open)}
         >
           <span className="text-xl">☰</span>
         </button>
       </div>
+      {menuOpen && (
+        <div id="mobile-navigation" className="border-t border-slate-100 bg-white px-5 py-4 shadow-lg lg:hidden">
+          <div className="mx-auto flex max-w-7xl flex-col gap-1">
+            {[
+              ["Home", "/"],
+              ["Shop", "/shop"],
+              ["Resources", "/blog"],
+              ["About Us", "/about"],
+              ["Training", "/training"],
+              ["Contact", "/contact"],
+              ["Cart", "/cart"],
+              ["My Account", "/account/dashboard"],
+            ].map(([label, to]) => (
+              <Link
+                key={label}
+                to={to}
+                onClick={() => setMenuOpen(false)}
+                className="rounded-lg px-3 py-3 font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700"
+              >
+                {label}
+                {label === "Cart" && cartCount > 0 ? ` (${cartCount})` : ""}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

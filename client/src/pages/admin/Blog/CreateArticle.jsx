@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { createBlogPost } from "../../../services/adminService";
 
 const CreateArticle = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ const CreateArticle = () => {
   });
 
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const categories = [
     "Agriculture",
@@ -32,18 +34,22 @@ const CreateArticle = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
     setSaving(true);
-
-    // Connect to backend API here later
-    console.log("Article:", formData);
-
-    setTimeout(() => {
-      setSaving(false);
+    setError("");
+    try {
+      await createBlogPost({
+        ...formData,
+        author: formData.author || "Admin",
+        date: new Date().toISOString(),
+      });
       navigate("/admin/blog");
-    }, 1000);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -71,6 +77,7 @@ const CreateArticle = () => {
         onSubmit={handleSubmit}
         className="max-w-5xl mx-auto bg-white rounded-2xl shadow-sm border p-5 sm:p-8"
       >
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">

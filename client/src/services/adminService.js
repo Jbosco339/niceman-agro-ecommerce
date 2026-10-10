@@ -1,24 +1,6 @@
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+import api from "./api";
 
-const adminRequest = async (endpoint, options = {}) => {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Admin request failed");
-  }
-
-  return data;
-};
+const adminRequest = api;
 
 // ==================== AUTH ====================
 
@@ -48,29 +30,29 @@ export const getAdminDashboard = async () => {
 // ==================== PRODUCTS ====================
 
 export const getProducts = async () => {
-  return adminRequest("/products");
+  return adminRequest("/admin/products");
 };
 
 export const getProduct = async (id) => {
-  return adminRequest(`/products/${id}`);
+  return adminRequest(`/admin/products/${encodeURIComponent(id)}`);
 };
 
 export const createProduct = async (product) => {
-  return adminRequest("/products", {
+  return adminRequest("/admin/products", {
     method: "POST",
     body: JSON.stringify(product),
   });
 };
 
 export const updateProduct = async (id, product) => {
-  return adminRequest(`/products/${id}`, {
+  return adminRequest(`/admin/products/${encodeURIComponent(id)}`, {
     method: "PUT",
     body: JSON.stringify(product),
   });
 };
 
 export const deleteProduct = async (id) => {
-  return adminRequest(`/products/${id}`, {
+  return adminRequest(`/admin/products/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 };
@@ -78,29 +60,29 @@ export const deleteProduct = async (id) => {
 // ==================== CATEGORIES ====================
 
 export const getCategories = async () => {
-  return adminRequest("/categories");
+  return adminRequest("/admin/categories");
 };
 
 export const getCategory = async (id) => {
-  return adminRequest(`/categories/${id}`);
+  return adminRequest(`/admin/categories/${encodeURIComponent(id)}`);
 };
 
 export const createCategory = async (category) => {
-  return adminRequest("/categories", {
+  return adminRequest("/admin/categories", {
     method: "POST",
     body: JSON.stringify(category),
   });
 };
 
 export const updateCategory = async (id, category) => {
-  return adminRequest(`/categories/${id}`, {
+  return adminRequest(`/admin/categories/${encodeURIComponent(id)}`, {
     method: "PUT",
     body: JSON.stringify(category),
   });
 };
 
 export const deleteCategory = async (id) => {
-  return adminRequest(`/categories/${id}`, {
+  return adminRequest(`/admin/categories/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 };
@@ -108,15 +90,15 @@ export const deleteCategory = async (id) => {
 // ==================== ORDERS ====================
 
 export const getOrders = async () => {
-  return adminRequest("/orders");
+  return adminRequest("/admin/orders");
 };
 
 export const getOrder = async (id) => {
-  return adminRequest(`/orders/${id}`);
+  return adminRequest(`/admin/orders/${encodeURIComponent(id)}`);
 };
 
 export const updateOrderStatus = async (id, status) => {
-  return adminRequest(`/orders/${id}/status`, {
+  return adminRequest(`/admin/orders/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
   });
@@ -125,35 +107,41 @@ export const updateOrderStatus = async (id, status) => {
 // ==================== CUSTOMERS ====================
 
 export const getCustomers = async () => {
-  return adminRequest("/customers");
+  return adminRequest("/admin/customers");
 };
 
 export const getCustomer = async (id) => {
-  return adminRequest(`/customers/${id}`);
+  return adminRequest(`/admin/customers/${encodeURIComponent(id)}`);
 };
 
 export const updateCustomer = async (id, customer) => {
-  return adminRequest(`/customers/${id}`, {
+  return adminRequest(`/admin/customers/${encodeURIComponent(id)}`, {
     method: "PUT",
     body: JSON.stringify(customer),
+  });
+};
+
+export const deleteCustomer = async (id) => {
+  return adminRequest(`/admin/customers/${encodeURIComponent(id)}`, {
+    method: "DELETE",
   });
 };
 
 // ==================== REVIEWS ====================
 
 export const getReviews = async () => {
-  return adminRequest("/reviews");
+  return adminRequest("/admin/reviews");
 };
 
 export const updateReviewStatus = async (id, status) => {
-  return adminRequest(`/reviews/${id}/status`, {
+  return adminRequest(`/admin/reviews/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
   });
 };
 
 export const deleteReview = async (id) => {
-  return adminRequest(`/reviews/${id}`, {
+  return adminRequest(`/admin/reviews/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 };
@@ -161,25 +149,25 @@ export const deleteReview = async (id) => {
 // ==================== PROMOTIONS ====================
 
 export const getPromotions = async () => {
-  return adminRequest("/promotions");
+  return adminRequest("/admin/promotions");
 };
 
 export const createPromotion = async (promotion) => {
-  return adminRequest("/promotions", {
+  return adminRequest("/admin/promotions", {
     method: "POST",
     body: JSON.stringify(promotion),
   });
 };
 
 export const updatePromotion = async (id, promotion) => {
-  return adminRequest(`/promotions/${id}`, {
+  return adminRequest(`/admin/promotions/${encodeURIComponent(id)}`, {
     method: "PUT",
     body: JSON.stringify(promotion),
   });
 };
 
 export const deletePromotion = async (id) => {
-  return adminRequest(`/promotions/${id}`, {
+  return adminRequest(`/admin/promotions/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 };
@@ -187,25 +175,29 @@ export const deletePromotion = async (id) => {
 // ==================== BLOG ====================
 
 export const getBlogPosts = async () => {
-  return adminRequest("/blog");
+  return adminRequest("/admin/blog");
+};
+
+export const getBlogPost = async (id) => {
+  return adminRequest(`/admin/blog/${encodeURIComponent(id)}`);
 };
 
 export const createBlogPost = async (post) => {
-  return adminRequest("/blog", {
+  return adminRequest("/admin/blog", {
     method: "POST",
     body: JSON.stringify(post),
   });
 };
 
 export const updateBlogPost = async (id, post) => {
-  return adminRequest(`/blog/${id}`, {
+  return adminRequest(`/admin/blog/${encodeURIComponent(id)}`, {
     method: "PUT",
     body: JSON.stringify(post),
   });
 };
 
 export const deleteBlogPost = async (id) => {
-  return adminRequest(`/blog/${id}`, {
+  return adminRequest(`/admin/blog/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 };
@@ -213,11 +205,11 @@ export const deleteBlogPost = async (id) => {
 // ==================== WEBSITE CONTENT ====================
 
 export const getWebsiteContent = async () => {
-  return adminRequest("/website-content");
+  return adminRequest("/admin/website-content");
 };
 
 export const updateWebsiteContent = async (content) => {
-  return adminRequest("/website-content", {
+  return adminRequest("/admin/website-content", {
     method: "PUT",
     body: JSON.stringify(content),
   });
@@ -248,6 +240,7 @@ export default {
   getCustomers,
   getCustomer,
   updateCustomer,
+  deleteCustomer,
 
   getReviews,
   updateReviewStatus,
@@ -259,6 +252,7 @@ export default {
   deletePromotion,
 
   getBlogPosts,
+  getBlogPost,
   createBlogPost,
   updateBlogPost,
   deleteBlogPost,

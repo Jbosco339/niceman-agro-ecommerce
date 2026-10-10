@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { createCategory } from "../../../services/adminService";
 
 const AddCategory = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const AddCategory = () => {
   });
 
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,18 +24,18 @@ const AddCategory = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
     setSaving(true);
-
-    // Connect to backend API here later
-    console.log("New Category:", formData);
-
-    setTimeout(() => {
-      setSaving(false);
+    setError("");
+    try {
+      await createCategory(formData);
       navigate("/admin/categories");
-    }, 1000);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -61,6 +63,7 @@ const AddCategory = () => {
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border p-5 sm:p-8"
       >
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
         <div className="space-y-6">
           {/* Category Name */}
           <div>

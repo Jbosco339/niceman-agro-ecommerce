@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { registerUser } from "../../services/authService";
 
 function Register() {
   const navigate = useNavigate();
@@ -65,27 +66,18 @@ function Register() {
     try {
       setLoading(true);
 
-      /*
-       * TEMPORARY REGISTRATION
-       *
-       * Later, connect this to:
-       *
-       * useAuth()
-       * authService.js
-       *
-       * Example:
-       *
-       * await register(formData)
-       */
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      console.log("Registration data:", formData);
-
-      // Temporary redirect
-      navigate("/login");
+      await registerUser({
+        userName: `${formData.firstName} ${formData.lastName}`.trim(),
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        phone: formData.phone,
+      });
+      navigate("/account/login", {
+        state: { message: "Registration complete. Verify your email before signing in." },
+      });
     } catch (err) {
-      setError("Unable to create your account. Please try again.");
+      setError(err.message || "Unable to create your account. Please try again.");
     } finally {
       setLoading(false);
     }

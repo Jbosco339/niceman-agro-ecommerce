@@ -26,8 +26,8 @@ export const initializePayment = async (paymentData) => {
   return post("/payments/initialize", paymentData);
 };
 
-export const verifyPayment = async (reference) => {
-  return get(`/payments/verify/${reference}`);
+export const verifyPayment = async (reference, state) => {
+  return get(`/payments/verify/${encodeURIComponent(reference)}?state=${encodeURIComponent(state || "")}`);
 };
 
 export const cancelPayment = async (orderId) => {

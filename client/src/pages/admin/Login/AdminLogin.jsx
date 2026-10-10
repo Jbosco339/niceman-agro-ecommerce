@@ -1,14 +1,31 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAdmin } from "../../../context/useAdmin";
 
 const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const { login } = useAdmin();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Connect your backend authentication here
-    console.log("Admin login submitted");
+    setError("");
+    setSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    try {
+      await login({
+        email: formData.get("email"),
+        password: formData.get("password"),
+      });
+      navigate("/admin/Admindashboard", { replace: true });
+    } catch (loginError) {
+      setError(loginError.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -75,6 +92,7 @@ const AdminLogin = () => {
                 name="email"
                 placeholder="admin@example.com"
                 required
+                autoComplete="username"
                 className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3.5 text-sm text-gray-800 outline-none transition focus:border-green-700 focus:bg-white focus:ring-4 focus:ring-green-700/10"
               />
             </div>
@@ -95,6 +113,7 @@ const AdminLogin = () => {
                   name="password"
                   placeholder="Enter your password"
                   required
+                  autoComplete="current-password"
                   className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3.5 pr-16 text-sm text-gray-800 outline-none transition focus:border-green-700 focus:bg-white focus:ring-4 focus:ring-green-700/10"
                 />
 
@@ -108,30 +127,19 @@ const AdminLogin = () => {
               </div>
             </div>
 
-            {/* Options */}
-            <div className="mb-6 flex items-center justify-between text-sm">
-              <label className="flex cursor-pointer items-center gap-2 text-gray-500">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-green-700"
-                />
-                Remember me
-              </label>
-
-              <Link
-                to="/admin/forgot-password"
-                className="font-semibold text-green-700 hover:text-green-900 hover:underline"
-              >
-                Forgot Password?
-              </Link>
-            </div>
+            {error && (
+              <p role="alert" className="mb-4 text-sm text-red-700">
+                {error}
+              </p>
+            )}
 
             {/* Login Button */}
             <button
               type="submit"
+              disabled={submitting}
               className="w-full rounded-lg bg-green-700 py-3.5 text-sm font-bold text-white shadow-lg shadow-green-700/20 transition hover:bg-green-800 hover:-translate-y-0.5"
             >
-              Login to Dashboard
+              {submitting ? "Signing in…" : "Login to Dashboard"}
             </button>
           </form>
 

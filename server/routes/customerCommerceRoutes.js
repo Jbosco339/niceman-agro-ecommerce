@@ -1,4 +1,6 @@
 import express from "express";
+import crypto from "node:crypto";
+import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import rateLimit from "express-rate-limit";
 import auth from "../middlewares/auth.js";
@@ -6,6 +8,7 @@ import admin from "../middlewares/adminMiddleware.js";
 import { AdminRecord } from "../models/AdminRecord.js";
 import { Product } from "../models/Product.js";
 import { User } from "../models/userSchema.js";
+import { initializePaystackTransaction, isValidPaystackSignature, markOrderPaid, verifyPaystackTransaction } from "../services/paystack.js";
 
 const router = express.Router();
 const checkoutLimiter = rateLimit({
@@ -66,6 +69,34 @@ const getCheckout = async (user) => {
     };
 };
 
+const getCheckoutFromItems = async (items) => {
+    if (!Array.isArray(items) || !items.length || items.length > 100) {
+        const error = new Error("Your cart is empty or invalid"); error.statusCode = 400; throw error;
+    }
+    const cart = [];
+    const seenProductIds = new Set();
+    for (const item of items) {
+        const productId = item?.productId || item?.id;
+        const quantity = Number(item?.quantity);
+        if (!mongoose.isValidObjectId(productId) || seenProductIds.has(String(productId)) || !Number.isInteger(quantity) || quantity < 1 || quantity > 1000) {
+            const error = new Error("Invalid product or quantity in checkout"); error.statusCode = 400; throw error;
+        }
+        seenProductIds.add(String(productId));
+        const product = await Product.findOne({ _id: productId, status: "Active" }).lean();
+        if (!product || quantity > product.stock) {
+            const error = new Error(`${product?.name || "A product"} is unavailable in the requested quantity`); error.statusCode = 409; throw error;
+        }
+        cart.push({ product, quantity });
+    }
+    if (process.env.DELIVERY_FEE === undefined) {
+        const error = new Error("Delivery pricing is not configured"); error.statusCode = 503; throw error;
+    }
+    const deliveryFee = Number(process.env.DELIVERY_FEE);
+    if (!Number.isFinite(deliveryFee) || deliveryFee < 0) throw new Error("DELIVERY_FEE must be a non-negative number");
+    const subtotal = cart.reduce((sum, entry) => sum + entry.product.price * entry.quantity, 0);
+    return { items: cart.map(({ product, quantity }) => ({ product: product._id.toString(), name: product.name, price: product.price, quantity })), subtotal, deliveryFee, total: subtotal + deliveryFee };
+};
+
 const updateCartItem = async (req, res) => {
     if (!mongoose.isValidObjectId(req.params.productId)) {
         return res.status(400).json({ status: "failed", message: "Invalid product id" });
@@ -110,7 +141,9 @@ router.delete("/cart", auth, async (req, res) => {
 });
 
 router.post("/checkout/calculate", auth, checkoutLimiter, async (req, res) => {
-    const checkout = await getCheckout(req.user);
+    const checkout = Array.isArray(req.body?.items)
+        ? await getCheckoutFromItems(req.body.items)
+        : await getCheckout(req.user);
     return res.status(200).json({ status: "success", data: checkout });
 });
 router.get("/checkout/summary", auth, async (req, res) => {
@@ -129,20 +162,25 @@ router.post("/checkout/delivery-fee", auth, checkoutLimiter, async (req, res) =>
 });
 router.post("/checkout/order", auth, checkoutLimiter, async (req, res) => {
     const user = await User.findById(req.user._id);
-    if (!user?.cart.length) {
-        return res.status(400).json({ status: "failed", message: "Your cart is empty" });
-    }
-    const checkout = await getCheckout(user);
-    if (checkout.items.length !== user.cart.length) {
-        return res.status(409).json({ status: "failed", message: "One or more cart products are unavailable" });
+    if (!user) return res.status(401).json({ status: "failed", message: "Please sign in to check out" });
+    const checkout = await getCheckoutFromItems(req.body?.items);
+    const details = req.body?.customer ?? {};
+    const customerName = [details.firstName, details.lastName].filter((value) => typeof value === "string").join(" ").trim() || user.userName;
+    const email = typeof details.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(details.email) ? details.email : user.email;
+    if (![details.address, details.city, details.state, details.phone].every((value) => typeof value === "string" && value.trim())) {
+        return res.status(400).json({ status: "failed", message: "Enter valid delivery contact details and address" });
     }
     const order = await AdminRecord.create({
         resource: "order",
         createdBy: user._id,
         payload: {
-            customer: user.userName,
-            email: user.email,
+            customer: { name: customerName, email, phone: details.phone || "" },
+            email,
+            deliveryAddress: { address: details.address || "", city: details.city || "", state: details.state || "" },
+            notes: typeof details.notes === "string" ? details.notes.slice(0, 1000) : "",
+            orderNumber: `NA-${Date.now()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`,
             items: checkout.items.map(({ name, price, quantity }) => ({ name, price, quantity })),
+            subtotal: checkout.subtotal,
             total: checkout.total,
             deliveryFee: checkout.deliveryFee,
             payment: "Pending",
@@ -299,14 +337,66 @@ router.delete("/customers/account", auth, async (req, res) => {
     return res.status(200).json({ status: "success", message: "Account deleted" });
 });
 
-const paymentUnavailable = (_req, res) =>
-    res.status(503).json({ status: "failed", message: "Online payments are unavailable until a payment provider is configured" });
-router.post("/payments/initialize", auth, paymentUnavailable);
-router.get("/payments/verify/:reference", auth, paymentUnavailable);
-router.get("/payments/:paymentId", auth, paymentUnavailable);
-router.post("/payments/:paymentId/cancel", auth, paymentUnavailable);
-router.post("/payments/cancel", auth, paymentUnavailable);
-router.get("/payments/my-payments", auth, paymentUnavailable);
-router.get("/payments", auth, admin, paymentUnavailable);
+router.post("/payments/initialize", auth, checkoutLimiter, async (req, res) => {
+    const orderId = req.body?.orderId;
+    if (!mongoose.isValidObjectId(orderId)) return res.status(400).json({ status: "failed", message: "Invalid order" });
+    const order = await AdminRecord.findOne(ownedOrder(orderId, req.user._id));
+    if (!order) return res.status(404).json({ status: "failed", message: "Order not found" });
+    if (order.payload.paymentStatus === "Paid") return res.status(409).json({ status: "failed", message: "This order has already been paid" });
+    if (!process.env.CLIENT_URL) return res.status(503).json({ status: "failed", message: "Client URL is not configured" });
+    const reference = `NA-${crypto.randomUUID()}`;
+    const callbackState = jwt.sign(
+        { purpose: "paystack-callback", orderId: order.id, reference },
+        process.env.JWT_SECRET,
+        { expiresIn: "24h" }
+    );
+    order.payload = { ...order.payload, paymentReference: reference, paymentMethod: "Paystack" };
+    await order.save();
+    const transaction = await initializePaystackTransaction(
+        order.payload.email,
+        Math.round(Number(order.payload.total) * 100),
+        reference,
+        `${process.env.CLIENT_URL.replace(/\/$/, "")}/payment/success?state=${encodeURIComponent(callbackState)}`,
+        { order_id: order.id, user_id: req.user._id.toString() }
+    );
+    return res.status(200).json({ status: "success", data: { authorizationUrl: transaction.authorization_url, reference } });
+});
+
+router.get("/payments/verify/:reference", async (req, res) => {
+    if (typeof req.params.reference !== "string" || req.params.reference.length > 100) return res.status(400).json({ status: "failed", message: "Invalid payment reference" });
+    let callback;
+    try {
+        callback = jwt.verify(req.query.state, process.env.JWT_SECRET);
+    } catch {
+        return res.status(401).json({ status: "failed", message: "Invalid or expired payment confirmation" });
+    }
+    if (callback.purpose !== "paystack-callback" || callback.reference !== req.params.reference || !mongoose.isValidObjectId(callback.orderId)) {
+        return res.status(401).json({ status: "failed", message: "Invalid payment confirmation" });
+    }
+    const order = await AdminRecord.findOne({ _id: callback.orderId, resource: "order", "payload.paymentReference": req.params.reference });
+    if (!order) return res.status(404).json({ status: "failed", message: "Payment not found" });
+    const transaction = await verifyPaystackTransaction(req.params.reference);
+    const paidOrder = await markOrderPaid(transaction);
+    if (!paidOrder || paidOrder.id !== callback.orderId) {
+        return res.status(402).json({ status: "failed", message: "Payment has not been confirmed" });
+    }
+    return res.status(200).json({ status: "success", data: presentOrder(paidOrder) });
+});
+
+router.post("/payments/webhook", async (req, res) => {
+    if (!isValidPaystackSignature(req.rawBody, req.get("x-paystack-signature"))) {
+        return res.status(401).json({ status: "failed", message: "Invalid webhook signature" });
+    }
+    const event = req.body;
+    if (event?.event !== "charge.success" || !event?.data?.reference) return res.sendStatus(200);
+    const transaction = await verifyPaystackTransaction(event.data.reference);
+    await markOrderPaid(transaction);
+    return res.sendStatus(200);
+});
+router.get("/payments/:paymentId", auth, async (_req, res) => res.status(501).json({ status: "failed", message: "Payment lookup is not supported" }));
+router.post("/payments/:paymentId/cancel", auth, async (_req, res) => res.status(501).json({ status: "failed", message: "Payment cancellation is not supported" }));
+router.post("/payments/cancel", auth, async (_req, res) => res.status(501).json({ status: "failed", message: "Payment cancellation is not supported" }));
+router.get("/payments/my-payments", auth, async (_req, res) => res.status(501).json({ status: "failed", message: "Payment history is not supported" }));
+router.get("/payments", auth, admin, async (_req, res) => res.status(501).json({ status: "failed", message: "Payment listing is not supported" }));
 
 export default router;

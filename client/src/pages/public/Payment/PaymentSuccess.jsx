@@ -1,91 +1,86 @@
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { verifyPayment } from "../../../services/checkoutService";
+import { useCart } from "../../../context/CartContext";
 
-const PaymentSuccess = () => {
-  const location = useLocation();
-  const order = location.state?.order;
+const formatNaira = (value) => `₦${Number(value || 0).toLocaleString("en-NG")}`;
+
+export default function PaymentSuccess() {
+  const [searchParams] = useSearchParams();
+  const reference = searchParams.get("reference");
+  const callbackState = searchParams.get("state");
+  const { clearCart } = useCart();
+  const [order, setOrder] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    if (!reference || !callbackState) {
+      setError("Payment confirmation details are missing. Check your account orders before trying again.");
+      return () => { active = false; };
+    }
+    verifyPayment(reference, callbackState)
+      .then(({ data }) => {
+        if (!active) return;
+        setOrder(data);
+        clearCart();
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message || "We could not confirm this payment yet.");
+      });
+    return () => { active = false; };
+  }, [reference, callbackState, clearCart]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow-sm p-8 text-center">
-        {/* Success Icon */}
-        <div className="mx-auto mb-6 w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-          <svg
-            className="w-10 h-10 text-green-600"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        </div>
-
-        <h1 className="text-3xl font-bold text-gray-900">
-          Payment Successful!
-        </h1>
-
-        <p className="text-gray-600 mt-3 leading-relaxed">
-          Your payment has been successfully processed. Thank you for shopping
-          with Niceman Agro & Farms.
-        </p>
-
-        {order?.orderNumber && (
-          <div className="mt-6 bg-green-50 rounded-xl p-4">
-            <p className="text-sm text-gray-500">Order Number</p>
-            <p className="font-semibold text-gray-900 mt-1">
-              {order.orderNumber}
-            </p>
+    <main className="min-h-screen bg-gray-50 px-4 py-12 sm:px-6 print:bg-white print:p-0">
+      <section className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow-sm sm:p-10 print:max-w-none print:shadow-none">
+        {!order && !error && <p role="status" className="py-16 text-center text-gray-600">Confirming your payment…</p>}
+        {error && (
+          <div className="py-8 text-center">
+            <h1 className="text-2xl font-bold text-gray-900">Payment confirmation pending</h1>
+            <p role="alert" className="mt-3 text-gray-600">{error}</p>
+            <p className="mt-2 text-sm text-gray-500">Your order is only marked paid after Paystack confirms it. You can check your order history shortly.</p>
+            <Link to="/account/orders" className="mt-6 inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white">View my orders</Link>
           </div>
         )}
-
-        {/* Payment Details */}
-        <div className="mt-6 border-t pt-5 text-left space-y-3">
-          {order?.total && (
-            <div className="flex justify-between">
-              <span className="text-gray-500">Amount Paid</span>
-              <span className="font-semibold text-gray-900">
-                ₦{Number(order.total).toLocaleString()}
-              </span>
+        {order && (
+          <>
+            <div className="text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-2xl font-bold text-green-700">✓</div>
+              <h1 className="mt-4 text-3xl font-bold text-gray-900">Payment received</h1>
+              <p className="mt-2 text-gray-600">
+                Your Paystack payment is confirmed. {order.receiptSentAt ? "A receipt has been sent to your email." : "Your receipt is available below to print or save."}
+              </p>
             </div>
-          )}
-
-          <div className="flex justify-between">
-            <span className="text-gray-500">Payment Status</span>
-            <span className="font-semibold text-green-600">Successful</span>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-3">
-          <Link
-            to="/order-confirmation"
-            state={{ order }}
-            className="flex-1 bg-green-700 hover:bg-green-800 text-white font-semibold py-3 rounded-xl transition"
-          >
-            View Order
-          </Link>
-
-          <Link
-            to="/shop"
-            className="flex-1 border border-gray-300 hover:border-green-600 hover:text-green-700 text-gray-700 font-semibold py-3 rounded-xl transition"
-          >
-            Continue Shopping
-          </Link>
-        </div>
-
-        <Link
-          to="/"
-          className="inline-block mt-6 text-sm text-gray-500 hover:text-green-700"
-        >
-          ← Back to Home
-        </Link>
-      </div>
-    </div>
+            <div className="mt-8 border-y border-dashed border-gray-300 py-6">
+              <div className="flex flex-wrap justify-between gap-3">
+                <div><p className="text-sm text-gray-500">Order number</p><p className="font-semibold">{order.orderNumber || order.id}</p></div>
+                <div><p className="text-sm text-gray-500">Payment reference</p><p className="break-all font-mono text-sm">{order.paymentReference}</p></div>
+                <div><p className="text-sm text-gray-500">Paid on</p><p className="font-semibold">{order.paidAt ? new Date(order.paidAt).toLocaleString() : "Confirmed"}</p></div>
+              </div>
+            </div>
+            <h2 className="mt-6 text-lg font-bold">Payment receipt</h2>
+            <div className="mt-3 divide-y divide-gray-100">
+              {(order.items || []).map((item, index) => (
+                <div key={`${item.product || item.name}-${index}`} className="flex justify-between gap-4 py-3 text-sm">
+                  <span>{item.name} × {item.quantity}</span><span className="font-medium">{formatNaira(Number(item.price) * Number(item.quantity))}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 space-y-2 border-t border-gray-200 pt-4 text-sm">
+              <div className="flex justify-between"><span>Delivery</span><span>{formatNaira(order.deliveryFee)}</span></div>
+              <div className="flex justify-between text-lg font-bold"><span>Total paid</span><span>{formatNaira(order.total)}</span></div>
+              <div className="flex justify-between"><span>Payment method</span><span>Paystack</span></div>
+              <div className="flex justify-between"><span>Status</span><span className="font-semibold text-green-700">Paid</span></div>
+            </div>
+            <div className="mt-8 flex flex-wrap justify-center gap-3 print:hidden">
+              <button type="button" onClick={() => window.print()} className="rounded-lg bg-green-700 px-5 py-3 font-semibold text-white">Print / Save receipt</button>
+              <Link to={`/account/orders/${order.id}`} className="rounded-lg border border-gray-300 px-5 py-3 font-semibold text-gray-700">View order</Link>
+              <Link to="/shop" className="rounded-lg border border-gray-300 px-5 py-3 font-semibold text-gray-700">Continue shopping</Link>
+            </div>
+          </>
+        )}
+      </section>
+    </main>
   );
-};
-
-export default PaymentSuccess;
+}

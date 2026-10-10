@@ -1,52 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-const initialCustomers = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "johndoe@example.com",
-    phone: "+234 801 234 5678",
-    orders: 8,
-    totalSpent: 245000,
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Sarah Williams",
-    email: "sarah@example.com",
-    phone: "+234 803 456 7890",
-    orders: 12,
-    totalSpent: 380000,
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Michael Johnson",
-    email: "michael@example.com",
-    phone: "+234 805 678 9012",
-    orders: 5,
-    totalSpent: 125000,
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Grace Okafor",
-    email: "grace@example.com",
-    phone: "+234 806 789 0123",
-    orders: 3,
-    totalSpent: 87000,
-    status: "Inactive",
-  },
-];
+import { deleteCustomer as removeCustomer, getCustomers, updateCustomer } from "../../../services/adminService";
 
 const formatCurrency = (amount) =>
   `₦${amount.toLocaleString("en-NG")}`;
 
 export default function Customers() {
-  const [customers, setCustomers] = useState(initialCustomers);
+  const [customers, setCustomers] = useState([]);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  useEffect(() => {
+    getCustomers()
+      .then(({ data }) => setCustomers(data.map((customer) => ({
+        ...customer,
+        orders: Number(customer.orders ?? 0),
+        totalSpent: Number(customer.totalSpent ?? 0),
+      }))))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const filteredCustomers = customers.filter((customer) => {
     const matchesSearch =
@@ -60,25 +33,29 @@ export default function Customers() {
     return matchesSearch && matchesStatus;
   });
 
-  const toggleStatus = (id) => {
-    setCustomers((prev) =>
-      prev.map((customer) =>
-        customer.id === id
-          ? {
-              ...customer,
-              status:
-                customer.status === "Active" ? "Inactive" : "Active",
-            }
-          : customer
-      )
-    );
+  const toggleStatus = async (id) => {
+    const customer = customers.find((item) => item.id === id);
+    if (!customer) return;
+    try {
+      const { data } = await updateCustomer(id, {
+        status: customer.status === "Active" ? "Inactive" : "Active",
+      });
+      setCustomers((prev) => prev.map((item) => item.id === id
+        ? { ...item, ...data, orders: Number(data.orders ?? item.orders), totalSpent: Number(data.totalSpent ?? item.totalSpent) }
+        : item));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
-  const deleteCustomer = (id) => {
+  const deleteCustomer = async (id) => {
     if (window.confirm("Are you sure you want to delete this customer?")) {
-      setCustomers((prev) =>
-        prev.filter((customer) => customer.id !== id)
-      );
+      try {
+        await removeCustomer(id);
+        setCustomers((prev) => prev.filter((customer) => customer.id !== id));
+      } catch (requestError) {
+        setError(requestError.message);
+      }
     }
   };
 
@@ -100,6 +77,7 @@ export default function Customers() {
             Manage and view all registered customers.
           </p>
         </div>
+        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       </div>
 
       {/* Stats */}

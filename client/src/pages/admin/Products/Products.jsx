@@ -1,54 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { deleteProduct as removeProduct, getProducts, updateProduct } from "../../../services/adminService";
 
 export default function Products() {
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Fresh Tomatoes",
-      category: "Fresh Vegetables",
-      price: 3500,
-      stock: 45,
-      status: "Active",
-      image: "/images/products/tomatoes.jpg",
-    },
-    {
-      id: 2,
-      name: "Premium Rice",
-      category: "Grains & Cereals",
-      price: 45000,
-      stock: 8,
-      status: "Active",
-      image: "/images/products/rice.jpg",
-    },
-    {
-      id: 3,
-      name: "Irish Potatoes",
-      category: "Tubers",
-      price: 6000,
-      stock: 0,
-      status: "Active",
-      image: "/images/products/potatoes.jpg",
-    },
-    {
-      id: 4,
-      name: "Fresh Chicken",
-      category: "Poultry",
-      price: 8500,
-      stock: 25,
-      status: "Active",
-      image: "/images/products/chicken.jpg",
-    },
-    {
-      id: 5,
-      name: "Fresh Mangoes",
-      category: "Fruits",
-      price: 5000,
-      stock: 12,
-      status: "Inactive",
-      image: "/images/products/mangoes.jpg",
-    },
-  ]);
+  const [products, setProducts] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getProducts()
+      .then(({ data }) => setProducts(data))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -67,27 +29,34 @@ export default function Products() {
     return "In Stock";
   };
 
-  const toggleStatus = (id) => {
-    setProducts((current) =>
-      current.map((product) =>
-        product.id === id
-          ? {
-              ...product,
-              status: product.status === "Active" ? "Inactive" : "Active",
-            }
-          : product
-      )
-    );
+  const toggleStatus = async (id) => {
+    const product = products.find((item) => item.id === id);
+    if (!product) return;
+    try {
+      const { data } = await updateProduct(id, {
+        status: product.status === "Active" ? "Inactive" : "Active",
+      });
+      setProducts((current) => current.map((item) => item.id === id ? data : item));
+      setError("");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
-  const deleteProduct = (id) => {
+  const deleteProduct = async (id) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this product?"
     );
 
     if (!confirmed) return;
 
-    setProducts((current) => current.filter((product) => product.id !== id));
+    try {
+      await removeProduct(id);
+      setProducts((current) => current.filter((product) => product.id !== id));
+      setError("");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   const filteredProducts = products.filter((product) => {
@@ -123,6 +92,7 @@ export default function Products() {
             Manage all products in your store.
           </p>
         </div>
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
         <div className="flex gap-3">
           <Link

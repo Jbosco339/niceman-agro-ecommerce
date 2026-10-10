@@ -1,37 +1,37 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { initializePayment } from "../../../services/checkoutService";
 
 const Payment = () => {
   const location = useLocation();
-  const navigate = useNavigate();
 
   const order = location.state?.order;
 
   const [paymentMethod, setPaymentMethod] = useState("paystack");
   const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
 
-  const total = order?.total || 53500;
+  const total = Number(order?.total) || 0;
 
-  const handlePayment = (e) => {
+  const handlePayment = async (e) => {
     e.preventDefault();
+    if (paymentMethod !== "paystack") {
+      setError("Cash on delivery is not available from this payment page.");
+      return;
+    }
+    if (!order?.id) {
+      setError("This payment session is missing its order. Return to checkout and place the order again.");
+      return;
+    }
+    setError("");
     setProcessing(true);
-
-    // Connect Paystack/backend here later
-    setTimeout(() => {
-      navigate("/order-confirmation", {
-        state: {
-          order: {
-            ...order,
-            paymentMethod:
-              paymentMethod === "paystack"
-                ? "Paystack"
-                : "Cash on Delivery",
-            paymentStatus:
-              paymentMethod === "paystack" ? "Paid" : "Payment Pending",
-          },
-        },
-      });
-    }, 1500);
+    try {
+      const { data } = await initializePayment({ orderId: order.id });
+      window.location.assign(data.authorizationUrl);
+    } catch (requestError) {
+      setError(requestError.message || "We could not start your payment. Please try again.");
+      setProcessing(false);
+    }
   };
 
   return (
@@ -135,6 +135,8 @@ const Payment = () => {
                 store your card details.
               </p>
             </div>
+
+            {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
 
             <button
               type="submit"

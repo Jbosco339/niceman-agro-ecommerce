@@ -3,35 +3,35 @@ import { get, post } from "./api";
 // ==================== CUSTOMER AUTH ====================
 
 export const registerUser = async (userData) => {
-  return post("/auth/register", userData);
+  return post("/user/register", userData);
 };
 
 export const loginUser = async (credentials) => {
-  return post("/auth/login", credentials);
+  return post("/user/login", credentials);
 };
 
 export const logoutUser = async () => {
-  return post("/auth/logout");
+  return post("/user/logout");
 };
 
 export const getCurrentUser = async () => {
-  return get("/auth/me");
+  return get("/user/profile");
 };
 
 // ==================== PASSWORD ====================
 
 export const forgotPassword = async (email) => {
-  return post("/auth/forgot-password", { email });
+  return post("/user/forgot-password", { email });
 };
 
 export const resetPassword = async (token, password) => {
-  return post(`/auth/reset-password/${token}`, {
+  return post(`/user/reset-password/${encodeURIComponent(token)}`, {
     password,
   });
 };
 
 export const changePassword = async (currentPassword, newPassword) => {
-  return post("/auth/change-password", {
+  return post("/user/change-password", {
     currentPassword,
     newPassword,
   });

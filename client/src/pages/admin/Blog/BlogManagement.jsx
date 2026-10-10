@@ -1,32 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createBlogPost, deleteBlogPost, getBlogPosts, updateBlogPost } from "../../../services/adminService";
 
 const BlogManagement = () => {
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      title: "5 Benefits of Eating Fresh Farm Produce",
-      category: "Healthy Living",
-      author: "Admin",
-      date: "Oct 2, 2026",
-      status: "Published",
-    },
-    {
-      id: 2,
-      title: "How to Store Fresh Vegetables Properly",
-      category: "Farming Tips",
-      author: "Admin",
-      date: "Sep 28, 2026",
-      status: "Published",
-    },
-    {
-      id: 3,
-      title: "Understanding Sustainable Agriculture",
-      category: "Agriculture",
-      author: "Admin",
-      date: "Sep 20, 2026",
-      status: "Draft",
-    },
-  ]);
+  const [posts, setPosts] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getBlogPosts()
+      .then(({ data }) => setPosts(data))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -66,41 +49,22 @@ const BlogManagement = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (editingPost) {
-      setPosts(
-        posts.map((post) =>
-          post.id === editingPost.id
-            ? {
-                ...post,
-                title: formData.title,
-                category: formData.category,
-                author: formData.author,
-                status: formData.status,
-              }
-            : post
-        )
-      );
-    } else {
-      const newPost = {
-        id: Date.now(),
-        title: formData.title,
-        category: formData.category,
-        author: formData.author || "Admin",
-        date: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
-        status: formData.status,
-      };
-
-      setPosts([newPost, ...posts]);
+    try {
+      const result = editingPost
+        ? await updateBlogPost(editingPost.id, formData)
+        : await createBlogPost({ ...formData, author: formData.author || "Admin" });
+      if (editingPost) {
+        setPosts((current) => current.map((post) => post.id === editingPost.id ? result.data : post));
+      } else {
+        setPosts((current) => [result.data, ...current]);
+      }
+      setError("");
+      resetForm();
+    } catch (requestError) {
+      setError(requestError.message);
     }
-
-    resetForm();
   };
 
   const resetForm = () => {
@@ -123,30 +87,35 @@ const BlogManagement = () => {
       title: post.title,
       category: post.category,
       author: post.author,
-      content: "",
+      content: post.content ?? "",
       status: post.status,
     });
 
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this post?")) {
-      setPosts(posts.filter((post) => post.id !== id));
+      try {
+        await deleteBlogPost(id);
+        setPosts((current) => current.filter((post) => post.id !== id));
+      } catch (requestError) {
+        setError(requestError.message);
+      }
     }
   };
 
-  const toggleStatus = (id) => {
-    setPosts(
-      posts.map((post) =>
-        post.id === id
-          ? {
-              ...post,
-              status: post.status === "Published" ? "Draft" : "Published",
-            }
-          : post
-      )
-    );
+  const toggleStatus = async (id) => {
+    const post = posts.find((item) => item.id === id);
+    if (!post) return;
+    try {
+      const { data } = await updateBlogPost(id, {
+        status: post.status === "Published" ? "Draft" : "Published",
+      });
+      setPosts((current) => current.map((item) => item.id === id ? data : item));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   return (
@@ -161,6 +130,7 @@ const BlogManagement = () => {
             Create and manage Niceman Agro & Farms blog posts.
           </p>
         </div>
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
         <button
           onClick={() => {

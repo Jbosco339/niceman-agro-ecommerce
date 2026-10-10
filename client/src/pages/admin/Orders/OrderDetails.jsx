@@ -1,46 +1,37 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-
-const order = {
-  id: "NA-2026-00125",
-  customer: {
-    name: "John Doe",
-    email: "johndoe@example.com",
-    phone: "+234 801 234 5678",
-    address: "12 Farm Road, Lagos, Nigeria",
-  },
-  date: "October 6, 2026",
-  status: "Processing",
-  paymentMethod: "Paystack",
-  paymentStatus: "Paid",
-  deliveryFee: 3000,
-  items: [
-    {
-      id: 1,
-      name: "Fresh Tomatoes",
-      quantity: 2,
-      price: 3500,
-    },
-    {
-      id: 2,
-      name: "Premium Rice",
-      quantity: 1,
-      price: 45000,
-    },
-  ],
-};
+import { getOrder } from "../../../services/adminService";
 
 const formatCurrency = (amount) =>
   `₦${amount.toLocaleString("en-NG")}`;
 
 export default function OrderDetails() {
   const { id } = useParams();
+  const [order, setOrder] = useState(null);
+  const [error, setError] = useState("");
 
-  const subtotal = order.items.reduce(
+  useEffect(() => {
+    if (!id) return;
+    getOrder(id)
+      .then(({ data }) => setOrder(data))
+      .catch((requestError) => setError(requestError.message));
+  }, [id]);
+
+  if (!order) {
+    const message = error || (id ? "Loading order…" : "Select an order from the orders list to view details.");
+    return <p role={error ? "alert" : "status"} className="p-6">{message}</p>;
+  }
+
+  const customer = typeof order.customer === "object"
+    ? order.customer
+    : { name: order.customer ?? "—", email: order.email ?? "—" };
+  const items = Array.isArray(order.items) ? order.items : [];
+  const deliveryFee = Number(order.deliveryFee ?? 0);
+  const subtotal = items.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
-
-  const total = subtotal + order.deliveryFee;
+  const total = Number(order.total ?? subtotal + deliveryFee);
 
   return (
     <div className="space-y-6">
@@ -82,7 +73,7 @@ export default function OrderDetails() {
                 Name
               </p>
               <p className="mt-1 text-sm font-medium text-gray-900">
-                {order.customer.name}
+                {customer.name}
               </p>
             </div>
 
@@ -91,7 +82,7 @@ export default function OrderDetails() {
                 Email
               </p>
               <p className="mt-1 text-sm text-gray-700">
-                {order.customer.email}
+                {customer.email}
               </p>
             </div>
 
@@ -100,7 +91,7 @@ export default function OrderDetails() {
                 Phone
               </p>
               <p className="mt-1 text-sm text-gray-700">
-                {order.customer.phone}
+                {customer.phone ?? "—"}
               </p>
             </div>
 
@@ -109,13 +100,12 @@ export default function OrderDetails() {
                 Delivery Address
               </p>
               <p className="mt-1 text-sm text-gray-700">
-                {order.customer.address}
+                {customer.address ?? order.address ?? "—"}
               </p>
             </div>
 
             <Link
-              to="/admin/customers/1"
-              state={{ customer: order.customer }}
+              to="/admin/Customers"
               className="inline-block text-sm font-semibold text-green-600 hover:text-green-800"
             >
               View Customer
@@ -135,7 +125,7 @@ export default function OrderDetails() {
                 Payment Method
               </p>
               <p className="mt-1 text-sm font-medium text-gray-900">
-                {order.paymentMethod}
+                {order.paymentMethod ?? order.payment ?? "—"}
               </p>
             </div>
 
@@ -144,7 +134,7 @@ export default function OrderDetails() {
                 Payment Status
               </p>
               <span className="mt-1 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-                {order.paymentStatus}
+                {order.paymentStatus ?? order.payment ?? "—"}
               </span>
             </div>
 
@@ -176,7 +166,7 @@ export default function OrderDetails() {
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Delivery Fee</span>
               <span className="font-medium text-gray-900">
-                {formatCurrency(order.deliveryFee)}
+                {formatCurrency(deliveryFee)}
               </span>
             </div>
 
@@ -222,8 +212,8 @@ export default function OrderDetails() {
             </thead>
 
             <tbody className="divide-y divide-gray-100">
-              {order.items.map((item) => (
-                <tr key={item.id}>
+              {items.map((item, index) => (
+                <tr key={item.id ?? `${item.name}-${index}`}>
                   <td className="px-5 py-4">
                     <p className="font-semibold text-gray-900">
                       {item.name}

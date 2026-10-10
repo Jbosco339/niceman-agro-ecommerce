@@ -1,53 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { deleteCategory, getCategories, updateCategory } from "../../../services/adminService";
 
 const Categories = () => {
   const navigate = useNavigate();
 
-  const [categories, setCategories] = useState([
-    {
-      id: 1,
-      name: "Fresh Vegetables",
-      description: "Fresh farm-grown vegetables.",
-      products: 24,
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Fruits",
-      description: "Fresh and nutritious fruits.",
-      products: 18,
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Grains & Cereals",
-      description: "Quality grains and cereals.",
-      products: 15,
-      status: "Active",
-    },
-    {
-      id: 4,
-      name: "Tubers",
-      description: "Fresh yam, cassava and other tubers.",
-      products: 12,
-      status: "Active",
-    },
-    {
-      id: 5,
-      name: "Livestock",
-      description: "Healthy farm livestock.",
-      products: 8,
-      status: "Inactive",
-    },
-    {
-      id: 6,
-      name: "Poultry",
-      description: "Quality poultry products.",
-      products: 10,
-      status: "Active",
-    },
-  ]);
+  const [categories, setCategories] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getCategories()
+      .then(({ data }) => setCategories(data))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -63,32 +28,32 @@ const Categories = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this category?"
     );
 
     if (confirmed) {
-      setCategories(
-        categories.filter((category) => category.id !== id)
-      );
+      try {
+        await deleteCategory(id);
+        setCategories((current) => current.filter((category) => category.id !== id));
+      } catch (requestError) {
+        setError(requestError.message);
+      }
     }
   };
 
-  const toggleStatus = (id) => {
-    setCategories(
-      categories.map((category) =>
-        category.id === id
-          ? {
-              ...category,
-              status:
-                category.status === "Active"
-                  ? "Inactive"
-                  : "Active",
-            }
-          : category
-      )
-    );
+  const toggleStatus = async (id) => {
+    const category = categories.find((item) => item.id === id);
+    if (!category) return;
+    try {
+      const { data } = await updateCategory(id, {
+        status: category.status === "Active" ? "Inactive" : "Active",
+      });
+      setCategories((current) => current.map((item) => item.id === id ? data : item));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   return (
@@ -104,6 +69,7 @@ const Categories = () => {
             Manage your store product categories.
           </p>
         </div>
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
         <Link
           to="/admin/categories/add"

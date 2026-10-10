@@ -1,43 +1,39 @@
-import { createContext, useContext, useEffect, useState } from "react";
-
-const AuthContext = createContext();
+import { useEffect, useState } from "react";
+import { getCurrentUser, logoutUser } from "../services/authService";
+import { AuthContext } from "./authContextValue";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check for existing user session
   useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error("Invalid user session:", error);
-        localStorage.removeItem("user");
-      }
-    }
-
-    setLoading(false);
+    let active = true;
+    getCurrentUser()
+      .then(({ data }) => {
+        if (active) setUser(data);
+      })
+      .catch(() => {
+        if (active) setUser(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  // Login
   const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData?.data ?? userData);
   };
 
-  // Logout
-  const logout = () => {
+  const logout = async () => {
+    await logoutUser();
     setUser(null);
-    localStorage.removeItem("user");
   };
 
-  // Register
   const register = (userData) => {
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
+    return userData;
   };
 
   const isAuthenticated = !!user;
@@ -57,15 +53,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-// Custom hook
-export function useAuth() {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
-  }
-
-  return context;
 }

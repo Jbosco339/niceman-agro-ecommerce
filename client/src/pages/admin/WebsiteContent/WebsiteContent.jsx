@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getWebsiteContent, updateWebsiteContent } from "../../../services/adminService";
 
 export default function WebsiteContent() {
   const [activeTab, setActiveTab] = useState("hero");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const [content, setContent] = useState({
     hero: {
@@ -34,6 +38,23 @@ export default function WebsiteContent() {
     },
   });
 
+  useEffect(() => {
+    getWebsiteContent()
+      .then(({ data }) => {
+        if (data && Object.keys(data).length) {
+          setContent((current) => ({
+            ...current,
+            ...data,
+            hero: { ...current.hero, ...data.hero },
+            about: { ...current.about, ...data.about },
+            contact: { ...current.contact, ...data.contact },
+            footer: { ...current.footer, ...data.footer },
+          }));
+        }
+      })
+      .catch((requestError) => setError(requestError.message));
+  }, []);
+
   const updateContent = (section, field, value) => {
     setContent((current) => ({
       ...current,
@@ -44,14 +65,18 @@ export default function WebsiteContent() {
     }));
   };
 
-  const handleSave = (section) => {
-    console.log(`Saving ${section} content:`, content[section]);
-
-    alert(
-      `${section.charAt(0).toUpperCase() + section.slice(1)} content saved successfully.`
-    );
-
-    // Connect to backend API here later.
+  const handleSave = async () => {
+    setSaving(true);
+    setSaved(false);
+    setError("");
+    try {
+      await updateWebsiteContent(content);
+      setSaved(true);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const tabs = [
@@ -73,6 +98,8 @@ export default function WebsiteContent() {
           Manage the content displayed across your website.
         </p>
       </div>
+      {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+      {saved && <p role="status" className="mb-4 text-sm text-green-700">Website content saved.</p>}
 
       {/* Tabs */}
       <div className="mb-6 overflow-x-auto rounded-xl bg-white shadow-sm">
@@ -183,7 +210,8 @@ export default function WebsiteContent() {
           </div>
 
           <button
-            onClick={() => handleSave("hero")}
+            onClick={handleSave}
+            disabled={saving}
             className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
           >
             Save Hero Content
@@ -252,7 +280,8 @@ export default function WebsiteContent() {
           </div>
 
           <button
-            onClick={() => handleSave("about")}
+            onClick={handleSave}
+            disabled={saving}
             className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
           >
             Save About Content
@@ -336,7 +365,8 @@ export default function WebsiteContent() {
           </div>
 
           <button
-            onClick={() => handleSave("contact")}
+            onClick={handleSave}
+            disabled={saving}
             className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
           >
             Save Contact Information
@@ -390,7 +420,8 @@ export default function WebsiteContent() {
           </div>
 
           <button
-            onClick={() => handleSave("footer")}
+            onClick={handleSave}
+            disabled={saving}
             className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
           >
             Save Footer Content

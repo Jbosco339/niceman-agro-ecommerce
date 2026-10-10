@@ -1,23 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-
-const sampleProduct = {
-  name: "Fresh Tomatoes",
-  category: "Fresh Vegetables",
-  price: "3500",
-  stock: "45",
-  description:
-    "Fresh, locally sourced tomatoes suitable for everyday cooking.",
-  image: "/images/products/tomatoes.jpg",
-  status: "Active",
-};
+import { getProduct, updateProduct } from "../../../services/adminService";
 
 export default function EditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState(sampleProduct);
-  const [preview, setPreview] = useState(sampleProduct.image);
+  const [formData, setFormData] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    getProduct(id)
+      .then(({ data }) => {
+        setFormData({
+          ...data,
+          price: String(data.price),
+          stock: String(data.stock),
+        });
+        setPreview(data.image || "");
+      })
+      .catch((requestError) => setError(requestError.message));
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,17 +38,26 @@ export default function EditProduct() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Connect to backend API here later
-    console.log("Product to update:", {
-      id,
-      ...formData,
-    });
-
-    navigate("/admin/products");
+    setSaving(true);
+    setError("");
+    try {
+      await updateProduct(id, formData);
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (!formData) {
+    const message = error || (id
+      ? "Loading product…"
+      : "Select a product from the products list to edit it.");
+    return <p role={error ? "alert" : "status"} className="p-6">{message}</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -69,6 +84,7 @@ export default function EditProduct() {
         onSubmit={handleSubmit}
         className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
       >
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Product Name */}
           <div>
@@ -228,9 +244,10 @@ export default function EditProduct() {
 
           <button
             type="submit"
+            disabled={saving}
             className="rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700"
           >
-            Save Changes
+            {saving ? "Saving…" : "Save Changes"}
           </button>
         </div>
       </form>
