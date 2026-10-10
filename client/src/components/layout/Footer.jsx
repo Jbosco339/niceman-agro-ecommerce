@@ -14,9 +14,9 @@ function Footer() {
   return (
     <footer className="bg-green-950 text-white">
       {/* Main Footer */}
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 px-5 py-14 sm:px-8 md:grid-cols-2 lg:grid-cols-4 lg:px-10">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-2 gap-6 px-4 py-8 sm:px-8 md:grid-cols-2 lg:grid-cols-4 lg:px-10">
         {/* Company */}
-        <div>
+        <div className="order-4 md:order-1">
           <Link to="/" className="flex items-center">
             <img
               src="/images/NicemanAgroLogoWhite.png"
@@ -25,12 +25,12 @@ function Footer() {
             />
           </Link>
 
-          <p className="mt-5 max-w-xs text-sm leading-6 text-green-100/75">
+          <p className="mt-3 md:mt-5 max-w-full sm:max-w-xs text-sm leading-6 text-green-100/75 wrap-break-word">
             {footer.description ||
               "Quality agricultural inputs, practical farming knowledge and solutions for healthier crops and a greener future."}
           </p>
 
-          <div className="mt-5 flex gap-3">
+          <div className="mt-3 md:mt-5 flex gap-3">
             <a
               href={facebookUrl || "#"}
               target={facebookUrl ? "_blank" : undefined}
@@ -115,10 +115,10 @@ function Footer() {
         </div>
 
         {/* Shop */}
-        <div>
+        <div className="order-1 md:order-2">
           <h3 className="text-base font-bold">Shop</h3>
 
-          <ul className="mt-5 space-y-3 text-sm text-green-100/75">
+          <ul className="mt-3 md:mt-5 space-y-3 text-sm text-green-100/75 wrap-break-word">
             <li>
               <Link to="/shop" className="transition hover:text-white">
                 All Products
@@ -152,10 +152,10 @@ function Footer() {
         </div>
 
         {/* Learn */}
-        <div>
+        <div className="order-2 md:order-3">
           <h3 className="text-base font-bold">Learn & Grow</h3>
 
-          <ul className="mt-5 space-y-3 text-sm text-green-100/75">
+          <ul className="mt-3 md:mt-5 space-y-3 text-sm text-green-100/75 wrap-break-word">
             <li>
               <Link to="/blog" className="transition hover:text-white">
                 Agricultural Blog
@@ -189,23 +189,29 @@ function Footer() {
         </div>
 
         {/* Contact */}
-        <div>
+        <div className="order-3 md:order-4">
           <h3 className="text-base font-bold">Contact Us</h3>
 
-          <div className="mt-5 space-y-4 text-sm text-green-100/75">
+          <div className="mt-3 md:mt-5 space-y-3 md:space-y-4 text-sm text-green-100/75">
             <div>
               <p className="font-semibold text-white">Address</p>
-              <p className="mt-1 leading-6">{contact.address || "Nigeria"}</p>
+              <p className="mt-1 leading-6 wrap-break-word">
+                {contact.address || "Nigeria"}
+              </p>
             </div>
 
             <div>
               <p className="font-semibold text-white">Phone</p>
-              <p className="mt-1">{contact.phone || "+234 000 000 0000"}</p>
+              <p className="mt-1 wrap-break-word">
+                {contact.phone || "+234 000 000 0000"}
+              </p>
             </div>
 
             <div>
               <p className="font-semibold text-white">Email</p>
-              <p className="mt-1">{contact.email || "info@nicemanagro.com"}</p>
+              <p className="mt-1 wrap-break-word">
+                {contact.email || "info@nicemanagro.com"}
+              </p>
             </div>
           </div>
         </div>

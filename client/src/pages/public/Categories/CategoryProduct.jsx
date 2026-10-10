@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import useProducts from "../../../hooks/useProducts";
 import useCategories from "../../../hooks/useCategories";
+import AnimateOnScroll from "../../../components/AnimateOnScroll";
 
 const CategoryByProduct = () => {
   const { slug } = useParams();
@@ -69,9 +70,11 @@ const CategoryByProduct = () => {
 
         {categoryProducts.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {categoryProducts.map((product) => (
-              <div
+            {categoryProducts.map((product, idx) => (
+              <AnimateOnScroll
+                as="div"
                 key={product.id}
+                delay={idx * 80}
                 className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 {/* Product Image */}
@@ -116,7 +119,7 @@ const CategoryByProduct = () => {
                     </Link>
                   </div>
                 </div>
-              </div>
+              </AnimateOnScroll>
             ))}
           </div>
         ) : (

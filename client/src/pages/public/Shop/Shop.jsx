@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import AnimateOnScroll from "../../../components/AnimateOnScroll";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -245,9 +246,11 @@ function Shop() {
               {/* Product Grid */}
               {filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                  {filteredProducts.map((product) => (
-                    <article
+                  {filteredProducts.map((product, idx) => (
+                    <AnimateOnScroll
+                      as="article"
                       key={product.id}
+                      delay={idx * 80}
                       className="group overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
                     >
                       {/* Product Image */}
@@ -327,7 +330,7 @@ function Shop() {
                           </button>
                         </div>
                       </div>
-                    </article>
+                    </AnimateOnScroll>
                   ))}
                 </div>
               ) : (
