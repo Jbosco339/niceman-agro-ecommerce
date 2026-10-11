@@ -64,14 +64,14 @@ const BoardOfDirectors = () => {
       {/* Directors */}
       <section className="bg-slate-50">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-3">
             {directors.map((director) => (
               <div
                 key={`${director.name}-${director.role}`}
                 className="overflow-hidden rounded-2xl bg-white shadow-sm"
               >
                 {/* Director Profile Image */}
-                <div className="flex h-72 items-center justify-center bg-green-100">
+                <div className="flex h-40 items-center justify-center bg-green-100 sm:h-72">
                   <img
                     src={director.image}
                     alt={director.name}
@@ -79,16 +79,16 @@ const BoardOfDirectors = () => {
                   />
                 </div>
 
-                <div className="p-7">
-                  <h3 className="text-xl font-bold text-slate-900">
+                <div className="p-3 sm:p-7">
+                  <h3 className="text-base font-bold text-slate-900 sm:text-xl">
                     {director.name}
                   </h3>
 
-                  <p className="mt-2 font-medium text-green-700">
+                  <p className="mt-1 text-[11px] font-medium text-green-700 sm:mt-2 sm:text-base">
                     {director.role}
                   </p>
 
-                  <p className="mt-4 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-xs leading-5 text-slate-600 sm:mt-4 sm:text-sm sm:leading-6">
                     Provides leadership, strategic guidance, and oversight
                     supporting the company's long-term objectives.
                   </p>

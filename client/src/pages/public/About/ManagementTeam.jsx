@@ -68,14 +68,14 @@ const ManagementTeam = () => {
       {/* Team */}
       <section className="bg-slate-50">
         <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {team.map((member) => (
               <div
                 key={`${member.name}-${member.role}`}
                 className="overflow-hidden rounded-2xl bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
                 {/* Profile Image */}
-                <div className="flex h-64 items-center justify-center bg-green-100">
+                <div className="flex h-40 items-center justify-center bg-green-100 sm:h-64">
                   <img
                     src={member.image}
                     alt={member.name}
@@ -83,16 +83,16 @@ const ManagementTeam = () => {
                   />
                 </div>
 
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-slate-900">
+                <div className="p-3 sm:p-6">
+                  <h3 className="text-base font-bold text-slate-900 sm:text-xl">
                     {member.name}
                   </h3>
 
-                  <p className="mt-2 font-medium text-green-700">
+                  <p className="mt-1 text-[11px] font-medium text-green-700 sm:mt-2 sm:text-base">
                     {member.role}
                   </p>
 
-                  <p className="mt-4 text-sm leading-6 text-slate-600">
+                  <p className="mt-2 text-xs leading-5 text-slate-600 sm:mt-4 sm:text-sm sm:leading-6">
                     Supporting the company's operations and contributing to
                     sustainable agricultural growth.
                   </p>

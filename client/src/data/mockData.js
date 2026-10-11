@@ -424,7 +424,7 @@ export const websiteContentSeed = {
     phone: "+234 8067030126",
     email: "info@nicemanagro.com",
     address: "Uyo, Nigeria",
-    whatsapp: "+234 8067030126",
+    whatsapp: "+234 812 797 1171",
   },
   footer: {
     description: "Quality inputs delivered to your doorstep.",

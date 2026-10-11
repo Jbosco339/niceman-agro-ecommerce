@@ -85,10 +85,10 @@ const Contact = () => {
                 <div>
                   <h3 className="font-bold text-slate-900">Email</h3>
                   <a
-                    href="mailto:info@nicemanagroandfarms.com"
+                    href="mailto:support@nicemanagro.com"
                     className="mt-1 block text-slate-600 hover:text-green-700"
                   >
-                    info@nicemanagroandfarms.com
+                    support@nicemanagro.com
                   </a>
                 </div>
               </div>

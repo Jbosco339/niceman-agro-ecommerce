@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import AnimateOnScroll from "../../../components/AnimateOnScroll";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -244,14 +245,16 @@ function Shop() {
 
               {/* Product Grid */}
               {filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-                  {filteredProducts.map((product) => (
-                    <article
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {filteredProducts.map((product, idx) => (
+                    <AnimateOnScroll
+                      as="article"
                       key={product.id}
+                      delay={idx * 80}
                       className="group overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
                     >
                       {/* Product Image */}
-                      <div className="relative aspect-square overflow-hidden bg-slate-50">
+                      <div className="relative h-56 overflow-hidden rounded-t-lg bg-white sm:aspect-square sm:h-auto sm:rounded-t-lg">
                         <Link
                           to={`/product/${product.id}`}
                           className="block h-full w-full"
@@ -259,7 +262,7 @@ function Shop() {
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="h-full w-full object-contain p-7 transition duration-300 group-hover:scale-105"
+                            className="block h-full w-full object-contain object-center p-2 transition duration-300 group-hover:scale-105 sm:p-7"
                           />
                         </Link>
 
@@ -327,7 +330,7 @@ function Shop() {
                           </button>
                         </div>
                       </div>
-                    </article>
+                    </AnimateOnScroll>
                   ))}
                 </div>
               ) : (

@@ -10,27 +10,28 @@ function Footer() {
   const facebookUrl = socials.facebook || footer.facebook || null;
   const twitterUrl = socials.x || socials.twitter || footer.twitter || null;
   const instagramUrl = socials.instagram || footer.instagram || null;
+  const youtubeUrl = socials.youtube || footer.youtube || null;
 
   return (
     <footer className="bg-green-950 text-white">
       {/* Main Footer */}
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 px-5 py-14 sm:px-8 md:grid-cols-2 lg:grid-cols-4 lg:px-10">
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-2 gap-6 px-4 py-8 sm:px-8 md:grid-cols-2 lg:grid-cols-4 lg:px-10">
         {/* Company */}
-        <div>
+        <div className="order-4 md:order-1">
           <Link to="/" className="flex items-center">
             <img
               src="/images/NicemanAgroLogoWhite.png"
               alt="Niceman Agro & Farms"
-              className="h-14 w-auto object-contain"
+              className="h-17 w-auto object-contain"
             />
           </Link>
 
-          <p className="mt-5 max-w-xs text-sm leading-6 text-green-100/75">
+          <p className="mt-3 md:mt-5 max-w-full sm:max-w-xs text-sm leading-6 text-green-100/75 wrap-break-word">
             {footer.description ||
               "Quality agricultural inputs, practical farming knowledge and solutions for healthier crops and a greener future."}
           </p>
 
-          <div className="mt-5 flex gap-3">
+          <div className="mt-3 md:mt-5 flex gap-3">
             <a
               href={facebookUrl || "#"}
               target={facebookUrl ? "_blank" : undefined}
@@ -108,17 +109,42 @@ function Footer() {
                 fill="currentColor"
                 aria-hidden
               >
-                <path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm5 6.5A4.5 4.5 0 0010.5 13 4.5 4.5 0 0012 16.5 4.5 4.5 0 0015.5 13 4.5 4.5 0 0012 8.5zM17.5 6a1 1 0 110 2 1 1 0 010-2z" />
+                <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5A4.25 4.25 0 0 0 16.25 3.5h-8.5Zm8.88 2.13a1.13 1.13 0 1 1 0 2.25a1.13 1.13 0 0 1 0-2.25ZM12 7a5 5 0 1 1 0 10a5 5 0 0 1 0-10Zm0 1.5a3.5 3.5 0 1 0 0 7a3.5 3.5 0 0 0 0-7Z" />
+              </svg>
+            </a>
+
+            <a
+              href={youtubeUrl || "#"}
+              target={youtubeUrl ? "_blank" : undefined}
+              rel={youtubeUrl ? "noopener noreferrer" : undefined}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white transition-colors duration-150 hover:bg-[#1A4329]"
+              aria-label={
+                youtubeUrl ? "YouTube" : "YouTube (placeholder - update URL)"
+              }
+              data-placeholder={!youtubeUrl ? "MISSING_YOUTUBE_URL" : undefined}
+              title={
+                youtubeUrl
+                  ? "Visit our YouTube channel"
+                  : "Update footer.socials.youtube with URL"
+              }
+            >
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path d="M23.5 6.5c-.35-1.3-1.33-2.28-2.62-2.62C19.1 3.45 12 3.45 12 3.45s-7.1 0-8.88.43C1.83 4.22.85 5.2.5 6.5C.07 8.28.07 12 .07 12s0 3.72.43 5.5c.35 1.3 1.33 2.28 2.62 2.62C4.9 20.55 12 20.55 12 20.55s7.1 0 8.88-.43c1.29-.34 2.27-1.32 2.62-2.62C23.93 15.72 23.93 12 23.93 12s0-3.72-.43-5.5ZM9.75 15.5v-7l6.25 3.5-6.25 3.5Z" />
               </svg>
             </a>
           </div>
         </div>
 
         {/* Shop */}
-        <div>
+        <div className="order-1 md:order-2">
           <h3 className="text-base font-bold">Shop</h3>
 
-          <ul className="mt-5 space-y-3 text-sm text-green-100/75">
+          <ul className="mt-3 md:mt-5 space-y-3 text-sm text-green-100/75 wrap-break-word">
             <li>
               <Link to="/shop" className="transition hover:text-white">
                 All Products
@@ -152,10 +178,10 @@ function Footer() {
         </div>
 
         {/* Learn */}
-        <div>
+        <div className="order-2 md:order-3">
           <h3 className="text-base font-bold">Learn & Grow</h3>
 
-          <ul className="mt-5 space-y-3 text-sm text-green-100/75">
+          <ul className="mt-3 md:mt-5 space-y-3 text-sm text-green-100/75 wrap-break-word">
             <li>
               <Link to="/blog" className="transition hover:text-white">
                 Agricultural Blog
@@ -189,23 +215,30 @@ function Footer() {
         </div>
 
         {/* Contact */}
-        <div>
+        <div className="order-3 md:order-4">
           <h3 className="text-base font-bold">Contact Us</h3>
 
-          <div className="mt-5 space-y-4 text-sm text-green-100/75">
+          <div className="mt-3 md:mt-5 space-y-3 md:space-y-4 text-sm text-green-100/75">
             <div>
               <p className="font-semibold text-white">Address</p>
-              <p className="mt-1 leading-6">{contact.address || "Nigeria"}</p>
+              <p className="mt-1 leading-6 wrap-break-word">
+                {contact.address || "Nigeria"}
+              </p>
             </div>
 
             <div>
               <p className="font-semibold text-white">Phone</p>
-              <p className="mt-1">{contact.phone || "+234 000 000 0000"}</p>
+              <p className="mt-1 wrap-break-word">{contact.phone}</p>
+              <p className="mt-1 wrap-break-word">
+                {contact.whatsapp || contact.phone}
+              </p>
             </div>
 
             <div>
               <p className="font-semibold text-white">Email</p>
-              <p className="mt-1">{contact.email || "info@nicemanagro.com"}</p>
+              <p className="mt-1 wrap-break-word">
+                {contact.email || "support@nicemanagro.com"}
+              </p>
             </div>
           </div>
         </div>

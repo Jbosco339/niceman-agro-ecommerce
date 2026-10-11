@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import useReviews from "../../hooks/useReviews";
+import AnimateOnScroll from "../../components/AnimateOnScroll";
 
 export default function Reviews() {
   const { getGeneralReviews } = useReviews();
@@ -39,9 +40,11 @@ export default function Reviews() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {reviews.map((review) => (
-              <article
+            {reviews.map((review, idx) => (
+              <AnimateOnScroll
+                as="article"
                 key={review.id}
+                delay={idx * 60}
                 className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
               >
                 <div className="flex items-center justify-between gap-4">
@@ -80,7 +83,7 @@ export default function Reviews() {
                 <p className="mt-5 text-sm leading-7 text-gray-700">
                   “{review.review}”
                 </p>
-              </article>
+              </AnimateOnScroll>
             ))}
           </div>
         )}
