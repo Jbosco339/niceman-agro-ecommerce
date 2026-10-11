@@ -46,7 +46,7 @@ function Navbar() {
           <img
             src="/images/NicemanAgroLogoGreen.png"
             alt="Niceman Agro & Farms"
-            className="h-8 w-auto object-contain sm:h-10 lg:h-12"
+            className="h-12 w-auto object-contain sm:h-10 lg:h-14"
           />
         </Link>
         {/* Desktop Navigation (visible on lg) */}

@@ -219,6 +219,80 @@ function Home() {
         </div>
       </section>
 
+      {/* About section that will appear after the hero before the product category */}
+      <section className="bg-white px-4 py-14 sm:px-6 sm:py-20 lg:px-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            {/* Left: Introduction */}
+            <div>
+              <span className="mb-4 inline-block text-sm font-bold uppercase tracking-[0.2em] text-[#1A4329]">
+                About Niceman Agro & Farms
+              </span>
+
+              <h2 className="mb-6 text-3xl font-bold leading-tight text-[#1A4329] sm:text-4xl lg:text-5xl">
+                Our Purpose — To Empower Farmers and Grow African Agriculture
+              </h2>
+
+              <p className="mb-5 text-base leading-8 text-gray-600 sm:text-lg">
+                Our purpose is to empower Nigerian farmers and improve
+                agricultural productivity by providing access to quality agro
+                inputs, reliable farming equipment, and practical agricultural
+                knowledge. Through innovation, trusted partnerships, and
+                customer-focused service, we aim to make farming more efficient,
+                productive, and sustainable.
+              </p>
+
+              <p className="mb-8 text-base leading-8 text-gray-600 sm:text-lg">
+                At Niceman Agro and Farms, we believe that stronger farmers
+                build stronger communities. We are committed to helping farmers
+                protect their crops, improve yields, adopt better farming
+                practices, and contribute to Nigeria's food security and
+                agricultural development.
+              </p>
+
+              <a
+                href="/company"
+                className="inline-flex items-center gap-3 rounded-md bg-[#1A4329] px-7 py-3.5 font-semibold text-white transition duration-300 hover:bg-[#245C39]"
+              >
+                Learn More About Us
+                <span aria-hidden="true">→</span>
+              </a>
+            </div>
+
+            {/* Right: Company Impact Statistics */}
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+              <div className="rounded-xl bg-[#F3F7F1] p-6 sm:p-8">
+                <h3 className="mb-2 text-3xl font-extrabold text-[#1A4329] sm:text-4xl">
+                  Quality
+                </h3>
+                <p className="text-sm font-medium leading-6 text-gray-600 sm:text-base">
+                  Agricultural Inputs
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-[#F3F7F1] p-6 sm:p-8">
+                <h3 className="mb-2 text-3xl font-extrabold text-[#1A4329] sm:text-4xl">
+                  Trusted
+                </h3>
+                <p className="text-sm font-medium leading-6 text-gray-600 sm:text-base">
+                  Farmer Partnerships
+                </p>
+              </div>
+
+              <div className="col-span-2 rounded-xl bg-[#1A4329] p-7 sm:p-9">
+                <h3 className="mb-2 text-4xl font-extrabold text-white sm:text-5xl">
+                  Sustainable
+                </h3>
+                <p className="max-w-md text-sm leading-7 text-green-100 sm:text-base">
+                  Farming Solutions for Better Productivity, Stronger
+                  Communities, and a More Food-Secure Nigeria.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* PRODUCT CATEGORIES */}
       <section className="bg-slate-50 py-16 sm:py-20">
         <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
@@ -248,11 +322,11 @@ function Home() {
                 to={`/shop?category=${encodeURIComponent(category.name)}`}
                 className="group overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
               >
-                <div className="flex h-32 items-center justify-center overflow-hidden bg-slate-100 sm:h-36 lg:h-40">
+                <div className="flex h-56 w-full items-center justify-center overflow-hidden rounded-lg bg-white sm:h-36 lg:h-40">
                   <img
                     src={category.image}
                     alt={category.name}
-                    className="h-full w-full object-cover p-2 transition duration-300 group-hover:scale-105 sm:p-0"
+                    className="block h-full w-full object-contain object-center p-2 transition duration-300 group-hover:scale-105 sm:object-cover sm:p-0"
                   />
                 </div>
 
@@ -325,7 +399,7 @@ function Home() {
 
                   <div className="mt-3 flex items-center justify-between gap-2 sm:mt-5 sm:gap-3">
                     <strong className="text-base text-green-950 sm:text-lg">
-                      {product.price}
+                      ₦{product.price}
                     </strong>
 
                     <Link
