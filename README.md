@@ -42,15 +42,15 @@ The administrator should be able to manage products, inventory, orders, customer
 Project Structure
 NICEMAN-AGRO/
 │
-├── README.md              # Project-wide documentation
+├── README.md # Project-wide documentation
 │
-├── client/                # Frontend application
-│   ├── README.md          # Frontend-specific documentation
-│   └── ...
+├── client/ # Frontend application
+│ ├── README.md # Frontend-specific documentation
+│ └── ...
 │
-└── server/                # Backend application
-    ├── ...
-    └── ...
+└── server/ # Backend application
+├── ...
+└── ...
 Architecture
 
 The project follows a client-server architecture.
@@ -157,17 +157,17 @@ Order & Email Flow
 The main order flow is:
 
 Browse Products
-      ↓
+↓
 Add to Cart
-      ↓
+↓
 Checkout
-      ↓
+↓
 Payment
-      ↓
+↓
 Payment Verification
-      ↓
+↓
 Create/Confirm Order
-      ↓
+↓
 Send Email Notifications
 
 After successful payment, the backend should send the complete order information to the administrator's email.
@@ -323,26 +323,26 @@ The client and server communicate through API endpoints.
 Example:
 
 Client
-  │
-  │ HTTP Request
-  ▼
+│
+│ HTTP Request
+▼
 Server API
-  │
-  ├── Database
-  ├── Payment Gateway
-  └── Email Service
-  │
-  ▼
+│
+├── Database
+├── Payment Gateway
+└── Email Service
+│
+▼
 Response
-  │
-  ▼
+│
+▼
 Client
 
 The API base URL should be stored in environment variables and should not be hardcoded throughout the application.
 
 Example:
 
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:5000/api
 
 The actual environment variables and API URL will depend on the backend configuration.
 
@@ -406,7 +406,7 @@ Do not commit:
 node_modules/
 .env
 .env.local
-*.env
+\*.env
 
 Do not commit API keys, database credentials, passwords, or other secrets.
 
