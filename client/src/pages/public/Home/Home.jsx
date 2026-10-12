@@ -4,6 +4,7 @@ import useProducts from "../../../hooks/useProducts";
 import { useCategoryContext } from "../../../context/CategoryContext";
 import useWebsiteContent from "../../../hooks/useWebsiteContent";
 import useReviews from "../../../hooks/useReviews";
+import useAuth from "../../../hooks/useAuth";
 import AnimateOnScroll from "../../../components/AnimateOnScroll";
 
 const blogPosts = [
@@ -52,6 +53,7 @@ function Home() {
   const { activeCategories } = useCategoryContext();
   const { content: siteContent } = useWebsiteContent();
   const { getGeneralReviews } = useReviews();
+  const { isAuthenticated } = useAuth();
   const approvedGeneralReviews = getGeneralReviews()
     .filter(
       (review) => review.type === "general" && review.status === "Approved",
@@ -379,11 +381,11 @@ function Home() {
                   to={`/product/${product.id}`}
                   className="block overflow-hidden bg-slate-50"
                 >
-                  <div className="flex h-30 items-center justify-center overflow-hidden sm:h-45 lg:h-55">
+                  <div className="flex h-40 w-full items-center justify-center overflow-hidden rounded-lg bg-white sm:h-48 lg:h-56">
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="h-full w-full object-contain p-2 sm:p-6"
+                      className="block h-full w-full object-contain object-center p-2 transition duration-300 group-hover:scale-105 sm:p-4 lg:p-6"
                     />
                   </div>
                 </Link>
@@ -556,13 +558,15 @@ function Home() {
               </p>
             </div>
 
-            <div className="hidden sm:flex items-center gap-3">
-              <Link
-                to="/write-review"
-                className="inline-flex items-center rounded-md border border-green-700 bg-white px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
-              >
-                Write a Review
-              </Link>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              {isAuthenticated && (
+                <Link
+                  to="/write-review"
+                  className="inline-flex items-center rounded-md border border-green-700 bg-white px-4 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
+                >
+                  Write a Review
+                </Link>
+              )}
               <Link
                 to="/reviews"
                 className="inline-flex items-center rounded-md bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800"
@@ -629,6 +633,66 @@ function Home() {
                 </figure>
               ))
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* Adding a by the numbers section here */}
+      <section className="bg-[#1A4329] py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-green-300 font-semibold tracking-[0.2em] text-sm mb-3">
+              OUR IMPACT
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">
+              By the Numbers
+            </h2>
+            <p className="text-gray-200 mt-4 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+              Empowering farmers with quality agricultural products and reliable
+              solutions for better farming and improved productivity.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-4 lg:gap-8">
+            {/* Statistic 1 */}
+            <div className="text-center px-2">
+              <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-green-300 mb-3">
+                400+
+              </h3>
+              <p className="text-white text-sm sm:text-base font-semibold">
+                Agricultural Products
+              </p>
+            </div>
+
+            {/* Statistic 2 */}
+            <div className="text-center px-2">
+              <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-green-300 mb-3">
+                All-Year
+              </h3>
+              <p className="text-white text-sm sm:text-base font-semibold">
+                Support for Farmers
+              </p>
+            </div>
+
+            {/* Statistic 3 */}
+            <div className="text-center px-2">
+              <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-green-300 mb-3">
+                100%
+              </h3>
+              <p className="text-white text-sm sm:text-base font-semibold">
+                Commitment to Quality
+              </p>
+            </div>
+
+            {/* Statistic 4 */}
+            <div className="text-center px-2">
+              <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-green-300 mb-3">
+                250+
+              </h3>
+              <p className="text-white text-sm sm:text-base font-semibold">
+                Satisfied Farmers
+              </p>
+            </div>
           </div>
         </div>
       </section>

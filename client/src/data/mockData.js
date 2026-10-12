@@ -117,8 +117,8 @@ export const ordersSeed = [
   {
     id: "NA-2026-00125",
     customer: {
-      name: "John Doe",
-      email: "johndoe@example.com",
+      name: "Ukpono Ekom",
+      email: "ukpono@gmail.com",
       phone: "+234 801 234 5678",
       address: "12 Farm Road, Lagos, Nigeria",
     },
@@ -206,8 +206,8 @@ export const ordersSeed = [
 export const customersSeed = [
   {
     id: 1,
-    name: "John Doe",
-    email: "johndoe@example.com",
+    name: "Mabel Richards",
+    email: "mabel@example.com",
     phone: "+234 801 234 5678",
     orders: 8,
     totalSpent: 245000,
@@ -320,8 +320,8 @@ export const reviewsSeed = [
   {
     id: 1,
     type: "general",
-    customer: "John Doe",
-    email: "johndoe@example.com",
+    customer: "Ifiok Abaiama",
+    email: "ifiok@example.com",
     rating: 5,
     review: "Very fresh tomatoes and excellent quality. Will order again.",
     comment: "Very fresh tomatoes and excellent quality. Will order again.",
@@ -412,13 +412,13 @@ export const websiteContentSeed = {
     subtitle: "Quality farm produce delivered fresh to your doorstep.",
     buttonText: "Shop Now",
     buttonLink: "/shop",
-    image: "/images/5.jpg",
+    image: "/images/categories/15.jpg",
   },
   about: {
     title: "About Niceman Agro & Farms",
     description:
       "We provide farm inputs and fresh, quality agricultural products sourced from trusted farms and delivered to customers with care.",
-    image: "/images/6.jpg",
+    image: "/images/categories/16.jpg",
   },
   contact: {
     phone: "+234 8067030126",

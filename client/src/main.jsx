@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { FavoritesProvider } from "./context/FavoritesContext";
 import { AdminProvider } from "./context/AdminContext";
@@ -15,26 +16,28 @@ import App from "./App";
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <AdminProvider>
-      <ProductProvider>
-        <OrderProvider>
-          <CustomerProvider>
-            <CategoryProvider>
-              <WebsiteContentProvider>
-                <BlogProvider>
-                  <FavoritesProvider>
-                    <CartProvider>
-                      <ReviewProvider>
-                        <App />
-                      </ReviewProvider>
-                    </CartProvider>
-                  </FavoritesProvider>
-                </BlogProvider>
-              </WebsiteContentProvider>
-            </CategoryProvider>
-          </CustomerProvider>
-        </OrderProvider>
-      </ProductProvider>
-    </AdminProvider>
+    <AuthProvider>
+      <AdminProvider>
+        <ProductProvider>
+          <OrderProvider>
+            <CustomerProvider>
+              <CategoryProvider>
+                <WebsiteContentProvider>
+                  <BlogProvider>
+                    <FavoritesProvider>
+                      <CartProvider>
+                        <ReviewProvider>
+                          <App />
+                        </ReviewProvider>
+                      </CartProvider>
+                    </FavoritesProvider>
+                  </BlogProvider>
+                </WebsiteContentProvider>
+              </CategoryProvider>
+            </CustomerProvider>
+          </OrderProvider>
+        </ProductProvider>
+      </AdminProvider>
+    </AuthProvider>
   </BrowserRouter>,
 );
