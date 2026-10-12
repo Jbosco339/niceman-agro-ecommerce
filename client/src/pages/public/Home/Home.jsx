@@ -4,6 +4,7 @@ import useProducts from "../../../hooks/useProducts";
 import { useCategoryContext } from "../../../context/CategoryContext";
 import useWebsiteContent from "../../../hooks/useWebsiteContent";
 import useReviews from "../../../hooks/useReviews";
+import AnimateOnScroll from "../../../components/AnimateOnScroll";
 
 const blogPosts = [
   {
@@ -218,6 +219,80 @@ function Home() {
         </div>
       </section>
 
+      {/* About section that will appear after the hero before the product category */}
+      <section className="bg-white px-4 py-14 sm:px-6 sm:py-20 lg:px-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            {/* Left: Introduction */}
+            <div>
+              <span className="mb-4 inline-block text-sm font-bold uppercase tracking-[0.2em] text-[#1A4329]">
+                About Niceman Agro & Farms
+              </span>
+
+              <h2 className="mb-6 text-3xl font-bold leading-tight text-[#1A4329] sm:text-4xl lg:text-5xl">
+                Our Purpose — To Empower Farmers and Grow African Agriculture
+              </h2>
+
+              <p className="mb-5 text-base leading-8 text-gray-600 sm:text-lg">
+                Our purpose is to empower Nigerian farmers and improve
+                agricultural productivity by providing access to quality agro
+                inputs, reliable farming equipment, and practical agricultural
+                knowledge. Through innovation, trusted partnerships, and
+                customer-focused service, we aim to make farming more efficient,
+                productive, and sustainable.
+              </p>
+
+              <p className="mb-8 text-base leading-8 text-gray-600 sm:text-lg">
+                At Niceman Agro and Farms, we believe that stronger farmers
+                build stronger communities. We are committed to helping farmers
+                protect their crops, improve yields, adopt better farming
+                practices, and contribute to Nigeria's food security and
+                agricultural development.
+              </p>
+
+              <a
+                href="/company"
+                className="inline-flex items-center gap-3 rounded-md bg-[#1A4329] px-7 py-3.5 font-semibold text-white transition duration-300 hover:bg-[#245C39]"
+              >
+                Learn More About Us
+                <span aria-hidden="true">→</span>
+              </a>
+            </div>
+
+            {/* Right: Company Impact Statistics */}
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+              <div className="rounded-xl bg-[#F3F7F1] p-6 sm:p-8">
+                <h3 className="mb-2 text-3xl font-extrabold text-[#1A4329] sm:text-4xl">
+                  Quality
+                </h3>
+                <p className="text-sm font-medium leading-6 text-gray-600 sm:text-base">
+                  Agricultural Inputs
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-[#F3F7F1] p-6 sm:p-8">
+                <h3 className="mb-2 text-3xl font-extrabold text-[#1A4329] sm:text-4xl">
+                  Trusted
+                </h3>
+                <p className="text-sm font-medium leading-6 text-gray-600 sm:text-base">
+                  Farmer Partnerships
+                </p>
+              </div>
+
+              <div className="col-span-2 rounded-xl bg-[#1A4329] p-7 sm:p-9">
+                <h3 className="mb-2 text-4xl font-extrabold text-white sm:text-5xl">
+                  Sustainable
+                </h3>
+                <p className="max-w-md text-sm leading-7 text-green-100 sm:text-base">
+                  Farming Solutions for Better Productivity, Stronger
+                  Communities, and a More Food-Secure Nigeria.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* PRODUCT CATEGORIES */}
       <section className="bg-slate-50 py-16 sm:py-20">
         <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
@@ -240,27 +315,27 @@ function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {activeCategories.map((category) => (
               <Link
                 key={category.name}
                 to={`/shop?category=${encodeURIComponent(category.name)}`}
                 className="group overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
               >
-                <div className="aspect-square overflow-hidden bg-slate-100">
+                <div className="flex h-56 w-full items-center justify-center overflow-hidden rounded-lg bg-white sm:h-36 lg:h-40">
                   <img
                     src={category.image}
                     alt={category.name}
-                    className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    className="block h-full w-full object-contain object-center p-2 transition duration-300 group-hover:scale-105 sm:object-cover sm:p-0"
                   />
                 </div>
 
-                <div className="p-4">
-                  <h3 className="font-semibold text-green-950">
+                <div className="p-3 text-center sm:p-4">
+                  <h3 className="text-sm font-semibold text-green-950 sm:text-base">
                     {category.name}
                   </h3>
 
-                  <span className="mt-2 block text-xs font-bold text-green-700">
+                  <span className="mt-1 block text-[10px] font-bold text-green-700 sm:mt-2 sm:text-xs">
                     Explore Products →
                   </span>
                 </div>
@@ -292,46 +367,50 @@ function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {productsToShow.map((product) => (
-              <article
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {productsToShow.map((product, idx) => (
+              <AnimateOnScroll
+                as="article"
                 key={product.id}
+                delay={idx * 80}
                 className="overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
               >
                 <Link
                   to={`/product/${product.id}`}
-                  className="block aspect-square overflow-hidden bg-slate-50"
+                  className="block overflow-hidden bg-slate-50"
                 >
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="h-full w-full object-contain p-6"
-                  />
+                  <div className="flex h-30 items-center justify-center overflow-hidden sm:h-45 lg:h-55">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="h-full w-full object-contain p-2 sm:p-6"
+                    />
+                  </div>
                 </Link>
 
-                <div className="p-5">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-green-700">
+                <div className="p-3 sm:p-5">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-green-700 sm:text-[11px]">
                     {product.category}
                   </span>
 
-                  <h3 className="mt-2 font-semibold leading-6 text-green-950">
+                  <h3 className="mt-2 text-sm font-semibold leading-5 text-green-950 sm:text-base sm:leading-6">
                     {product.name}
                   </h3>
 
-                  <div className="mt-5 flex items-center justify-between gap-3">
-                    <strong className="text-lg text-green-950">
-                      {product.price}
+                  <div className="mt-3 flex items-center justify-between gap-2 sm:mt-5 sm:gap-3">
+                    <strong className="text-base text-green-950 sm:text-lg">
+                      ₦{product.price}
                     </strong>
 
                     <Link
                       to={`/product/${product.id}`}
-                      className="text-sm font-bold text-green-700 hover:underline"
+                      className="text-xs font-bold text-green-700 hover:underline sm:text-sm"
                     >
                       View →
                     </Link>
                   </div>
                 </div>
-              </article>
+              </AnimateOnScroll>
             ))}
           </div>
         </div>
@@ -355,7 +434,7 @@ function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 icon: "✓",
@@ -380,17 +459,17 @@ function Home() {
             ].map((benefit) => (
               <article
                 key={benefit.title}
-                className="rounded-lg bg-white p-7 text-center"
+                className="rounded-lg bg-white p-3 text-center sm:p-7"
               >
-                <div className="mx-auto flex h-13 w-13 items-center justify-center rounded-full bg-green-100 text-xl font-bold text-green-700">
+                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-lg font-bold text-green-700 sm:h-13 sm:w-13 sm:text-xl">
                   {benefit.icon}
                 </div>
 
-                <h3 className="mt-5 text-lg font-bold text-green-950">
+                <h3 className="mt-3 text-sm font-bold text-green-950 sm:mt-5 sm:text-lg">
                   {benefit.title}
                 </h3>
 
-                <p className="mt-3 text-sm leading-6 text-slate-600">
+                <p className="mt-2 text-xs leading-5 text-slate-600 sm:mt-3 sm:text-sm sm:leading-6">
                   {benefit.text}
                 </p>
               </article>
@@ -422,9 +501,11 @@ function Home() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {blogPosts.map((post) => (
-              <article
+            {blogPosts.map((post, idx) => (
+              <AnimateOnScroll
+                as="article"
                 key={post.title}
+                delay={idx * 80}
                 className="overflow-hidden rounded-lg border border-slate-200 bg-white"
               >
                 <Link to="/blog" className="block aspect-video overflow-hidden">
@@ -451,7 +532,7 @@ function Home() {
                     Read Article →
                   </Link>
                 </div>
-              </article>
+              </AnimateOnScroll>
             ))}
           </div>
         </div>

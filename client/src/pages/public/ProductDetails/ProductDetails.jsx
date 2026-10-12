@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import AnimateOnScroll from "../../../components/AnimateOnScroll";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -211,30 +212,30 @@ function ProductDetails() {
 
       {/* Product Details */}
       <section className="px-4 py-12 sm:py-16">
-        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2">
-          {/* Product Image */}
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
-            <div className="aspect-square">
+        <div className="mx-auto flex max-w-7xl gap-6">
+          {/* Product Image (left column) */}
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 p-3 w-2/5 md:w-1/2">
+            <div className="flex h-[240px] md:h-[420px] items-center justify-center p-2">
               <img
                 src={product.image}
                 alt={product.name}
-                className="h-full w-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
           </div>
 
-          {/* Product Information */}
-          <div className="flex flex-col justify-center">
+          {/* Product Information (right column) */}
+          <div className="flex flex-col justify-center w-3/5 md:w-1/2">
             <p className="text-sm font-semibold uppercase tracking-wider text-green-700">
               {product.category}
             </p>
 
-            <h2 className="mt-3 text-3xl font-bold text-gray-900 sm:text-4xl">
+            <h2 className="mt-3 text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
               {product.name}
             </h2>
 
             {/* Rating */}
-            <div className="mt-5 flex items-center gap-2">
+            <div className="mt-4 flex items-center gap-2">
               <div className="flex items-center gap-1 text-yellow-500">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
@@ -261,7 +262,7 @@ function ProductDetails() {
             </div>
 
             {/* Price */}
-            <p className="mt-6 text-3xl font-bold text-green-800">
+            <p className="mt-4 text-2xl md:text-3xl font-bold text-green-800">
               {formatPrice(product.price)}
             </p>
 
@@ -293,7 +294,7 @@ function ProductDetails() {
             </div>
 
             {/* Quantity */}
-            <div className="mt-8">
+            <div className="mt-6">
               <p className="mb-3 text-sm font-semibold text-gray-900">
                 Quantity
               </p>
@@ -302,7 +303,7 @@ function ProductDetails() {
                 <button
                   type="button"
                   onClick={decreaseQuantity}
-                  className="flex h-11 w-11 items-center justify-center rounded-l-lg border border-gray-300 bg-white text-gray-700 transition hover:bg-gray-50"
+                  className="flex h-9 w-9 md:h-11 md:w-11 items-center justify-center rounded-l-lg border border-gray-300 bg-white text-gray-700 transition hover:bg-gray-50"
                 >
                   <Minus size={17} />
                 </button>
@@ -314,7 +315,7 @@ function ProductDetails() {
                 <button
                   type="button"
                   onClick={increaseQuantity}
-                  className="flex h-11 w-11 items-center justify-center rounded-r-lg border border-gray-300 bg-white text-gray-700 transition hover:bg-gray-50"
+                  className="flex h-9 w-9 md:h-11 md:w-11 items-center justify-center rounded-r-lg border border-gray-300 bg-white text-gray-700 transition hover:bg-gray-50"
                 >
                   <Plus size={17} />
                 </button>
@@ -322,27 +323,27 @@ function ProductDetails() {
             </div>
 
             {/* Actions */}
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-800 px-6 py-3.5 font-semibold text-white transition hover:bg-green-900"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-800 px-5 py-2.5 md:px-6 md:py-3.5 font-semibold text-white transition hover:bg-green-900"
               >
-                <ShoppingCart size={19} />
+                <ShoppingCart size={18} />
                 Add to Cart
               </button>
 
               <button
                 type="button"
                 onClick={() => toggleFavorite(product)}
-                className={`flex items-center justify-center gap-2 rounded-lg border px-5 py-3.5 font-semibold transition ${
+                className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 md:px-5 md:py-3.5 font-semibold transition ${
                   isFavorite(product.id)
                     ? "border-red-200 bg-red-50 text-red-600"
                     : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                 }`}
               >
                 <Heart
-                  size={19}
+                  size={18}
                   fill={isFavorite(product.id) ? "currentColor" : "none"}
                 />
                 {isFavorite(product.id) ? "Saved" : "Wishlist"}
@@ -510,9 +511,11 @@ function ProductDetails() {
                 your experience.
               </div>
             ) : (
-              productReviews.map((review) => (
-                <div
+              productReviews.map((review, idx) => (
+                <AnimateOnScroll
                   key={review.id}
+                  as="div"
+                  delay={idx * 60}
                   className="rounded-lg bg-white p-6 shadow-sm"
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -552,7 +555,7 @@ function ProductDetails() {
                   <p className="mt-4 text-sm leading-6 text-gray-600">
                     “{review.review}”
                   </p>
-                </div>
+                </AnimateOnScroll>
               ))
             )}
           </div>
