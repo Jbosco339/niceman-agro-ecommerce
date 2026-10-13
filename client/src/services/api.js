@@ -1,4 +1,8 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+const API_URL = import.meta.env.VITE_API_URL;
+
+if (!API_URL) {
+  throw new Error("Missing VITE_API_URL in the client .env file.");
+}
 
 const api = async (endpoint, options = {}) => {
   const requestOptions = {
@@ -26,9 +30,9 @@ const api = async (endpoint, options = {}) => {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const error = new Error(data.message || "Something went wrong with the API request.");
-    error.status = response.status;
-    throw error;
+    throw new Error(
+      data.message || "Something went wrong with the API request.",
+    );
   }
 
   return data;
