@@ -95,7 +95,7 @@ function Home() {
               image: "/images/hero/agro12.jpg",
               title: ["Growing Better Crops.", "Building a Better Future."],
               description:
-                "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farms.",
+                "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farm.",
             },
             {
               image: "/images/hero/6.jpg",
@@ -226,7 +226,7 @@ function Home() {
             {/* Left: Introduction */}
             <div>
               <span className="mb-4 inline-block text-sm font-bold uppercase tracking-[0.2em] text-[#1A4329]">
-                About Niceman Agro & Farms
+                About Niceman Agro & Farm
               </span>
 
               <h2 className="mb-6 text-3xl font-bold leading-tight text-[#1A4329] sm:text-4xl lg:text-5xl">
@@ -234,7 +234,7 @@ function Home() {
               </h2>
 
               <p className="mb-5 text-base leading-8 text-gray-600 sm:text-lg">
-                Our purpose is to empower Nigerian farmers and improve
+                Our purpose is to empower  farmers in Africa and improve
                 agricultural productivity by providing access to quality agro
                 inputs, reliable farming equipment, and practical agricultural
                 knowledge. Through innovation, trusted partnerships, and
@@ -243,7 +243,7 @@ function Home() {
               </p>
 
               <p className="mb-8 text-base leading-8 text-gray-600 sm:text-lg">
-                At Niceman Agro and Farms, we believe that stronger farmers
+                At Niceman Agro and Farm, we believe that stronger farmers
                 build stronger communities. We are committed to helping farmers
                 protect their crops, improve yields, adopt better farming
                 practices, and contribute to Nigeria's food security and
@@ -425,7 +425,7 @@ function Home() {
             </span>
 
             <h2 className="mt-2 text-3xl font-bold text-green-950 sm:text-4xl">
-              Why Choose Niceman Agro & Farms?
+              Why Choose Niceman Agro & Farm?
             </h2>
 
             <p className="mt-4 leading-7 text-slate-600">
@@ -580,7 +580,7 @@ function Home() {
                 </p>
                 <p className="mt-2 text-green-800/80">
                   Be the first to share your experience with Niceman Agro &
-                  Farms.
+                  Farm.
                 </p>
               </div>
             ) : (
@@ -692,7 +692,7 @@ function Home() {
         <div className="mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-8 px-5 sm:px-8 lg:flex-row lg:items-center lg:px-10">
           <div className="max-w-3xl">
             <span className="text-xs font-bold uppercase tracking-[0.15em] text-green-200">
-              Niceman Agro & Farms
+              Niceman Agro & Farm
             </span>
 
             <h2 className="mt-3 text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">

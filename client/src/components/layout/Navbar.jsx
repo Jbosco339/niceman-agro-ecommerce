@@ -90,7 +90,7 @@ function Navbar() {
           <div className="relative group">
             <div className="relative group">
               <Link
-                to="/about"
+                to="/"
                 className="flex items-center gap-1 text-sm font-medium text-slate-700 transition-colors duration-200 hover:text-green-700"
               >
                 About Us
