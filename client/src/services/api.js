@@ -5,22 +5,29 @@ if (!API_URL) {
 }
 
 const api = async (endpoint, options = {}) => {
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const requestOptions = {
     credentials: "include",
     ...options,
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
     },
-  });
+  };
+  const sendRequest = () => fetch(`${API_URL}${endpoint}`, requestOptions);
+  let response = await sendRequest();
 
-  let data;
-
-  try {
-    data = await response.json();
-  } catch {
-    data = {};
+  if (
+    response.status === 401 &&
+    !/\/(login|register|refresh-token)$/.test(endpoint)
+  ) {
+    const refreshResponse = await fetch(`${API_URL}/user/refresh-token`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (refreshResponse.ok) response = await sendRequest();
   }
+
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     throw new Error(

@@ -1,4 +1,5 @@
-import { get, post, put, del } from "./api";
+import { get } from "./api";
+import adminService from "./adminService";
 
 // ==================== PUBLIC BLOG ====================
 
@@ -17,25 +18,23 @@ export const getBlogPostsByCategory = async (category) => {
 // ==================== ADMIN BLOG ====================
 
 export const getAllBlogPosts = async () => {
-  return get("/blog");
+  return adminService.getBlogPosts();
 };
 
 export const createBlogPost = async (post) => {
-  return post("/blog", post);
+  return adminService.createBlogPost(post);
 };
 
 export const updateBlogPost = async (id, updatedPost) => {
-  return put(`/blog/${id}`, updatedPost);
+  return adminService.updateBlogPost(id, updatedPost);
 };
 
 export const deleteBlogPost = async (id) => {
-  return del(`/blog/${id}`);
+  return adminService.deleteBlogPost(id);
 };
 
 export const toggleBlogPostStatus = async (id, status) => {
-  return put(`/blog/${id}`, {
-    status,
-  });
+  return adminService.updateBlogPost(id, { status });
 };
 
 export default {

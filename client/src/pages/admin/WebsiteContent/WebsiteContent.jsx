@@ -1,59 +1,82 @@
-import { useState } from "react";
-import useWebsiteContent from "../../../hooks/useWebsiteContent";
-import { handleLocalImageUpload } from "../../../utils/localImageUpload";
+import { useEffect, useState } from "react";
+import { getWebsiteContent, updateWebsiteContent } from "../../../services/adminService";
 
 export default function WebsiteContent() {
   const [activeTab, setActiveTab] = useState("hero");
-  const [heroBannerPreview, setHeroBannerPreview] = useState("");
-  const [heroBannerPreview2, setHeroBannerPreview2] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const { content, updateSection } = useWebsiteContent();
+  const [content, setContent] = useState({
+    hero: {
+      title: "Fresh From Our Farm to Your Table",
+      subtitle:
+        "Quality farm produce delivered fresh to your doorstep.",
+      buttonText: "Shop Now",
+      buttonLink: "/shop",
+      image: "/images/hero-bg.jpg",
+    },
+
+    about: {
+      title: "About Niceman Agro & Farms",
+      description:
+        "We provide fresh, quality agricultural products sourced from trusted farms and delivered to customers with care.",
+      image: "/images/about.jpg",
+    },
+
+    contact: {
+      phone: "+234 801 234 5678",
+      email: "info@nicemanagro.com",
+      address: "Lagos, Nigeria",
+      whatsapp: "+234 801 234 5678",
+    },
+
+    footer: {
+      description:
+        "Quality farm produce delivered fresh to your doorstep.",
+      copyright: "© 2026 Niceman Agro & Farms. All rights reserved.",
+    },
+  });
+
+  useEffect(() => {
+    getWebsiteContent()
+      .then(({ data }) => {
+        if (data && Object.keys(data).length) {
+          setContent((current) => ({
+            ...current,
+            ...data,
+            hero: { ...current.hero, ...data.hero },
+            about: { ...current.about, ...data.about },
+            contact: { ...current.contact, ...data.contact },
+            footer: { ...current.footer, ...data.footer },
+          }));
+        }
+      })
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const updateContent = (section, field, value) => {
-    updateSection(section, { [field]: value });
+    setContent((current) => ({
+      ...current,
+      [section]: {
+        ...current[section],
+        [field]: value,
+      },
+    }));
   };
 
-  const updateHeroSlide = (index, field, value) => {
-    const slides =
-      content.hero && content.hero.slides ? [...content.hero.slides] : [];
-    // Ensure at least two slots
-    while (slides.length < 2)
-      slides.push({
-        title: "",
-        subtitle: "",
-        buttonText: "",
-        buttonLink: "",
-        image: "",
-      });
-    slides[index] = { ...(slides[index] || {}), [field]: value };
-
-    if (index === 0) {
-      // keep top-level hero keys in sync for backwards compatibility
-      updateSection("hero", { slides, [field]: value });
-    } else {
-      updateSection("hero", { slides });
+  const handleSave = async () => {
+    setSaving(true);
+    setSaved(false);
+    setError("");
+    try {
+      await updateWebsiteContent(content);
+      setSaved(true);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
     }
-  };
-
-  const handleHeroImageUpload = async (index, e) => {
-    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
-      updateHeroSlide(index, "image", nextImage);
-      if (index === 0) setHeroBannerPreview(nextImage);
-      if (index === 1) setHeroBannerPreview2(nextImage);
-    });
-
-    const slide = content.hero?.slides?.[index];
-    if (!dataUrl && slide?.image) {
-      if (index === 0) setHeroBannerPreview(slide.image);
-      if (index === 1) setHeroBannerPreview2(slide.image);
-    }
-  };
-
-  const handleSave = (section) => {
-    // content is already persisted via the provider
-    alert(
-      `${section.charAt(0).toUpperCase() + section.slice(1)} content saved successfully.`,
-    );
   };
 
   const tabs = [
@@ -67,12 +90,16 @@ export default function WebsiteContent() {
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Website Content</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Website Content
+        </h1>
 
         <p className="mt-1 text-sm text-gray-500">
           Manage the content displayed across your website.
         </p>
       </div>
+      {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+      {saved && <p role="status" className="mb-4 text-sm text-green-700">Website content saved.</p>}
 
       {/* Tabs */}
       <div className="mb-6 overflow-x-auto rounded-xl bg-white shadow-sm">
@@ -105,241 +132,90 @@ export default function WebsiteContent() {
             </p>
           </div>
 
-          <div className="space-y-6">
-            {/* Slide 1 editor */}
-            <div className="rounded-lg border border-gray-100 p-4">
-              <h3 className="mb-3 text-sm font-semibold text-gray-800">
-                Hero Slide 1 (keeps current site values)
-              </h3>
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Heading
-                  </label>
-                  <input
-                    type="text"
-                    value={
-                      content?.hero?.slides?.[0]?.title ||
-                      content?.hero?.title ||
-                      ""
-                    }
-                    onChange={(e) =>
-                      updateHeroSlide(0, "title", e.target.value)
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
-                  />
-                </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Heading
+              </label>
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Button Text
-                  </label>
-                  <input
-                    type="text"
-                    value={
-                      content?.hero?.slides?.[0]?.buttonText ||
-                      content?.hero?.buttonText ||
-                      ""
-                    }
-                    onChange={(e) =>
-                      updateHeroSlide(0, "buttonText", e.target.value)
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
-                  />
-                </div>
-
-                <div className="lg:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Subtitle
-                  </label>
-                  <textarea
-                    rows="4"
-                    value={
-                      content?.hero?.slides?.[0]?.subtitle ||
-                      content?.hero?.subtitle ||
-                      ""
-                    }
-                    onChange={(e) =>
-                      updateHeroSlide(0, "subtitle", e.target.value)
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Button Link
-                  </label>
-                  <input
-                    type="text"
-                    value={
-                      content?.hero?.slides?.[0]?.buttonLink ||
-                      content?.hero?.buttonLink ||
-                      ""
-                    }
-                    onChange={(e) =>
-                      updateHeroSlide(0, "buttonLink", e.target.value)
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Hero Image
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleHeroImageUpload(0, e)}
-                    className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
-                  />
-                  <p className="mt-2 text-xs text-gray-500">
-                    Upload or replace Slide 1 image.
-                  </p>
-
-                  {(heroBannerPreview ||
-                    content?.hero?.slides?.[0]?.image ||
-                    content?.hero?.image) && (
-                    <div className="mt-4">
-                      <p className="text-sm font-medium text-gray-700 mb-2">
-                        Preview
-                      </p>
-                      <img
-                        src={
-                          heroBannerPreview ||
-                          content?.hero?.slides?.[0]?.image ||
-                          content?.hero?.image
-                        }
-                        alt="Hero slide 1 preview"
-                        className="w-full h-48 rounded-lg object-cover border border-gray-200 bg-gray-50"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <button
-                  onClick={() => handleSave("hero")}
-                  className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800"
-                >
-                  Save Slide 1
-                </button>
-              </div>
+              <input
+                type="text"
+                value={content.hero.title}
+                onChange={(e) =>
+                  updateContent("hero", "title", e.target.value)
+                }
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+              />
             </div>
 
-            {/* Slide 2 editor */}
-            <div className="rounded-lg border border-gray-100 p-4">
-              <h3 className="mb-3 text-sm font-semibold text-gray-800">
-                Hero Slide 2
-              </h3>
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Heading
-                  </label>
-                  <input
-                    type="text"
-                    value={content?.hero?.slides?.[1]?.title || ""}
-                    onChange={(e) =>
-                      updateHeroSlide(1, "title", e.target.value)
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
-                  />
-                </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Button Text
+              </label>
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Button Text
-                  </label>
-                  <input
-                    type="text"
-                    value={content?.hero?.slides?.[1]?.buttonText || ""}
-                    onChange={(e) =>
-                      updateHeroSlide(1, "buttonText", e.target.value)
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
-                  />
-                </div>
+              <input
+                type="text"
+                value={content.hero.buttonText}
+                onChange={(e) =>
+                  updateContent("hero", "buttonText", e.target.value)
+                }
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+              />
+            </div>
 
-                <div className="lg:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Subtitle
-                  </label>
-                  <textarea
-                    rows="4"
-                    value={content?.hero?.slides?.[1]?.subtitle || ""}
-                    onChange={(e) =>
-                      updateHeroSlide(1, "subtitle", e.target.value)
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
-                  />
-                </div>
+            <div className="lg:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Subtitle
+              </label>
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Button Link
-                  </label>
-                  <input
-                    type="text"
-                    value={content?.hero?.slides?.[1]?.buttonLink || ""}
-                    onChange={(e) =>
-                      updateHeroSlide(1, "buttonLink", e.target.value)
-                    }
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
-                  />
-                </div>
+              <textarea
+                rows="4"
+                value={content.hero.subtitle}
+                onChange={(e) =>
+                  updateContent("hero", "subtitle", e.target.value)
+                }
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+              />
+            </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Hero Image
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleHeroImageUpload(1, e)}
-                    className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
-                  />
-                  <p className="mt-2 text-xs text-gray-500">
-                    Upload image for Slide 2.
-                  </p>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Button Link
+              </label>
 
-                  {(heroBannerPreview2 ||
-                    content?.hero?.slides?.[1]?.image) && (
-                    <div className="mt-4">
-                      <p className="text-sm font-medium text-gray-700 mb-2">
-                        Preview
-                      </p>
-                      <img
-                        src={
-                          heroBannerPreview2 ||
-                          content?.hero?.slides?.[1]?.image
-                        }
-                        alt="Hero slide 2 preview"
-                        className="w-full h-48 rounded-lg object-cover border border-gray-200 bg-gray-50"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+              <input
+                type="text"
+                value={content.hero.buttonLink}
+                onChange={(e) =>
+                  updateContent("hero", "buttonLink", e.target.value)
+                }
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+              />
+            </div>
 
-              <div className="mt-4">
-                <button
-                  onClick={() => handleSave("hero")}
-                  className="rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800"
-                >
-                  Save Slide 2
-                </button>
-              </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Hero Image URL
+              </label>
+
+              <input
+                type="text"
+                value={content.hero.image}
+                onChange={(e) =>
+                  updateContent("hero", "image", e.target.value)
+                }
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+              />
             </div>
           </div>
+
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
+          >
+            Save Hero Content
+          </button>
         </div>
       )}
 
@@ -404,7 +280,8 @@ export default function WebsiteContent() {
           </div>
 
           <button
-            onClick={() => handleSave("about")}
+            onClick={handleSave}
+            disabled={saving}
             className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
           >
             Save About Content
@@ -488,7 +365,8 @@ export default function WebsiteContent() {
           </div>
 
           <button
-            onClick={() => handleSave("contact")}
+            onClick={handleSave}
+            disabled={saving}
             className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
           >
             Save Contact Information
@@ -542,7 +420,8 @@ export default function WebsiteContent() {
           </div>
 
           <button
-            onClick={() => handleSave("footer")}
+            onClick={handleSave}
+            disabled={saving}
             className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
           >
             Save Footer Content
@@ -552,8 +431,8 @@ export default function WebsiteContent() {
 
       {/* Backend Note */}
       <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        Website content is currently stored locally for development. Connect
-        these sections to the backend API when the server is ready.
+        Website content is currently stored locally for development.
+        Connect these sections to the backend API when the server is ready.
       </div>
     </div>
   );

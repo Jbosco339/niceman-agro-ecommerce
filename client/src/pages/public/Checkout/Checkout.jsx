@@ -1,24 +1,30 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../../../context/CartContext";
-
-const bankDetails = {
-  accountName: "Niceman Agro & Farms",
-  bankName: "Access Bank",
-  accountNumber: "1234567890",
-};
+import { useAuth } from "../../../context/useAuth";
+import { calculateCheckout, createOrder, getBankTransferReference, initializePayment, getBankDetails as fetchBankDetails } from "../../../services/checkoutService";
 
 const Checkout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { cartItems: cartContextItems, cartTotal } = useCart();
+  const { isAuthenticated } = useAuth();
 
   const cartItems = location.state?.cartItems ?? cartContextItems ?? [];
-  const subtotal = location.state?.subtotal ?? cartTotal ?? 0;
-  const deliveryFee =
-    location.state?.deliveryFee ?? (subtotal >= 50000 ? 0 : 3000);
-  const total = location.state?.total ?? subtotal + deliveryFee;
+  const [serverQuote, setServerQuote] = useState(null);
+  const [quoteError, setQuoteError] = useState("");
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const subtotal = serverQuote?.subtotal ?? location.state?.subtotal ?? cartTotal ?? 0;
+  const deliveryFee = serverQuote?.deliveryFee ?? (
+    location.state?.deliveryFee ?? (subtotal >= 50000 ? 0 : 3000)
+  );
+  const total = serverQuote?.total ?? location.state?.total ?? subtotal + deliveryFee;
+  const displayItems = serverQuote?.items ?? cartItems;
 
   const [paymentMethod, setPaymentMethod] = useState("paystack");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [bankDetails, setBankDetails] = useState(null);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -31,7 +37,37 @@ const Checkout = () => {
     notes: "",
   });
 
+  useEffect(() => {
+    if (!isAuthenticated || !cartItems.length) {
+      setServerQuote(null);
+      setQuoteError("");
+      return undefined;
+    }
+    let active = true;
+    setQuoteLoading(true);
+    calculateCheckout({ items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })) })
+      .then(({ data }) => {
+        if (active) {
+          setServerQuote(data);
+          setQuoteError("");
+        }
+      })
+      .catch((error) => {
+        if (active) setQuoteError(error.message || "We could not confirm your checkout total.");
+      })
+      .finally(() => { if (active) setQuoteLoading(false); });
+    return () => { active = false; };
+  }, [isAuthenticated, cartItems]);
+
   const formatPrice = (price) => `₦${price.toLocaleString()}`;
+
+  useEffect(() => {
+    if (paymentMethod === "bank-transfer") {
+      fetchBankDetails()
+        .then(({ data }) => setBankDetails(data))
+        .catch(() => setBankDetails(null));
+    }
+  }, [paymentMethod]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -42,19 +78,44 @@ const Checkout = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const orderData = {
-      customer: formData,
-      items: cartItems,
-      paymentMethod,
-      subtotal,
-      deliveryFee,
-      total,
-    };
-
-    console.log("Order:", orderData);
+    setSubmitError("");
+    if (!isAuthenticated) {
+      navigate("/account/login", { state: { from: "/checkout" } });
+      return;
+    }
+    if (!serverQuote) {
+      setSubmitError(quoteError || "Wait while we verify your order total, then try again.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { data: order } = await createOrder({
+        items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })),
+        customer: formData,
+      });
+      if (paymentMethod === "paystack") {
+        const { data: payment } = await initializePayment({ orderId: order.id });
+        window.location.assign(payment.authorizationUrl);
+        return;
+      }
+      const { data: bankTransfer } = await getBankTransferReference(order.id);
+      navigate("/checkout/order-confirmation", {
+        state: {
+          order: {
+            ...order,
+            ...bankTransfer,
+            customerName: order.customer?.name,
+            paymentMethod: "Bank Transfer",
+          },
+        },
+      });
+    } catch (error) {
+      setSubmitError(error.message || "We could not start checkout. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!cartItems || cartItems.length === 0) {
@@ -443,8 +504,9 @@ const Checkout = () => {
                             <span className="font-medium text-gray-500">
                               Account Name
                             </span>
+
                             <span className="font-semibold text-gray-900">
-                              {bankDetails.accountName}
+                              {bankDetails?.accountName || "—"}
                             </span>
                           </div>
 
@@ -452,8 +514,9 @@ const Checkout = () => {
                             <span className="font-medium text-gray-500">
                               Bank Name
                             </span>
+
                             <span className="font-semibold text-gray-900">
-                              {bankDetails.bankName}
+                              {bankDetails?.bankName || "—"}
                             </span>
                           </div>
 
@@ -461,10 +524,15 @@ const Checkout = () => {
                             <span className="font-medium text-gray-500">
                               Account Number
                             </span>
+
                             <span className="font-semibold text-gray-900">
-                              {bankDetails.accountNumber}
+                              {bankDetails?.accountNumber || "—"}
                             </span>
                           </div>
+
+                          <p className="mt-3 text-xs text-gray-500">
+                            Transfer the exact total amount and allow up to 24 hours for payment confirmation.
+                          </p>
                         </div>
                       </div>
                     )}
@@ -482,16 +550,12 @@ const Checkout = () => {
 
                 {/* Items */}
                 <div className="mt-6 space-y-5">
-                  {cartItems.map((item) => (
+                  {displayItems.map((item) => (
                     <div
-                      key={item.id}
+                      key={item.id || item.product || item.name}
                       className="flex gap-3 border-b border-gray-100 pb-5"
                     >
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="h-16 w-16 rounded-lg object-cover"
-                      />
+                      {item.image && <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg object-cover" />}
 
                       <div className="min-w-0 flex-1">
                         <h3 className="truncate text-sm font-bold text-gray-900">
@@ -536,6 +600,9 @@ const Checkout = () => {
 
                 <div className="my-5 border-t border-gray-200" />
 
+                {quoteLoading && <p className="text-sm text-gray-500">Verifying current product prices…</p>}
+                {quoteError && <p role="alert" className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{quoteError}</p>}
+
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-bold text-gray-900">Total</span>
 
@@ -545,11 +612,17 @@ const Checkout = () => {
                 </div>
 
                 {/* Place Order */}
+                {submitError && (
+                  <p role="alert" className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                    {submitError}
+                  </p>
+                )}
                 <button
                   type="submit"
-                  className="mt-7 w-full rounded-lg bg-green-700 py-4 font-bold text-white shadow-lg shadow-green-700/20 transition hover:bg-green-800 hover:-translate-y-0.5"
+                  disabled={submitting || (isAuthenticated && (!serverQuote || quoteLoading))}
+                  className="mt-7 w-full rounded-lg bg-green-700 py-4 font-bold text-white shadow-lg shadow-green-700/20 transition hover:bg-green-800 hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60"
                 >
-                  Place Order
+                  {submitting ? "Preparing checkout…" : paymentMethod === "paystack" ? "Pay Online" : "Place Order"}
                 </button>
 
                 <p className="mt-4 text-center text-xs leading-5 text-gray-400">

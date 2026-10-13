@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
-import AnimateOnScroll from "../../../components/AnimateOnScroll";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useMemo, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   Search,
   SlidersHorizontal,
@@ -12,25 +11,48 @@ import {
   Check,
 } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
-import { useFavorites } from "../../../context/FavoritesContext";
-import useProducts from "../../../hooks/useProducts";
-import { useCategoryContext } from "../../../context/CategoryContext";
+import { getProducts } from "../../../services/productService";
+
+const categories = [
+  "All Products",
+  "Fertilizers",
+  "Herbicides",
+  "Insecticides",
+  "Fungicides",
+  "Seeds",
+  "Farm Equipment",
+];
 
 function formatPrice(price) {
   return `₦${price.toLocaleString("en-NG")}`;
 }
 
 function Shop() {
-  const { products } = useProducts();
-  // use the direct category context to guarantee shared provider usage
-  const { activeCategories } = useCategoryContext();
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
   const { addToCart } = useCart();
-  const { toggleFavorite, isFavorite } = useFavorites();
   const [addedProductId, setAddedProductId] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    setProductsLoading(true);
+    getProducts()
+      .then(({ data }) => {
+        if (active) setProducts(data);
+      })
+      .catch((error) => {
+        if (active) setProductsError(error.message || "Could not load products.");
+      })
+      .finally(() => {
+        if (active) setProductsLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   const handleAddToCart = (product) => {
     addToCart(product, 1);
@@ -41,27 +63,12 @@ function Shop() {
     }, 1200);
   };
 
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const params = new URLSearchParams(location.search);
-  const categoryFromUrl = params.get("category");
-  const categoriesList = [
-    "All Products",
-    ...activeCategories.map((category) => category.name),
-  ];
-
-  const displayedCategory =
-    categoryFromUrl && categoriesList.includes(categoryFromUrl)
-      ? categoryFromUrl
-      : selectedCategory;
-
   const filteredProducts = useMemo(() => {
-    let result = [...(products || [])];
+    let result = [...products];
 
-    if (displayedCategory !== "All Products") {
+    if (selectedCategory !== "All Products") {
       result = result.filter(
-        (product) => product.category === displayedCategory,
+        (product) => product.category === selectedCategory,
       );
     }
 
@@ -89,11 +96,15 @@ function Shop() {
     }
 
     if (sortOption === "featured") {
-      result.sort((a, b) => Number(b.featured) - Number(a.featured));
+      result.sort((a, b) => {
+        const aTime = new Date(b.createdAt || b.id).getTime();
+        const bTime = new Date(a.createdAt || a.id).getTime();
+        return bTime - aTime;
+      });
     }
 
     return result;
-  }, [displayedCategory, searchTerm, sortOption, products]);
+  }, [selectedCategory, searchTerm, sortOption]);
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -183,24 +194,14 @@ function Shop() {
                 </h2>
 
                 <div className="mt-5 space-y-1">
-                  {categoriesList.map((category) => {
-                    const active = displayedCategory === category;
+                  {categories.map((category) => {
+                    const active = selectedCategory === category;
 
                     return (
                       <button
                         key={category}
                         type="button"
-                        onClick={() => {
-                          if (category === "All Products") {
-                            navigate("/shop");
-                            setSelectedCategory("All Products");
-                          } else {
-                            navigate(
-                              `/shop?category=${encodeURIComponent(category)}`,
-                            );
-                            setSelectedCategory(category);
-                          }
-                        }}
+                        onClick={() => setSelectedCategory(category)}
                         className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition ${
                           active
                             ? "bg-green-700 font-semibold text-white"
@@ -223,7 +224,7 @@ function Shop() {
               <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-green-950">
-                    {displayedCategory}
+                    {selectedCategory}
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-500">
@@ -244,17 +245,19 @@ function Shop() {
               </div>
 
               {/* Product Grid */}
-              {filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {filteredProducts.map((product, idx) => (
-                    <AnimateOnScroll
-                      as="article"
+              {productsLoading ? (
+            <p className="text-gray-500">Loading products…</p>
+          ) : productsError ? (
+            <p role="alert" className="text-red-700">{productsError}</p>
+          ) : filteredProducts.length > 0 ? (
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                  {filteredProducts.map((product) => (
+                    <article
                       key={product.id}
-                      delay={idx * 80}
                       className="group overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
                     >
                       {/* Product Image */}
-                      <div className="relative h-56 overflow-hidden rounded-t-lg bg-white sm:aspect-square sm:h-auto sm:rounded-t-lg">
+                      <div className="relative aspect-square overflow-hidden bg-slate-50">
                         <Link
                           to={`/product/${product.id}`}
                           className="block h-full w-full"
@@ -262,28 +265,22 @@ function Shop() {
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="block h-full w-full object-contain object-center p-2 transition duration-300 group-hover:scale-105 sm:p-7"
+                            className="h-full w-full object-contain p-7 transition duration-300 group-hover:scale-105"
                           />
                         </Link>
 
-                        {product.featured && (
-                          <span className="absolute left-4 top-4 rounded-full bg-green-700 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
-                            Featured
-                          </span>
-                        )}
+                         {product.stock > 0 && (
+                           <span className="absolute left-4 top-4 rounded-full bg-green-700 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                             In Stock
+                           </span>
+                         )}
 
                         <button
                           type="button"
-                          onClick={() => toggleFavorite(product)}
                           className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm transition hover:text-red-500"
-                          aria-label={`Toggle favorite for ${product.name}`}
+                          aria-label={`Add ${product.name} to wishlist`}
                         >
-                          <Heart
-                            size={17}
-                            fill={
-                              isFavorite(product.id) ? "currentColor" : "none"
-                            }
-                          />
+                          <Heart size={17} />
                         </button>
                       </div>
 
@@ -330,7 +327,7 @@ function Shop() {
                           </button>
                         </div>
                       </div>
-                    </AnimateOnScroll>
+                    </article>
                   ))}
                 </div>
               ) : (
@@ -354,7 +351,6 @@ function Shop() {
                     onClick={() => {
                       setSearchTerm("");
                       setSelectedCategory("All Products");
-                      navigate("/shop");
                     }}
                     className="mt-5 font-semibold text-green-700 hover:underline"
                   >

@@ -1,13 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import useProducts from "../../../hooks/useProducts";
+import { getProducts, updateProduct } from "../../../services/adminService";
 
-const formatCurrency = (amount) => `₦${amount.toLocaleString("en-NG")}`;
+const formatCurrency = (amount) =>
+  `₦${amount.toLocaleString("en-NG")}`;
 
 export default function Inventory() {
-  const { products, updateStock: sharedUpdateStock } = useProducts();
+  const [products, setProducts] = useState([]);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  useEffect(() => {
+    getProducts()
+      .then(({ data }) => setProducts(data))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const getStockStatus = (stock) => {
     if (stock === 0) return "Out of Stock";
@@ -21,30 +29,45 @@ export default function Inventory() {
       product.category.toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus =
-      statusFilter === "All" || getStockStatus(product.stock) === statusFilter;
+      statusFilter === "All" ||
+      getStockStatus(product.stock) === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
-  const updateStock = (id, amount) => {
-    // delegate to shared product store
-    sharedUpdateStock(id, amount);
+  const updateStock = async (id, amount) => {
+    const current = products.find((product) => product.id === id);
+    if (!current) return;
+    try {
+      const { data } = await updateProduct(id, {
+        stock: Math.max(0, current.stock + amount),
+      });
+      setProducts((prev) => prev.map((product) => product.id === id ? data : product));
+      setError("");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   const totalProducts = products.length;
   const inStock = products.filter((p) => p.stock > 10).length;
-  const lowStock = products.filter((p) => p.stock > 0 && p.stock <= 10).length;
+  const lowStock = products.filter(
+    (p) => p.stock > 0 && p.stock <= 10
+  ).length;
   const outOfStock = products.filter((p) => p.stock === 0).length;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Inventory
+        </h1>
         <p className="mt-1 text-sm text-gray-500">
           Monitor and manage your product stock.
         </p>
       </div>
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -57,17 +80,23 @@ export default function Inventory() {
 
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">In Stock</p>
-          <p className="mt-2 text-2xl font-bold text-green-600">{inStock}</p>
+          <p className="mt-2 text-2xl font-bold text-green-600">
+            {inStock}
+          </p>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">Low Stock</p>
-          <p className="mt-2 text-2xl font-bold text-yellow-600">{lowStock}</p>
+          <p className="mt-2 text-2xl font-bold text-yellow-600">
+            {lowStock}
+          </p>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">Out of Stock</p>
-          <p className="mt-2 text-2xl font-bold text-red-600">{outOfStock}</p>
+          <p className="mt-2 text-2xl font-bold text-red-600">
+            {outOfStock}
+          </p>
         </div>
       </div>
 
@@ -135,7 +164,10 @@ export default function Inventory() {
                   const status = getStockStatus(product.stock);
 
                   return (
-                    <tr key={product.id} className="hover:bg-gray-50">
+                    <tr
+                      key={product.id}
+                      className="hover:bg-gray-50"
+                    >
                       <td className="px-6 py-4">
                         <p className="font-semibold text-gray-900">
                           {product.name}
@@ -176,7 +208,9 @@ export default function Inventory() {
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2">
                           <button
-                            onClick={() => updateStock(product.id, -1)}
+                            onClick={() =>
+                              updateStock(product.id, -1)
+                            }
                             disabled={product.stock === 0}
                             className="h-8 w-8 rounded-lg border border-gray-300 font-bold text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
                           >
@@ -184,7 +218,9 @@ export default function Inventory() {
                           </button>
 
                           <button
-                            onClick={() => updateStock(product.id, 1)}
+                            onClick={() =>
+                              updateStock(product.id, 1)
+                            }
                             className="h-8 w-8 rounded-lg bg-green-600 font-bold text-white hover:bg-green-700"
                           >
                             +
@@ -218,8 +254,8 @@ export default function Inventory() {
 
       {/* Backend Note */}
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> Inventory is currently using sample data. Connect
-        the stock values to your backend API later.
+        <strong>Note:</strong> Inventory is currently using sample
+        data. Connect the stock values to your backend API later.
       </div>
     </div>
   );

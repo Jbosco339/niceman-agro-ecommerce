@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { AdminRecord } from "../models/AdminRecord.js";
 import { User } from "../models/userSchema.js";
+import { releaseInventory } from "../services/paystack.js";
 
 const fields = {
     category: ["name", "description", "image", "status", "products"],
@@ -130,11 +131,28 @@ export const updateAdminRecord = (resource) => async (req, res) => {
     }
     const existing = await AdminRecord.findOne({ _id: req.params.id, resource });
     if (!existing) return res.status(404).json({ status: "failed", message: "Record not found" });
+    if (resource === "order" && payload.status === "Cancelled" && existing.payload.paymentStatus === "Paid") {
+        return res.status(409).json({ status: "failed", message: "Paid orders require a refund before cancellation" });
+    }
+    if (resource === "order" && existing.payload.inventoryReserved && payload.items !== undefined) {
+        return res.status(409).json({ status: "failed", message: "Reserved order items cannot be edited" });
+    }
+    const updatedPayload = { ...existing.payload, ...payload };
+    if (resource === "order" && payload.status === "Cancelled") updatedPayload.inventoryReserved = false;
+    const filter = { _id: req.params.id, resource };
+    if (resource === "order" && payload.status === "Cancelled") {
+        filter["payload.paymentStatus"] = { $ne: "Paid" };
+        filter["payload.status"] = existing.payload.status;
+    }
     const record = await AdminRecord.findOneAndUpdate(
-        { _id: req.params.id, resource },
-        { $set: { payload: { ...existing.payload, ...payload } } },
+        filter,
+        { $set: { payload: updatedPayload } },
         { new: true, runValidators: true }
     );
+    if (!record) return res.status(409).json({ status: "failed", message: "Record changed; reload and try again" });
+    if (resource === "order" && existing.payload.inventoryReserved && payload.status === "Cancelled") {
+        await releaseInventory(existing.payload.items);
+    }
     return res.status(200).json({ status: "success", data: present(record) });
 };
 
@@ -144,12 +162,15 @@ export const deleteAdminRecord = (resource) => async (req, res) => {
     }
     const record = await AdminRecord.findOneAndDelete({ _id: req.params.id, resource });
     if (!record) return res.status(404).json({ status: "failed", message: "Record not found" });
+    if (resource === "order" && record.payload.inventoryReserved) {
+        await releaseInventory(record.payload.items);
+    }
     return res.status(200).json({ status: "success", message: "Record deleted" });
 };
 
 export const listCustomers = async (_req, res) => {
     const customers = await User.find({ role: "user" })
-        .select("userName email image isVerified isActive createdAt")
+        .select("userName email phone image isVerified isActive createdAt")
         .sort({ createdAt: -1 });
     return res.status(200).json({
         status: "success",
@@ -172,7 +193,7 @@ export const getCustomer = async (req, res) => {
         return res.status(400).json({ status: "failed", message: "Invalid customer id" });
     }
     const user = await User.findOne({ _id: req.params.id, role: "user" })
-        .select("userName email image isVerified isActive createdAt");
+        .select("userName email phone image isVerified isActive createdAt");
     if (!user) return res.status(404).json({ status: "failed", message: "Customer not found" });
     const orders = await AdminRecord.find({
         resource: "order",

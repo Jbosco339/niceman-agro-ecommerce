@@ -1,19 +1,75 @@
+
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import useProducts from "../../../hooks/useProducts";
-import useCategories from "../../../hooks/useCategories";
-import AnimateOnScroll from "../../../components/AnimateOnScroll";
+import { getProducts } from "../../../services/productService";
+
+const categoryNames = {
+  vegetables: "Fresh Vegetables",
+  fruits: "Fresh Fruits",
+  grains: "Grains & Cereals",
+  tubers: "Tubers",
+  livestock: "Livestock",
+  poultry: "Poultry",
+};
 
 const CategoryByProduct = () => {
-  const { slug } = useParams();
+  const { category } = useParams();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const { getCategoryBySlug } = useCategories();
-  const { getProductsByCategory } = useProducts();
+  const currentCategory = category?.toLowerCase();
+  const categoryName = categoryNames[currentCategory] || "Products";
 
-  const categoryObj = slug ? getCategoryBySlug(slug) : null;
-  const categoryName = categoryObj ? categoryObj.name : "Products";
-  const categoryProducts = categoryObj
-    ? getProductsByCategory(categoryObj.name)
-    : [];
+  useEffect(() => {
+    if (!currentCategory) return;
+    setLoading(true);
+    getProducts({ category: currentCategory })
+      .then((response) => {
+        setProducts(response.data || []);
+        setError("");
+      })
+      .catch(() => {
+        setError("Failed to load products.");
+      })
+      .finally(() => setLoading(false));
+  }, [currentCategory]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <section className="bg-green-950 px-4 py-12 text-white">
+          <div className="mx-auto max-w-7xl">
+            <h1 className="text-3xl font-bold md:text-4xl">{categoryName}</h1>
+          </div>
+        </section>
+
+        <main className="mx-auto max-w-7xl px-4 py-12">
+          <div className="rounded-2xl bg-white px-6 py-16 text-center shadow-sm">
+            <p className="text-lg text-gray-600">Loading products...</p>
+          </div>
+        </main>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <section className="bg-green-950 px-4 py-12 text-white">
+          <div className="mx-auto max-w-7xl">
+            <h1 className="text-3xl font-bold md:text-4xl">{categoryName}</h1>
+          </div>
+        </section>
+
+        <main className="mx-auto max-w-7xl px-4 py-12">
+          <div className="rounded-2xl bg-white px-6 py-16 text-center shadow-sm">
+            <p className="text-lg text-gray-600">{error}</p>
+          </div>
+        </main>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -63,18 +119,15 @@ const CategoryByProduct = () => {
           </div>
 
           <p className="text-sm text-gray-500">
-            {categoryProducts.length}{" "}
-            {categoryProducts.length === 1 ? "product" : "products"} available
+            {products.length} {products.length === 1 ? "product" : "products"} available
           </p>
         </div>
 
-        {categoryProducts.length > 0 ? (
+        {products.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {categoryProducts.map((product, idx) => (
-              <AnimateOnScroll
-                as="div"
+            {products.map((product) => (
+              <div
                 key={product.id}
-                delay={idx * 80}
                 className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 {/* Product Image */}
@@ -108,7 +161,7 @@ const CategoryByProduct = () => {
 
                   <div className="mt-5 flex items-center justify-between">
                     <span className="text-xl font-extrabold text-green-800">
-                      {product.price}
+                                             {'\u20A6'}{Number(product.price).toLocaleString("en-NG")}
                     </span>
 
                     <Link
@@ -119,7 +172,7 @@ const CategoryByProduct = () => {
                     </Link>
                   </div>
                 </div>
-              </AnimateOnScroll>
+              </div>
             ))}
           </div>
         ) : (
@@ -155,8 +208,8 @@ const CategoryByProduct = () => {
         </h2>
 
         <p className="mx-auto mt-3 max-w-xl text-white/75">
-          Browse our other agricultural product categories and find exactly what
-          you need.
+          Browse our other agricultural product categories and find exactly
+          what you need.
         </p>
 
         <Link

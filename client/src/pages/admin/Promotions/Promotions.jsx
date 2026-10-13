@@ -1,56 +1,21 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { createPromotion, deletePromotion as removePromotion, getPromotions, updatePromotion } from "../../../services/adminService";
 
 export default function Promotions() {
-  const [promotions, setPromotions] = useState([
-    {
-      id: 1,
-      name: "Fresh Produce Discount",
-      code: "FRESH20",
-      type: "Percentage",
-      value: 20,
-      startDate: "Oct 1, 2026",
-      endDate: "Oct 15, 2026",
-      usage: 34,
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "New Customer Discount",
-      code: "WELCOME10",
-      type: "Percentage",
-      value: 10,
-      startDate: "Sep 1, 2026",
-      endDate: "Dec 31, 2026",
-      usage: 58,
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Rice Special Offer",
-      code: "RICE5000",
-      type: "Fixed",
-      value: 5000,
-      startDate: "Sep 20, 2026",
-      endDate: "Oct 10, 2026",
-      usage: 21,
-      status: "Active",
-    },
-    {
-      id: 4,
-      name: "Harvest Season Sale",
-      code: "HARVEST25",
-      type: "Percentage",
-      value: 25,
-      startDate: "Aug 1, 2026",
-      endDate: "Aug 31, 2026",
-      usage: 76,
-      status: "Expired",
-    },
-  ]);
+  const [promotions, setPromotions] = useState([]);
+  const [error, setError] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [editingPromotion, setEditingPromotion] = useState(null);
+  const [form, setForm] = useState({ name: "", code: "", type: "Percentage", value: "", startDate: "", endDate: "" });
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  useEffect(() => {
+    getPromotions()
+      .then(({ data }) => setPromotions(data))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const formatCurrency = (amount) =>
     new Intl.NumberFormat("en-NG", {
@@ -59,30 +24,69 @@ export default function Promotions() {
       maximumFractionDigits: 0,
     }).format(amount);
 
-  const toggleStatus = (id) => {
-    setPromotions((current) =>
-      current.map((promotion) =>
-        promotion.id === id
-          ? {
-              ...promotion,
-              status:
-                promotion.status === "Active" ? "Inactive" : "Active",
-            }
-          : promotion
-      )
-    );
+  const toggleStatus = async (id) => {
+    const promotion = promotions.find((item) => item.id === id);
+    if (!promotion) return;
+    try {
+      const { data } = await updatePromotion(id, {
+        status: promotion.status === "Active" ? "Inactive" : "Active",
+      });
+      setPromotions((current) => current.map((item) => item.id === id ? data : item));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
-  const deletePromotion = (id) => {
+  const deletePromotion = async (id) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this promotion?"
     );
 
     if (!confirmed) return;
 
-    setPromotions((current) =>
-      current.filter((promotion) => promotion.id !== id)
-    );
+    try {
+      await removePromotion(id);
+      setPromotions((current) => current.filter((promotion) => promotion.id !== id));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  const submitPromotion = async (event) => {
+    event.preventDefault();
+    try {
+      const payload = {
+        ...form,
+        value: Number(form.value),
+        discount: Number(form.value),
+        status: editingPromotion?.status ?? "Active",
+      };
+      const { data } = editingPromotion
+        ? await updatePromotion(editingPromotion.id, payload)
+        : await createPromotion(payload);
+      setPromotions((current) => editingPromotion
+        ? current.map((promotion) => promotion.id === editingPromotion.id ? data : promotion)
+        : [data, ...current]);
+      setEditingPromotion(null);
+      setForm({ name: "", code: "", type: "Percentage", value: "", startDate: "", endDate: "" });
+      setShowForm(false);
+      setError("");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  const editPromotion = (promotion) => {
+    setEditingPromotion(promotion);
+    setForm({
+      name: promotion.name,
+      code: promotion.code,
+      type: promotion.type ?? "Percentage",
+      value: String(promotion.value ?? promotion.discount ?? ""),
+      startDate: promotion.startDate ?? "",
+      endDate: promotion.endDate ?? "",
+    });
+    setShowForm(true);
   };
 
   const filteredPromotions = promotions.filter((promotion) => {
@@ -118,13 +122,32 @@ export default function Promotions() {
           </p>
         </div>
 
-        <Link
-          to="/admin/promotions/add"
+        <button
+          type="button"
+          onClick={() => {
+            setEditingPromotion(null);
+            setShowForm((visible) => !visible);
+          }}
           className="w-fit rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-800"
         >
-          + Create Promotion
-        </Link>
+          {showForm && !editingPromotion ? "Close Form" : "+ Create Promotion"}
+        </button>
       </div>
+      {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+      {showForm && (
+        <form onSubmit={submitPromotion} className="mb-6 grid gap-3 rounded-xl border bg-white p-5 sm:grid-cols-2 lg:grid-cols-3">
+          <input required maxLength="120" placeholder="Promotion name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="rounded-lg border px-3 py-2" />
+          <input required maxLength="64" placeholder="Promotion code" value={form.code} onChange={(event) => setForm({ ...form, code: event.target.value })} className="rounded-lg border px-3 py-2" />
+          <select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })} className="rounded-lg border px-3 py-2">
+            <option value="Percentage">Percentage</option>
+            <option value="Fixed">Fixed amount</option>
+          </select>
+          <input required type="number" min="0" placeholder="Discount value" value={form.value} onChange={(event) => setForm({ ...form, value: event.target.value })} className="rounded-lg border px-3 py-2" />
+          <input type="date" value={form.startDate} onChange={(event) => setForm({ ...form, startDate: event.target.value })} className="rounded-lg border px-3 py-2" />
+          <input type="date" value={form.endDate} onChange={(event) => setForm({ ...form, endDate: event.target.value })} className="rounded-lg border px-3 py-2" />
+          <button type="submit" className="rounded-lg bg-green-700 px-4 py-2 text-white">{editingPromotion ? "Update promotion" : "Save promotion"}</button>
+        </form>
+      )}
 
       {/* Stats */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -264,12 +287,13 @@ export default function Promotions() {
 
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <Link
-                        to={`/admin/promotions/edit/${promotion.id}`}
+                      <button
+                        type="button"
+                        onClick={() => editPromotion(promotion)}
                         className="text-sm font-medium text-green-600 hover:underline"
                       >
                         Edit
-                      </Link>
+                      </button>
 
                       <button
                         onClick={() => deletePromotion(promotion.id)}

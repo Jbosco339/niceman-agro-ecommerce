@@ -1,70 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import useCategories from "../../../hooks/useCategories";
-import useProducts from "../../../hooks/useProducts";
-import { handleLocalImageUpload } from "../../../utils/localImageUpload";
-
-const emptyProduct = {
-  name: "",
-  category: "",
-  sku: "",
-  price: "",
-  stock: "",
-  description: "",
-  image: "",
-  status: "Active",
-  featured: false,
-};
+import { getProduct, updateProduct } from "../../../services/adminService";
 
 export default function EditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { activeCategories } = useCategories();
-  const { getProduct, updateProduct } = useProducts();
 
-  const existingProduct = getProduct(id) || null;
+  const [formData, setFormData] = useState(null);
+  const [preview, setPreview] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const [formData, setFormData] = useState(() =>
-    existingProduct
-      ? {
-          name: existingProduct.name,
-          category: existingProduct.category,
-          sku: existingProduct.sku || "",
-          price: String(existingProduct.price),
-          stock: String(existingProduct.stock),
-          description: existingProduct.description,
-          image: existingProduct.image || "",
-          status: existingProduct.status,
-          featured: Boolean(existingProduct.featured),
-        }
-      : emptyProduct,
-  );
-  const [preview, setPreview] = useState(existingProduct?.image || "");
-
-  if (!existingProduct) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <Link
-            to="/admin/products"
-            className="text-sm font-medium text-green-600 hover:text-green-800"
-          >
-            ← Back to Products
-          </Link>
-          <h1 className="mt-2 text-2xl font-bold text-gray-900">
-            Product Not Found
-          </h1>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!id) return;
+    getProduct(id)
+      .then(({ data }) => {
+        setFormData({
+          ...data,
+          price: String(data.price),
+          stock: String(data.stock),
+        });
+        setPreview(data.image || "");
+      })
+      .catch((requestError) => setError(requestError.message));
+  }, [id]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
 
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
 
     if (name === "image") {
@@ -72,31 +38,26 @@ export default function EditProduct() {
     }
   };
 
-  const handleImageUpload = async (e) => {
-    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
-      setFormData((prev) => ({ ...prev, image: nextImage }));
-      setPreview(nextImage);
-    });
-
-    if (!dataUrl && formData.image) {
-      setPreview(formData.image);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      await updateProduct(id, formData);
+      navigate("/admin/products");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    updateProduct(id, {
-      ...formData,
-      price: Number(formData.price),
-      stock: formData.stock ? Number(formData.stock) : 0,
-      featured: Boolean(formData.featured),
-      image: formData.image || "/images/products/placeholder.jpg",
-      sku: formData.sku || `NAG-${Date.now()}`,
-    });
-
-    navigate("/admin/products");
-  };
+  if (!formData) {
+    const message = error || (id
+      ? "Loading product…"
+      : "Select a product from the products list to edit it.");
+    return <p role={error ? "alert" : "status"} className="p-6">{message}</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -109,7 +70,9 @@ export default function EditProduct() {
           ← Back to Products
         </Link>
 
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">Edit Product</h1>
+        <h1 className="mt-2 text-2xl font-bold text-gray-900">
+          Edit Product
+        </h1>
 
         <p className="mt-1 text-sm text-gray-500">
           Update product information and inventory.
@@ -121,6 +84,7 @@ export default function EditProduct() {
         onSubmit={handleSubmit}
         className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
       >
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Product Name */}
           <div>
@@ -152,28 +116,17 @@ export default function EditProduct() {
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
             >
               <option value="">Select category</option>
-              {activeCategories.map((category) => (
-                <option key={category.id} value={category.name}>
-                  {category.name}
-                </option>
-              ))}
+              <option value="Fresh Vegetables">
+                Fresh Vegetables
+              </option>
+              <option value="Fruits">Fruits</option>
+              <option value="Grains & Cereals">
+                Grains & Cereals
+              </option>
+              <option value="Tubers">Tubers</option>
+              <option value="Livestock">Livestock</option>
+              <option value="Poultry">Poultry</option>
             </select>
-          </div>
-
-          {/* SKU */}
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-700">
-              SKU
-            </label>
-
-            <input
-              type="text"
-              name="sku"
-              value={formData.sku}
-              onChange={handleChange}
-              placeholder="NAG-123456"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
-            />
           </div>
 
           {/* Price */}
@@ -196,7 +149,7 @@ export default function EditProduct() {
           {/* Stock */}
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">
-              Stock Quantity (Optional)
+              Stock Quantity
             </label>
 
             <input
@@ -205,11 +158,9 @@ export default function EditProduct() {
               value={formData.stock}
               onChange={handleChange}
               min="0"
+              required
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Stock management will be enabled after backend integration.
-            </p>
           </div>
 
           {/* Status */}
@@ -229,43 +180,20 @@ export default function EditProduct() {
             </select>
           </div>
 
-          {/* Featured */}
+          {/* Image URL */}
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">
-              Featured
-            </label>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="featured"
-                checked={formData.featured}
-                onChange={handleChange}
-                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-600"
-              />
-
-              <span className="ml-2 text-sm text-gray-600">
-                Mark as featured product
-              </span>
-            </div>
-          </div>
-
-          {/* Image Upload */}
-          <div className="lg:col-span-2">
-            <label className="mb-2 block text-sm font-semibold text-gray-700">
-              Product Image
+              Product Image URL
             </label>
 
             <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+              type="text"
+              name="image"
+              value={formData.image}
+              onChange={handleChange}
+              placeholder="/images/products/product.jpg"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
             />
-
-            <p className="mt-2 text-xs text-gray-500">
-              Upload a new product image to replace the current image.
-            </p>
           </div>
 
           {/* Description */}
@@ -309,19 +237,26 @@ export default function EditProduct() {
         <div className="mt-8 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:justify-end">
           <Link
             to="/admin/products"
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-gray-300 px-6 py-3 text-center text-sm font-semibold text-gray-700 hover:bg-gray-50"
           >
             Cancel
           </Link>
 
           <button
             type="submit"
-            className="rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-800"
+            disabled={saving}
+            className="rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700"
           >
-            Update Product
+            {saving ? "Saving…" : "Save Changes"}
           </button>
         </div>
       </form>
+
+      {/* Backend Note */}
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
+        <strong>Note:</strong> This currently uses sample product
+        data. Connect the product ID to your backend API later.
+      </div>
     </div>
   );
 }

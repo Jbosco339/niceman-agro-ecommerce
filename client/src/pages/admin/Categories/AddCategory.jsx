@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import useCategories from "../../../hooks/useCategories";
-import { handleLocalImageUpload } from "../../../utils/localImageUpload";
+import { createCategory } from "../../../services/adminService";
 
 const AddCategory = () => {
   const navigate = useNavigate();
@@ -13,9 +12,8 @@ const AddCategory = () => {
     status: "Active",
   });
 
-  const [preview, setPreview] = useState("");
   const [saving, setSaving] = useState(false);
-  const { addCategory } = useCategories();
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,36 +24,16 @@ const AddCategory = () => {
     }));
   };
 
-  const handleImageUpload = async (e) => {
-    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
-      setFormData((prev) => ({ ...prev, image: nextImage }));
-      setPreview(nextImage);
-    });
-
-    if (!dataUrl && formData.image) {
-      setPreview(formData.image);
-    }
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
     setSaving(true);
-
+    setError("");
     try {
-      // add to shared CategoryContext
-      addCategory({
-        name: formData.name,
-        description: formData.description,
-        image: formData.image,
-        status: formData.status || "Active",
-      });
-
-      setSaving(false);
+      await createCategory(formData);
       navigate("/admin/categories");
-    } catch (err) {
-      // keep original UI behavior: stop saving and log
-      console.error("Failed to add category", err);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
       setSaving(false);
     }
   };
@@ -85,6 +63,7 @@ const AddCategory = () => {
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border p-5 sm:p-8"
       >
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
         <div className="space-y-6">
           {/* Category Name */}
           <div>
@@ -122,26 +101,23 @@ const AddCategory = () => {
           {/* Image */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Category Image
+              Category Image URL
             </label>
 
             <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+              type="text"
+              name="image"
+              value={formData.image}
+              onChange={handleChange}
+              placeholder="/images/categories/vegetables.jpg"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
             />
 
-            <p className="mt-2 text-xs text-gray-500">
-              Upload a local image or keep an existing image URL if already
-              saved.
-            </p>
-
-            {preview && (
+            {formData.image && (
               <img
-                src={preview}
+                src={formData.image}
                 alt="Category preview"
-                className="mt-4 w-48 h-48 object-cover rounded-xl border border-gray-200 bg-gray-50"
+                className="mt-4 w-full h-48 object-cover rounded-xl"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}

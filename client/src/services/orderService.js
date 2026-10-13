@@ -1,4 +1,5 @@
 import { get, post } from "./api";
+import adminService from "./adminService";
 
 // ==================== CUSTOMER ORDERS ====================
 
@@ -27,17 +28,15 @@ export const trackOrder = async (orderId) => {
 // ==================== ADMIN ORDERS ====================
 
 export const getAllOrders = async () => {
-  return get("/orders");
+  return adminService.getOrders();
 };
 
 export const getOrder = async (orderId) => {
-  return get(`/orders/${orderId}`);
+  return adminService.getOrder(orderId);
 };
 
 export const updateOrderStatus = async (orderId, status) => {
-  return post(`/orders/${orderId}/status`, {
-    status,
-  });
+  return adminService.updateOrderStatus(orderId, status);
 };
 
 export default {

@@ -1,29 +1,27 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import useProducts from "../../../hooks/useProducts";
+import { getProduct } from "../../../services/adminService";
 
-const formatCurrency = (amount) => `₦${amount.toLocaleString("en-NG")}`;
+const formatCurrency = (amount) =>
+  `₦${amount.toLocaleString("en-NG")}`;
 
 export default function ProductDetails() {
   const { id } = useParams();
-  const { getProduct } = useProducts();
-  const product = getProduct(id);
+  const [product, setProduct] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!id) return;
+    getProduct(id)
+      .then(({ data }) => setProduct(data))
+      .catch((requestError) => setError(requestError.message));
+  }, [id]);
 
   if (!product) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <Link
-            to="/admin/products"
-            className="text-sm font-medium text-green-600 hover:text-green-800"
-          >
-            ← Back to Products
-          </Link>
-          <h1 className="mt-2 text-2xl font-bold text-gray-900">
-            Product Not Found
-          </h1>
-        </div>
-      </div>
-    );
+    const message = error || (id
+      ? "Loading product…"
+      : "Select a product from the products list to view details.");
+    return <p role={error ? "alert" : "status"} className="p-6">{message}</p>;
   }
 
   const stockStatus =
@@ -82,7 +80,9 @@ export default function ProductDetails() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-sm text-gray-500">{product.category}</p>
+              <p className="text-sm text-gray-500">
+                {product.category}
+              </p>
 
               <h2 className="mt-1 text-2xl font-bold text-gray-900">
                 {product.name}
@@ -124,14 +124,16 @@ export default function ProductDetails() {
                 Units Sold
               </p>
               <p className="mt-1 text-xl font-bold text-gray-900">
-                {product.sales || 0}
+                {product.sales ?? "—"}
               </p>
             </div>
           </div>
 
           <div className="mt-6 border-t pt-5">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Inventory Status</span>
+              <span className="text-sm text-gray-500">
+                Inventory Status
+              </span>
 
               <span
                 className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -159,23 +161,47 @@ export default function ProductDetails() {
 
           <div className="mt-5 space-y-4">
             <div className="flex justify-between gap-4">
-              <span className="text-sm text-gray-500">Product ID</span>
+              <span className="text-sm text-gray-500">
+                Product ID
+              </span>
               <span className="text-sm font-medium text-gray-900">
                 {product.id}
               </span>
             </div>
 
             <div className="flex justify-between gap-4">
-              <span className="text-sm text-gray-500">Category</span>
+              <span className="text-sm text-gray-500">
+                Category
+              </span>
               <span className="text-sm font-medium text-gray-900">
                 {product.category}
               </span>
             </div>
 
             <div className="flex justify-between gap-4">
-              <span className="text-sm text-gray-500">Status</span>
+              <span className="text-sm text-gray-500">
+                Status
+              </span>
               <span className="text-sm font-medium text-green-600">
                 {product.status}
+              </span>
+            </div>
+
+            <div className="flex justify-between gap-4">
+              <span className="text-sm text-gray-500">
+                Created
+              </span>
+              <span className="text-sm font-medium text-gray-900">
+                {product.createdAt}
+              </span>
+            </div>
+
+            <div className="flex justify-between gap-4">
+              <span className="text-sm text-gray-500">
+                Last Updated
+              </span>
+              <span className="text-sm font-medium text-gray-900">
+                {product.updatedAt}
               </span>
             </div>
           </div>
@@ -183,27 +209,35 @@ export default function ProductDetails() {
 
         {/* Sales Information */}
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900">Sales Information</h2>
+          <h2 className="text-lg font-bold text-gray-900">
+            Sales Information
+          </h2>
 
           <div className="mt-5 space-y-4">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Units Sold</span>
+              <span className="text-sm text-gray-500">
+                Units Sold
+              </span>
               <span className="text-sm font-semibold text-gray-900">
-                {product.sales || 0}
+                {product.sales}
               </span>
             </div>
 
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Current Stock</span>
+              <span className="text-sm text-gray-500">
+                Current Stock
+              </span>
               <span className="text-sm font-semibold text-gray-900">
                 {product.stock} units
               </span>
             </div>
 
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Revenue Generated</span>
+              <span className="text-sm text-gray-500">
+                Revenue Generated
+              </span>
               <span className="text-sm font-semibold text-green-600">
-                {formatCurrency((product.sales || 0) * product.price)}
+                {formatCurrency(product.sales * product.price)}
               </span>
             </div>
           </div>
@@ -232,6 +266,13 @@ export default function ProductDetails() {
         >
           All Products
         </Link>
+      </div>
+
+      {/* Backend Note */}
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
+        <strong>Note:</strong> This page currently uses sample
+        product data. Connect the product ID to your backend API
+        later.
       </div>
     </div>
   );
