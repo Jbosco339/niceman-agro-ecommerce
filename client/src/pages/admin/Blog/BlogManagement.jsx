@@ -1,8 +1,15 @@
-import { useState } from "react";
-import useBlogPosts from "../../../hooks/useBlogPosts";
+import { useEffect, useState } from "react";
+import { createBlogPost, deleteBlogPost, getBlogPosts, updateBlogPost } from "../../../services/adminService";
 
 const BlogManagement = () => {
-  const { posts, addPost, updatePost, deletePost } = useBlogPosts();
+  const [posts, setPosts] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getBlogPosts()
+      .then(({ data }) => setPosts(data))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -29,7 +36,8 @@ const BlogManagement = () => {
       .toLowerCase()
       .includes(search.toLowerCase());
 
-    const matchesCategory = category === "All" || post.category === category;
+    const matchesCategory =
+      category === "All" || post.category === category;
 
     return matchesSearch && matchesCategory;
   });
@@ -41,34 +49,22 @@ const BlogManagement = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (editingPost) {
-      updatePost(editingPost.id, {
-        title: formData.title,
-        category: formData.category,
-        author: formData.author,
-        status: formData.status,
-      });
-    } else {
-      const newPost = {
-        // id will be assigned by addPost if not provided
-        title: formData.title,
-        category: formData.category,
-        author: formData.author || "Admin",
-        date: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
-        status: formData.status,
-      };
-
-      addPost(newPost);
+    try {
+      const result = editingPost
+        ? await updateBlogPost(editingPost.id, formData)
+        : await createBlogPost({ ...formData, author: formData.author || "Admin" });
+      if (editingPost) {
+        setPosts((current) => current.map((post) => post.id === editingPost.id ? result.data : post));
+      } else {
+        setPosts((current) => [result.data, ...current]);
+      }
+      setError("");
+      resetForm();
+    } catch (requestError) {
+      setError(requestError.message);
     }
-
-    resetForm();
   };
 
   const resetForm = () => {
@@ -91,25 +87,35 @@ const BlogManagement = () => {
       title: post.title,
       category: post.category,
       author: post.author,
-      content: "",
+      content: post.content ?? "",
       status: post.status,
     });
 
     setShowForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this post?")) {
-      deletePost(id);
+      try {
+        await deleteBlogPost(id);
+        setPosts((current) => current.filter((post) => post.id !== id));
+      } catch (requestError) {
+        setError(requestError.message);
+      }
     }
   };
 
-  const toggleStatus = (id) => {
-    const p = posts.find((x) => String(x.id) === String(id));
-    if (!p) return;
-    updatePost(id, {
-      status: p.status === "Published" ? "Draft" : "Published",
-    });
+  const toggleStatus = async (id) => {
+    const post = posts.find((item) => item.id === id);
+    if (!post) return;
+    try {
+      const { data } = await updateBlogPost(id, {
+        status: post.status === "Published" ? "Draft" : "Published",
+      });
+      setPosts((current) => current.map((item) => item.id === id ? data : item));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   return (
@@ -124,6 +130,7 @@ const BlogManagement = () => {
             Create and manage Niceman Agro & Farms blog posts.
           </p>
         </div>
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
         <button
           onClick={() => {
@@ -186,7 +193,7 @@ const BlogManagement = () => {
       {/* Blog Table */}
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="text-left px-6 py-4 text-sm font-semibold">
@@ -218,11 +225,17 @@ const BlogManagement = () => {
                       {post.title}
                     </td>
 
-                    <td className="px-6 py-4 text-gray-600">{post.category}</td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {post.category}
+                    </td>
 
-                    <td className="px-6 py-4 text-gray-600">{post.author}</td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {post.author}
+                    </td>
 
-                    <td className="px-6 py-4 text-gray-600">{post.date}</td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {post.date}
+                    </td>
 
                     <td className="px-6 py-4">
                       <button
@@ -258,7 +271,10 @@ const BlogManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center py-10 text-gray-500">
+                  <td
+                    colSpan="6"
+                    className="text-center py-10 text-gray-500"
+                  >
                     No blog posts found.
                   </td>
                 </tr>
@@ -353,7 +369,9 @@ const BlogManagement = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Status</label>
+                <label className="block text-sm font-medium mb-2">
+                  Status
+                </label>
 
                 <select
                   name="status"

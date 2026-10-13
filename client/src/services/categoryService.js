@@ -1,4 +1,5 @@
-import { get, post, put, del } from "./api";
+import { get } from "./api";
+import adminService from "./adminService";
 
 // ==================== PUBLIC CATEGORIES ====================
 
@@ -17,21 +18,19 @@ export const getCategoryBySlug = async (slug) => {
 // ==================== ADMIN CATEGORIES ====================
 
 export const createCategory = async (category) => {
-  return post("/categories", category);
+  return adminService.createCategory(category);
 };
 
 export const updateCategory = async (id, category) => {
-  return put(`/categories/${id}`, category);
+  return adminService.updateCategory(id, category);
 };
 
 export const deleteCategory = async (id) => {
-  return del(`/categories/${id}`);
+  return adminService.deleteCategory(id);
 };
 
 export const toggleCategoryStatus = async (id, status) => {
-  return put(`/categories/${id}`, {
-    status,
-  });
+  return adminService.updateCategory(id, { status });
 };
 
 export default {

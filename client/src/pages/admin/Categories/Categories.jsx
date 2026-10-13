@@ -1,11 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import useCategories from "../../../hooks/useCategories";
+import { deleteCategory, getCategories, updateCategory } from "../../../services/adminService";
 
 const Categories = () => {
   const navigate = useNavigate();
 
-  const { categories, deleteCategory, toggleStatus } = useCategories();
+  const [categories, setCategories] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getCategories()
+      .then(({ data }) => setCategories(data))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -21,18 +28,33 @@ const Categories = () => {
     return matchesSearch && matchesStatus;
   });
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this category?",
+      "Are you sure you want to delete this category?"
     );
 
     if (confirmed) {
-      deleteCategory(id);
+      try {
+        await deleteCategory(id);
+        setCategories((current) => current.filter((category) => category.id !== id));
+      } catch (requestError) {
+        setError(requestError.message);
+      }
     }
   };
 
-  // delegate status toggling to canonical categories hook
-  // (function name intentionally same as previously declared above)
+  const toggleStatus = async (id) => {
+    const category = categories.find((item) => item.id === id);
+    if (!category) return;
+    try {
+      const { data } = await updateCategory(id, {
+        status: category.status === "Active" ? "Inactive" : "Active",
+      });
+      setCategories((current) => current.map((item) => item.id === id ? data : item));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -47,6 +69,7 @@ const Categories = () => {
             Manage your store product categories.
           </p>
         </div>
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
         <Link
           to="/admin/categories/add"
@@ -71,8 +94,9 @@ const Categories = () => {
 
           <h2 className="text-2xl font-bold text-green-700 mt-1">
             {
-              categories.filter((category) => category.status === "Active")
-                .length
+              categories.filter(
+                (category) => category.status === "Active"
+              ).length
             }
           </h2>
         </div>
@@ -82,8 +106,9 @@ const Categories = () => {
 
           <h2 className="text-2xl font-bold text-red-600 mt-1">
             {
-              categories.filter((category) => category.status === "Inactive")
-                .length
+              categories.filter(
+                (category) => category.status === "Inactive"
+              ).length
             }
           </h2>
         </div>
@@ -141,7 +166,10 @@ const Categories = () => {
             <tbody className="divide-y">
               {filteredCategories.length > 0 ? (
                 filteredCategories.map((category) => (
-                  <tr key={category.id} className="hover:bg-gray-50">
+                  <tr
+                    key={category.id}
+                    className="hover:bg-gray-50"
+                  >
                     <td className="px-6 py-4">
                       <p className="font-semibold text-gray-900">
                         {category.name}
@@ -173,7 +201,9 @@ const Categories = () => {
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() =>
-                            navigate(`/admin/categories/edit/${category.id}`)
+                            navigate(
+                              `/admin/categories/edit/${category.id}`
+                            )
                           }
                           className="px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
                         >
@@ -181,7 +211,9 @@ const Categories = () => {
                         </button>
 
                         <button
-                          onClick={() => handleDelete(category.id)}
+                          onClick={() =>
+                            handleDelete(category.id)
+                          }
                           className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
                         >
                           Delete
@@ -192,7 +224,10 @@ const Categories = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" className="text-center py-12 text-gray-500">
+                  <td
+                    colSpan="5"
+                    className="text-center py-12 text-gray-500"
+                  >
                     No categories found.
                   </td>
                 </tr>

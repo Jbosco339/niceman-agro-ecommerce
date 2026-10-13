@@ -64,7 +64,7 @@ export const getAdminDashboard = async (_req, res) => {
         Product.countDocuments({ stock: { $lt: 10 } }),
         AdminRecord.countDocuments({ resource: "order" }),
         AdminRecord.aggregate([
-            { $match: { resource: "order", "payload.status": { $ne: "Cancelled" } } },
+            { $match: { resource: "order", "payload.paymentStatus": "Paid" } },
             { $group: { _id: null, total: { $sum: "$payload.total" } } },
         ]),
         AdminRecord.countDocuments({ resource: "order", "payload.status": "Pending" }),

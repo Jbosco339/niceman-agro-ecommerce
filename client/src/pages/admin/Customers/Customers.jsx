@@ -1,13 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import useCustomers from "../../../hooks/useCustomers";
+import { deleteCustomer as removeCustomer, getCustomers, updateCustomer } from "../../../services/adminService";
 
-const formatCurrency = (amount) => `₦${amount.toLocaleString("en-NG")}`;
+const formatCurrency = (amount) =>
+  `₦${amount.toLocaleString("en-NG")}`;
 
 export default function Customers() {
-  const { customers, updateCustomer, deleteCustomer } = useCustomers();
+  const [customers, setCustomers] = useState([]);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  useEffect(() => {
+    getCustomers()
+      .then(({ data }) => setCustomers(data.map((customer) => ({
+        ...customer,
+        orders: Number(customer.orders ?? 0),
+        totalSpent: Number(customer.totalSpent ?? 0),
+      }))))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const filteredCustomers = customers.filter((customer) => {
     const matchesSearch =
@@ -21,26 +33,38 @@ export default function Customers() {
     return matchesSearch && matchesStatus;
   });
 
-  const toggleStatus = (id) => {
-    const c = customers.find((x) => String(x.id) === String(id));
-    if (!c) return;
-    updateCustomer(id, {
-      status: c.status === "Active" ? "Inactive" : "Active",
-    });
+  const toggleStatus = async (id) => {
+    const customer = customers.find((item) => item.id === id);
+    if (!customer) return;
+    try {
+      const { data } = await updateCustomer(id, {
+        status: customer.status === "Active" ? "Inactive" : "Active",
+      });
+      setCustomers((prev) => prev.map((item) => item.id === id
+        ? { ...item, ...data, orders: Number(data.orders ?? item.orders), totalSpent: Number(data.totalSpent ?? item.totalSpent) }
+        : item));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
-  const handleDelete = (id) => {
+  const deleteCustomer = async (id) => {
     if (window.confirm("Are you sure you want to delete this customer?")) {
-      deleteCustomer(id);
+      try {
+        await removeCustomer(id);
+        setCustomers((prev) => prev.filter((customer) => customer.id !== id));
+      } catch (requestError) {
+        setError(requestError.message);
+      }
     }
   };
 
   const totalCustomers = customers.length;
   const activeCustomers = customers.filter(
-    (customer) => customer.status === "Active",
+    (customer) => customer.status === "Active"
   ).length;
   const inactiveCustomers = customers.filter(
-    (customer) => customer.status === "Inactive",
+    (customer) => customer.status === "Inactive"
   ).length;
 
   return (
@@ -53,6 +77,7 @@ export default function Customers() {
             Manage and view all registered customers.
           </p>
         </div>
+        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       </div>
 
       {/* Stats */}
@@ -105,7 +130,7 @@ export default function Customers() {
       {/* Customers Table */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[900px]">
             <thead className="border-b bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase text-gray-500">
@@ -132,7 +157,10 @@ export default function Customers() {
             <tbody className="divide-y divide-gray-100">
               {filteredCustomers.length > 0 ? (
                 filteredCustomers.map((customer) => (
-                  <tr key={customer.id} className="hover:bg-gray-50">
+                  <tr
+                    key={customer.id}
+                    className="hover:bg-gray-50"
+                  >
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-semibold text-gray-900">
@@ -188,7 +216,7 @@ export default function Customers() {
                         </button>
 
                         <button
-                          onClick={() => handleDelete(customer.id)}
+                          onClick={() => deleteCustomer(customer.id)}
                           className="text-sm font-medium text-red-600 hover:text-red-800"
                         >
                           Delete

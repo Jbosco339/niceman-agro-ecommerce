@@ -26,8 +26,20 @@ export const initializePayment = async (paymentData) => {
   return post("/payments/initialize", paymentData);
 };
 
-export const verifyPayment = async (reference) => {
-  return get(`/payments/verify/${reference}`);
+export const getBankTransferReference = async (orderId) => {
+  return post("/payments/bank-transfer/reference", { orderId });
+};
+
+export const getBankDetails = async () => {
+  return get("/payments/bank-transfer/details");
+};
+
+export const verifyPayment = async (reference, state) => {
+  return get(`/payments/verify/${encodeURIComponent(reference)}?state=${encodeURIComponent(state || "")}`);
+};
+
+export const downloadReceipt = async (orderId) => {
+  return get(`/orders/${encodeURIComponent(orderId)}/receipt`);
 };
 
 export const cancelPayment = async (orderId) => {
@@ -42,6 +54,9 @@ export default {
   getCheckoutSummary,
   calculateDeliveryFee,
   initializePayment,
+  getBankTransferReference,
+  getBankDetails,
   verifyPayment,
+  downloadReceipt,
   cancelPayment,
 };

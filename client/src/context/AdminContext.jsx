@@ -1,37 +1,43 @@
-import { createContext, useContext, useEffect, useState } from "react";
-
-const AdminContext = createContext();
+import { useEffect, useState } from "react";
+import { adminLogin, adminLogout, getCurrentAdmin } from "../services/adminService";
+import { AdminContext } from "./adminContextValue";
 
 export function AdminProvider({ children }) {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
 
-  // Check for saved admin session
   useEffect(() => {
-    const savedAdmin = localStorage.getItem("admin");
+    let active = true;
+    getCurrentAdmin()
+      .then(({ data }) => {
+        if (active) setAdmin(data);
+      })
+      .catch((error) => {
+        if (!active) return;
+        if (error.status !== 401 && error.status !== 403) {
+          setAuthError(error.message);
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
 
-    if (savedAdmin) {
-      try {
-        setAdmin(JSON.parse(savedAdmin));
-      } catch (error) {
-        console.error("Invalid admin session:", error);
-        localStorage.removeItem("admin");
-      }
-    }
-
-    setLoading(false);
+    return () => {
+      active = false;
+    };
   }, []);
 
-  // Admin login
-  const login = (adminData) => {
-    setAdmin(adminData);
-    localStorage.setItem("admin", JSON.stringify(adminData));
+  const login = async (credentials) => {
+    const { data } = await adminLogin(credentials);
+    setAuthError("");
+    setAdmin(data);
+    return data;
   };
 
-  // Admin logout
-  const logout = () => {
+  const logout = async () => {
+    await adminLogout();
     setAdmin(null);
-    localStorage.removeItem("admin");
   };
 
   const isAuthenticated = !!admin;
@@ -45,20 +51,10 @@ export function AdminProvider({ children }) {
         logout,
         isAuthenticated,
         loading,
+        authError,
       }}
     >
       {children}
     </AdminContext.Provider>
   );
-}
-
-// Custom hook
-export function useAdmin() {
-  const context = useContext(AdminContext);
-
-  if (!context) {
-    throw new Error("useAdmin must be used inside AdminProvider");
-  }
-
-  return context;
 }

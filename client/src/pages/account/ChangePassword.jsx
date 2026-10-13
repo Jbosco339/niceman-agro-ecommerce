@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { changePassword } from "../../services/authService";
 
 function ChangePassword() {
-  const navigate = useNavigate();
-
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -65,18 +64,7 @@ function ChangePassword() {
     try {
       setLoading(true);
 
-      /*
-       * TEMPORARY
-       *
-       * Later replace this with your actual authentication service:
-       *
-       * await changePassword(
-       *   formData.currentPassword,
-       *   formData.newPassword
-       * );
-       */
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await changePassword(formData.currentPassword, formData.newPassword);
 
       setSuccess(true);
 
@@ -86,7 +74,7 @@ function ChangePassword() {
         confirmPassword: "",
       });
     } catch (err) {
-      setError("Unable to change your password. Please try again.");
+      setError(err.message || "Unable to change your password. Please try again.");
     } finally {
       setLoading(false);
     }

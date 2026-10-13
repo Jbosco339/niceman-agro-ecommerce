@@ -1,24 +1,41 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import useOrders from "../../../hooks/useOrders";
+import { getOrders, updateOrderStatus, confirmPayment } from "../../../services/adminService";
 
-const formatCurrency = (amount) => `₦${amount.toLocaleString("en-NG")}`;
+const formatCurrency = (amount) =>
+  `₦${amount.toLocaleString("en-NG")}`;
 
 export default function Orders() {
-  const { orders, updateOrder } = useOrders();
+  const [orders, setOrders] = useState([]);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  const filteredOrders = orders.filter((order) => {
-    const lower = search.toLowerCase();
-    const customerName = order.customer?.name || "";
+  useEffect(() => {
+    getOrders()
+      .then(({ data }) => {
+        setOrders(data.map((order) => ({
+          ...order,
+          customer: typeof order.customer === "string"
+            ? order.customer
+            : order.customer?.name ?? "",
+          items: Array.isArray(order.items) ? order.items.length : order.items ?? 0,
+          total: Number(order.total ?? 0),
+          date: order.date ?? order.createdAt ?? "",
+          payment: order.payment ?? order.paymentStatus ?? "",
+        })));
+      })
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
+  const filteredOrders = orders.filter((order) => {
+    const customerName = typeof order.customer === "string"
+      ? order.customer
+      : order.customer?.name ?? "";
     const matchesSearch =
-      String(order.id).toLowerCase().includes(lower) ||
-      customerName.toLowerCase().includes(lower) ||
-      String(order.customer?.email || "")
-        .toLowerCase()
-        .includes(lower);
+      order.id.toLowerCase().includes(search.toLowerCase()) ||
+      customerName.toLowerCase().includes(search.toLowerCase()) ||
+      (order.email ?? "").toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus =
       statusFilter === "All" || order.status === statusFilter;
@@ -26,32 +43,55 @@ export default function Orders() {
     return matchesSearch && matchesStatus;
   });
 
+  const updateStatus = async (id, newStatus) => {
+    try {
+      const { data } = await updateOrderStatus(id, newStatus);
+      setOrders((prev) => prev.map((order) => order.id === id
+        ? {
+            ...data,
+            customer: typeof data.customer === "string" ? data.customer : data.customer?.name ?? "",
+            items: Array.isArray(data.items) ? data.items.length : data.items ?? 0,
+            total: Number(data.total ?? 0),
+            date: data.date ?? data.createdAt ?? "",
+            payment: data.payment ?? data.paymentStatus ?? "",
+          }
+        : order));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(
-    (order) => order.status === "Pending",
+    (order) => order.status === "Pending"
   ).length;
   const processingOrders = orders.filter(
-    (order) => order.status === "Processing",
+    (order) => order.status === "Processing"
   ).length;
   const deliveredOrders = orders.filter(
-    (order) => order.status === "Delivered",
+    (order) => order.status === "Delivered"
   ).length;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Orders
+        </h1>
         <p className="mt-1 text-sm text-gray-500">
           Manage and track all customer orders.
         </p>
       </div>
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">Total Orders</p>
-          <p className="mt-2 text-2xl font-bold text-gray-900">{totalOrders}</p>
+          <p className="mt-2 text-2xl font-bold text-gray-900">
+            {totalOrders}
+          </p>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -137,7 +177,10 @@ export default function Orders() {
             <tbody className="divide-y divide-gray-100">
               {filteredOrders.length > 0 ? (
                 filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
+                  <tr
+                    key={order.id}
+                    className="hover:bg-gray-50"
+                  >
                     <td className="px-6 py-4">
                       <Link
                         to={`/admin/orders/${order.id}`}
@@ -149,17 +192,15 @@ export default function Orders() {
 
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-gray-900">
-                        {order.customer?.name}
+                        {typeof order.customer === "string" ? order.customer : order.customer?.name}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {order.customer?.email}
+                        {order.email}
                       </p>
                     </td>
 
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {Array.isArray(order.items)
-                        ? order.items.length
-                        : order.items}
+                      {Array.isArray(order.items) ? order.items.length : order.items}
                     </td>
 
                     <td className="px-6 py-4 text-sm font-semibold text-gray-900">
@@ -167,22 +208,33 @@ export default function Orders() {
                     </td>
 
                     <td className="px-6 py-4">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          order.paymentStatus === "Paid"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {order.paymentStatus}
-                      </span>
+                      <div className="flex flex-col">
+                        <span
+                          className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                            order.payment === "Paid"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {order.payment}
+                        </span>
+                        {order.paymentReference && (
+                          <span className="mt-1 break-all text-xs font-mono text-gray-500">
+                            {order.paymentReference.slice(0, 20)}
+                            {order.paymentReference.length > 20 && "…"}
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     <td className="px-6 py-4">
                       <select
                         value={order.status}
                         onChange={(e) =>
-                          updateOrder(order.id, { status: e.target.value })
+                          updateStatus(
+                            order.id,
+                            e.target.value
+                          )
                         }
                         className={`rounded-full border-0 px-3 py-1 text-xs font-semibold outline-none ${
                           order.status === "Delivered"
@@ -195,9 +247,15 @@ export default function Orders() {
                         }`}
                       >
                         <option value="Pending">Pending</option>
-                        <option value="Processing">Processing</option>
-                        <option value="Delivered">Delivered</option>
-                        <option value="Cancelled">Cancelled</option>
+                        <option value="Processing">
+                          Processing
+                        </option>
+                        <option value="Delivered">
+                          Delivered
+                        </option>
+                        <option value="Cancelled">
+                          Cancelled
+                        </option>
                       </select>
                     </td>
 
@@ -230,11 +288,6 @@ export default function Orders() {
         </div>
       </div>
 
-      {/* Backend Note */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> Orders currently use sample data. Connect the
-        orders and status updates to your backend API later.
-      </div>
     </div>
   );
 }

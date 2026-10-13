@@ -13,6 +13,14 @@ Remove-Item Env:ADMIN_PASSWORD
 
 Run the command from the `server` directory. It refuses to change an existing account and does not enable login before the administrator verifies their email. Keep the administrator password out of shell history, logs, source control, and client code.
 
-Set `MONGODB_URL`, a high-entropy `JWT_SECRET` (at least 32 characters), `JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`, `CLIENT_URL`, and `API_URL`. Configure SMTP variables to deliver verification and reset messages. Set `CLIENT_URL` to the exact production frontend origin and `API_URL` to the externally reachable API origin. Configure `DELIVERY_FEE` before enabling checkout; checkout fails closed when delivery pricing is missing or invalid.
+Set `MONGODB_URL`, a high-entropy `JWT_SECRET` (at least 32 characters), `JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`, `CLIENT_URL`, and `API_URL`. Configure SMTP variables to deliver verification, reset, and Paystack receipt messages. Set `CLIENT_URL` to the exact production frontend origin and `API_URL` to the externally reachable API origin. Configure `DELIVERY_FEE` before enabling checkout; checkout fails closed when delivery pricing is missing or invalid.
 
-Admin APIs are mounted at `/api/v1/admin`; catalog reads remain public at `/api/v1/products`, while writes require an administrator session. Admin and customer sessions use `HttpOnly` cookies and require email verification. MongoDB/Mongoose is used here: PostgreSQL row-level security and SQL parameterization do not apply. Enforce least-privilege MongoDB credentials, network restrictions, encrypted transport, and backups in the database deployment. No payment webhook receiver is currently implemented; verify provider signatures before adding one.
+## Paystack payments
+
+Set `PAYSTACK_SECRET_KEY` in the server environment only. Use a Paystack test secret key in development and a live secret key in production; never put either key in the client `.env` or source code. Customer checkout requires a signed-in account and server-calculates product prices, delivery, and the final NGN amount.
+
+In the Paystack Dashboard, configure the webhook URL as `https://<your-api-host>/api/v1/payments/webhook`. The endpoint validates `x-paystack-signature` against the raw request body and verifies successful transactions with Paystack before marking an order paid. The callback returns to `<CLIENT_URL>/payment/success`; that page also verifies the transaction server-side and provides a printable receipt. Successful webhook processing sends an email receipt when SMTP is configured.
+
+The frontend and API must be deployed over HTTPS for production payments and Paystack webhooks. A webhook URL on localhost is not reachable by Paystack.
+
+Admin APIs are mounted at `/api/v1/admin`; catalog reads remain public at `/api/v1/products`, while writes require an administrator session. Admin and customer sessions use `HttpOnly` cookies and require email verification. MongoDB/Mongoose is used here: PostgreSQL row-level security and SQL parameterization do not apply. Enforce least-privilege MongoDB credentials, network restrictions, encrypted transport, and backups in the database deployment.

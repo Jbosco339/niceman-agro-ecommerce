@@ -1,4 +1,5 @@
 import { get, post, put, del } from "./api";
+import adminService from "./adminService";
 
 // ==================== PUBLIC REVIEWS ====================
 
@@ -31,13 +32,11 @@ export const getMyReviews = async () => {
 // ==================== ADMIN REVIEWS ====================
 
 export const getAllReviews = async () => {
-  return get("/reviews");
+  return adminService.getReviews();
 };
 
 export const updateReviewStatus = async (reviewId, status) => {
-  return put(`/reviews/${reviewId}/status`, {
-    status,
-  });
+  return adminService.updateReviewStatus(reviewId, status);
 };
 
 export const approveReview = async (reviewId) => {

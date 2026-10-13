@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { loginUser } from "../../services/authService";
+import { useAuth } from "../../context/useAuth";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -39,27 +42,11 @@ function Login() {
     try {
       setLoading(true);
 
-      /*
-       * TEMPORARY LOGIN
-       *
-       * Replace this section later with:
-       *
-       * await login(formData.email, formData.password)
-       *
-       * from your useAuth() hook.
-       */
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      console.log("Login data:", {
-        ...formData,
-        rememberMe,
-      });
-
-      // Temporary redirect
-      navigate("/");
+      const response = await loginUser(formData);
+      login(response);
+      navigate(location.state?.from || "/account/dashboard", { replace: true });
     } catch (err) {
-      setError("Unable to login. Please try again.");
+      setError(err.message || "Unable to login. Please try again.");
     } finally {
       setLoading(false);
     }

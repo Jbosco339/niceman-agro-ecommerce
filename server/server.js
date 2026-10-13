@@ -17,6 +17,7 @@ import cookieParser from "cookie-parser"
 import rateLimit from "express-rate-limit"
 import uploadRoutes from "./routes/uploadRoutes.js";
 import helmet from "helmet";
+import { releaseExpiredReservations } from "./services/paystack.js";
 
 const app = express();
 const validateRequiredConfiguration = () => {
@@ -56,7 +57,10 @@ const limiter = rateLimit({
     legacyHeaders: false,
 });
 
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({
+    limit: "1mb",
+    verify: (req, _res, buffer) => { req.rawBody = Buffer.from(buffer); },
+}));
 app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 app.use(morgan("tiny", {
     skip: (req) =>
@@ -76,6 +80,12 @@ app.use(errorMiddleware);
 const PORT = process.env.PORT || 5000;
 connect()
     .then(() => {
+        const reservationCleanup = setInterval(() => {
+            releaseExpiredReservations().catch((error) => {
+                console.error("Unable to release expired inventory reservations:", error.message);
+            });
+        }, 60 * 1000);
+        reservationCleanup.unref();
         app.listen(PORT, () => {
             console.log(`Server listening on port ${PORT}`);
         });

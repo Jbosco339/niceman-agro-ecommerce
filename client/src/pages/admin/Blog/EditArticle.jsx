@@ -1,43 +1,22 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import useBlogPosts from "../../../hooks/useBlogPosts";
-import { handleLocalImageUpload } from "../../../utils/localImageUpload";
+import { getBlogPost, updateBlogPost } from "../../../services/adminService";
 
 const EditArticle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { getPostById, updatePost } = useBlogPosts();
-
-  const [formData, setFormData] = useState({
-    title: "",
-    category: "Agriculture",
-    author: "",
-    excerpt: "",
-    content: "",
-    image: "",
-    status: "Draft",
-  });
-
-  const [preview, setPreview] = useState("");
-
-  useEffect(() => {
-    const post = getPostById(id);
-    if (post) {
-      setFormData({
-        title: post.title || "",
-        category: post.category || "Agriculture",
-        author: post.author || "",
-        excerpt: post.excerpt || "",
-        content: post.content || "",
-        image: post.image || "",
-        status: post.status || "Draft",
-      });
-      setPreview(post.image || "");
-    }
-  }, [id, getPostById]);
+  const [formData, setFormData] = useState(null);
 
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!id) return;
+    getBlogPost(id)
+      .then(({ data }) => setFormData(data))
+      .catch((requestError) => setError(requestError.message));
+  }, [id]);
 
   const categories = [
     "Agriculture",
@@ -55,30 +34,24 @@ const EditArticle = () => {
     }));
   };
 
-  const handleImageUpload = async (e) => {
-    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
-      setFormData((prev) => ({ ...prev, image: nextImage }));
-      setPreview(nextImage);
-    });
-
-    if (!dataUrl && formData.image) {
-      setPreview(formData.image);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      await updateBlogPost(id, formData);
+      navigate("/admin/blog");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    setSaving(true);
-
-    // Connect to backend API here later
-    updatePost(id, formData);
-
-    setTimeout(() => {
-      setSaving(false);
-      navigate("/admin/blog");
-    }, 200);
-  };
+  if (!formData) {
+    const message = error || (id ? "Loading article…" : "Select an article from blog management to edit it.");
+    return <p role={error ? "alert" : "status"} className="p-6">{message}</p>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
@@ -105,6 +78,7 @@ const EditArticle = () => {
         onSubmit={handleSubmit}
         className="max-w-5xl mx-auto bg-white rounded-2xl shadow-sm border p-5 sm:p-8"
       >
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
@@ -191,35 +165,17 @@ const EditArticle = () => {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Featured Image
+                Featured Image URL
               </label>
 
               <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+                type="text"
+                name="image"
+                value={formData.image}
+                onChange={handleChange}
+                placeholder="/images/blog/article.jpg"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
               />
-
-              <p className="mt-2 text-xs text-gray-500">
-                Upload a new article image to replace the current image.
-              </p>
-
-              {preview && (
-                <div className="mt-4">
-                  <p className="text-sm font-semibold text-gray-700 mb-2">
-                    Image Preview
-                  </p>
-                  <img
-                    src={preview}
-                    alt="Article preview"
-                    className="h-48 w-full rounded-xl object-cover border border-gray-200 bg-gray-50"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                </div>
-              )}
             </div>
 
             <div>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 const CART_KEY = "niceman_cart";
 const CartContext = createContext(null);
@@ -79,9 +79,7 @@ export function CartProvider({ children }) {
     );
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-  };
+  const clearCart = useCallback(() => setCartItems([]), []);
 
   const cartCount = useMemo(
     () => cartItems.reduce((total, item) => total + item.quantity, 0),

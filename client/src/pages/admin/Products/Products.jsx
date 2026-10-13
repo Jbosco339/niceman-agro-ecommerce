@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import useProducts from "../../../hooks/useProducts";
-import useCategories from "../../../hooks/useCategories";
+import { deleteProduct as removeProduct, getProducts, updateProduct } from "../../../services/adminService";
 
 export default function Products() {
-  const {
-    products,
-    toggleStatus: toggleStatusHook,
-    deleteProduct: deleteProductHook,
-  } = useProducts();
-  const { activeCategories } = useCategories();
+  const [products, setProducts] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getProducts()
+      .then(({ data }) => setProducts(data))
+      .catch((requestError) => setError(requestError.message));
+  }, []);
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -28,20 +29,34 @@ export default function Products() {
     return "In Stock";
   };
 
-  const toggleStatus = (id) => {
-    // delegate to shared product hook
-    toggleStatusHook(id);
+  const toggleStatus = async (id) => {
+    const product = products.find((item) => item.id === id);
+    if (!product) return;
+    try {
+      const { data } = await updateProduct(id, {
+        status: product.status === "Active" ? "Inactive" : "Active",
+      });
+      setProducts((current) => current.map((item) => item.id === id ? data : item));
+      setError("");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
-  const deleteProduct = (id) => {
+  const deleteProduct = async (id) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this product?",
+      "Are you sure you want to delete this product?"
     );
 
     if (!confirmed) return;
 
-    // delegate to shared product hook
-    deleteProductHook(id);
+    try {
+      await removeProduct(id);
+      setProducts((current) => current.filter((product) => product.id !== id));
+      setError("");
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   const filteredProducts = products.filter((product) => {
@@ -60,10 +75,10 @@ export default function Products() {
 
   const totalProducts = products.length;
   const activeProducts = products.filter(
-    (product) => product.status === "Active",
+    (product) => product.status === "Active"
   ).length;
   const lowStock = products.filter(
-    (product) => product.stock > 0 && product.stock <= 10,
+    (product) => product.stock > 0 && product.stock <= 10
   ).length;
   const outOfStock = products.filter((product) => product.stock === 0).length;
 
@@ -77,6 +92,7 @@ export default function Products() {
             Manage all products in your store.
           </p>
         </div>
+        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
         <div className="flex gap-3">
           <Link
@@ -120,7 +136,9 @@ export default function Products() {
 
         <div className="rounded-xl bg-white p-5 shadow-sm">
           <p className="text-sm text-gray-500">Out of Stock</p>
-          <h2 className="mt-2 text-2xl font-bold text-red-600">{outOfStock}</h2>
+          <h2 className="mt-2 text-2xl font-bold text-red-600">
+            {outOfStock}
+          </h2>
         </div>
       </div>
 
@@ -141,11 +159,12 @@ export default function Products() {
             className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-green-600"
           >
             <option value="All">All Categories</option>
-            {activeCategories.map((c) => (
-              <option key={c.id} value={c.name}>
-                {c.name}
-              </option>
-            ))}
+            <option value="Fresh Vegetables">Fresh Vegetables</option>
+            <option value="Fruits">Fruits</option>
+            <option value="Grains & Cereals">Grains & Cereals</option>
+            <option value="Tubers">Tubers</option>
+            <option value="Livestock">Livestock</option>
+            <option value="Poultry">Poultry</option>
           </select>
 
           <select
