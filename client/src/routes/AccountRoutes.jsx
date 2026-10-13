@@ -3,6 +3,7 @@ import AccountDashboard from "../pages/account/AccountDashboard";
 import Profile from "../pages/account/Profile";
 import MyOrders from "../pages/account/MyOrders";
 import OrderDetails from "../pages/account/OrderDetails";
+import Receipt from "../pages/account/Receipt";
 import Login from "../pages/account/Login";
 import Register from "../pages/account/Register";
 import ChangePassword from "../pages/account/ChangePassword";
@@ -18,6 +19,7 @@ function AccountRoutes() {
       <Route path="profile" element={<Profile />} />
       <Route path="orders" element={<MyOrders />} />
       <Route path="orders/:orderId" element={<OrderDetails />} />
+      <Route path="orders/:orderId/receipt" element={<Receipt />} />
       <Route path="change-password" element={<ChangePassword />} />
       <Route path="settings" element={<SavedAddresses />} />
       <Route path="saved-addresses" element={<SavedAddresses />} />

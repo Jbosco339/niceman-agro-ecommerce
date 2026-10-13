@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -11,100 +11,7 @@ import {
   Check,
 } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
-
-const products = [
-  {
-    id: 1,
-    name: "Premium Crop Fertilizer",
-    category: "Fertilizers",
-    price: 25000,
-    image: "/images/products/5.jpg",
-    description:
-      "Quality fertilizer formulated to support healthy crop growth.",
-    featured: true,
-  },
-  {
-    id: 2,
-    name: "Crop Protection Herbicide",
-    category: "Herbicides",
-    price: 18500,
-    image: "/images/products/herbicides.jpg",
-    description: "Effective weed control solution for agricultural crops.",
-    featured: true,
-  },
-  {
-    id: 3,
-    name: "Farm Insect Control",
-    category: "Insecticides",
-    price: 14500,
-    image: "/images/products/17.jpg",
-    description: "Reliable protection against common agricultural pests.",
-    featured: true,
-  },
-  {
-    id: 4,
-    name: "Quality Seeds",
-    category: "Seeds",
-    price: 12000,
-    image: "/images/products/13.jpg",
-    description: "Quality maize seeds selected for productive farming.",
-    featured: true,
-  },
-  {
-    id: 5,
-    name: "NPK Fertilizer",
-    category: "Fertilizers",
-    price: 22000,
-    image: "/images/products/7.jpg",
-    description: "Balanced NPK fertilizer for improved crop nutrition.",
-    featured: false,
-  },
-  {
-    id: 6,
-    name: "Broad Spectrum Herbicide",
-    category: "Herbicides",
-    price: 16500,
-    image: "/images/products/herbicides.jpg",
-    description: "Agricultural herbicide for effective weed management.",
-    featured: false,
-  },
-  {
-    id: 7,
-    name: "Agricultural Insecticide",
-    category: "Insecticides",
-    price: 13500,
-    image: "/images/products/15.jpg",
-    description: "Crop protection product for controlling harmful insects.",
-    featured: false,
-  },
-  {
-    id: 8,
-    name: "Improved Vegetable Seeds",
-    category: "Seeds",
-    price: 9500,
-    image: "/images/products/12.jpg",
-    description: "Selected vegetable seeds for productive farm cultivation.",
-    featured: false,
-  },
-  {
-    id: 8,
-    name: "Improved Vegetable Seeds",
-    category: "Fungicides",
-    price: 9500,
-    image: "/images/products/3.jpg",
-    description: "Selected vegetable seeds for productive farm cultivation.",
-    featured: false,
-  },
-  {
-    id: 8,
-    name: "Improved Vegetable Seeds",
-    category: "Farm Equipment",
-    price: 9500,
-    image: "/images/products/13.jpg",
-    description: "Selected vegetable seeds for productive farm cultivation.",
-    featured: false,
-  },
-];
+import { getProducts } from "../../../services/productService";
 
 const categories = [
   "All Products",
@@ -127,6 +34,25 @@ function Shop() {
   const [showFilters, setShowFilters] = useState(false);
   const { addToCart } = useCart();
   const [addedProductId, setAddedProductId] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    setProductsLoading(true);
+    getProducts()
+      .then(({ data }) => {
+        if (active) setProducts(data);
+      })
+      .catch((error) => {
+        if (active) setProductsError(error.message || "Could not load products.");
+      })
+      .finally(() => {
+        if (active) setProductsLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   const handleAddToCart = (product) => {
     addToCart(product, 1);
@@ -170,7 +96,11 @@ function Shop() {
     }
 
     if (sortOption === "featured") {
-      result.sort((a, b) => Number(b.featured) - Number(a.featured));
+      result.sort((a, b) => {
+        const aTime = new Date(b.createdAt || b.id).getTime();
+        const bTime = new Date(a.createdAt || a.id).getTime();
+        return bTime - aTime;
+      });
     }
 
     return result;
@@ -315,7 +245,11 @@ function Shop() {
               </div>
 
               {/* Product Grid */}
-              {filteredProducts.length > 0 ? (
+              {productsLoading ? (
+            <p className="text-gray-500">Loading products…</p>
+          ) : productsError ? (
+            <p role="alert" className="text-red-700">{productsError}</p>
+          ) : filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                   {filteredProducts.map((product) => (
                     <article
@@ -325,7 +259,7 @@ function Shop() {
                       {/* Product Image */}
                       <div className="relative aspect-square overflow-hidden bg-slate-50">
                         <Link
-                          to={`/shop/product/${product.id}`}
+                          to={`/product/${product.id}`}
                           className="block h-full w-full"
                         >
                           <img
@@ -335,11 +269,11 @@ function Shop() {
                           />
                         </Link>
 
-                        {product.featured && (
-                          <span className="absolute left-4 top-4 rounded-full bg-green-700 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
-                            Featured
-                          </span>
-                        )}
+                         {product.stock > 0 && (
+                           <span className="absolute left-4 top-4 rounded-full bg-green-700 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                             In Stock
+                           </span>
+                         )}
 
                         <button
                           type="button"
@@ -357,7 +291,7 @@ function Shop() {
                         </span>
 
                         <Link
-                          to={`/shop/product/${product.id}`}
+                          to={`/product/${product.id}`}
                           className="mt-2 block"
                         >
                           <h3 className="min-h-12 text-base font-bold leading-6 text-green-950 transition hover:text-green-700">

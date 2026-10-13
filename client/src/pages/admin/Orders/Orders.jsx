@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getOrders, updateOrderStatus } from "../../../services/adminService";
+import { getOrders, updateOrderStatus, confirmPayment } from "../../../services/adminService";
 
 const formatCurrency = (amount) =>
   `₦${amount.toLocaleString("en-NG")}`;
@@ -208,15 +208,23 @@ export default function Orders() {
                     </td>
 
                     <td className="px-6 py-4">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          order.payment === "Paid"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {order.payment}
-                      </span>
+                      <div className="flex flex-col">
+                        <span
+                          className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                            order.payment === "Paid"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {order.payment}
+                        </span>
+                        {order.paymentReference && (
+                          <span className="mt-1 break-all text-xs font-mono text-gray-500">
+                            {order.paymentReference.slice(0, 20)}
+                            {order.paymentReference.length > 20 && "…"}
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     <td className="px-6 py-4">

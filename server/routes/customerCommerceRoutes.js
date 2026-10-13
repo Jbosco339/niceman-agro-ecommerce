@@ -8,8 +8,9 @@ import admin from "../middlewares/adminMiddleware.js";
 import { AdminRecord } from "../models/AdminRecord.js";
 import { Product } from "../models/Product.js";
 import { User } from "../models/userSchema.js";
-import { initializePaystackTransaction, isValidPaystackSignature, markOrderPaid, verifyPaystackTransaction } from "../services/paystack.js";
+import { confirmBankTransferPayment, initializePaystackTransaction, isValidPaystackSignature, generateReceiptNumber, markOrderPaid, releaseInventory, reserveInventory, verifyPaystackTransaction } from "../services/paystack.js";
 
+import { sendOrderNotificationEmail } from "../config/email.js";
 const router = express.Router();
 const checkoutLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -97,6 +98,29 @@ const getCheckoutFromItems = async (items) => {
     return { items: cart.map(({ product, quantity }) => ({ product: product._id.toString(), name: product.name, price: product.price, quantity })), subtotal, deliveryFee, total: subtotal + deliveryFee };
 };
 
+const createReservedOrder = async (user, checkout, payload) => {
+    if (!(await reserveInventory(checkout.items))) {
+        const error = new Error("Some items are no longer available in the requested quantity");
+        error.statusCode = 409;
+        throw error;
+    }
+    try {
+        return await AdminRecord.create({
+            resource: "order",
+            createdBy: user._id,
+            payload: {
+                ...payload,
+                items: checkout.items,
+                inventoryReserved: true,
+                reservationExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
+            },
+        });
+    } catch (error) {
+        await releaseInventory(checkout.items);
+        throw error;
+    }
+};
+
 const updateCartItem = async (req, res) => {
     if (!mongoose.isValidObjectId(req.params.productId)) {
         return res.status(400).json({ status: "failed", message: "Invalid product id" });
@@ -170,16 +194,12 @@ router.post("/checkout/order", auth, checkoutLimiter, async (req, res) => {
     if (![details.address, details.city, details.state, details.phone].every((value) => typeof value === "string" && value.trim())) {
         return res.status(400).json({ status: "failed", message: "Enter valid delivery contact details and address" });
     }
-    const order = await AdminRecord.create({
-        resource: "order",
-        createdBy: user._id,
-        payload: {
+    const order = await createReservedOrder(user, checkout, {
             customer: { name: customerName, email, phone: details.phone || "" },
             email,
             deliveryAddress: { address: details.address || "", city: details.city || "", state: details.state || "" },
             notes: typeof details.notes === "string" ? details.notes.slice(0, 1000) : "",
             orderNumber: `NA-${Date.now()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`,
-            items: checkout.items.map(({ name, price, quantity }) => ({ name, price, quantity })),
             subtotal: checkout.subtotal,
             total: checkout.total,
             deliveryFee: checkout.deliveryFee,
@@ -187,8 +207,12 @@ router.post("/checkout/order", auth, checkoutLimiter, async (req, res) => {
             paymentStatus: "Pending",
             status: "Pending",
             date: new Date().toISOString(),
-        },
     });
+    try {
+        await sendOrderNotificationEmail(order.payload);
+    } catch (error) {
+        console.error("Order notification email could not be sent:", error.message);
+    }
     return res.status(201).json({ status: "success", data: presentOrder(order) });
 });
 
@@ -213,21 +237,21 @@ router.post("/orders", auth, checkoutLimiter, async (req, res) => {
     if (checkout.items.length !== user.cart.length) {
         return res.status(409).json({ status: "failed", message: "One or more cart products are unavailable" });
     }
-    const order = await AdminRecord.create({
-        resource: "order",
-        createdBy: user._id,
-        payload: {
+    const order = await createReservedOrder(user, checkout, {
             customer: user.userName,
             email: user.email,
-            items: checkout.items.map(({ name, price, quantity }) => ({ name, price, quantity })),
             total: checkout.total,
             deliveryFee: checkout.deliveryFee,
             payment: "Pending",
             paymentStatus: "Pending",
             status: "Pending",
             date: new Date().toISOString(),
-        },
     });
+    try {
+        await sendOrderNotificationEmail(order.payload);
+    } catch (error) {
+        console.error("Order notification email could not be sent:", error.message);
+    }
     return res.status(201).json({ status: "success", data: presentOrder(order) });
 });
 router.post("/orders/:id/cancel", auth, async (req, res) => {
@@ -236,11 +260,17 @@ router.post("/orders/:id/cancel", auth, async (req, res) => {
     }
     const order = await AdminRecord.findOne(ownedOrder(req.params.id, req.user._id));
     if (!order) return res.status(404).json({ status: "failed", message: "Order not found" });
-    if (order.payload.status !== "Pending") {
+    if (order.payload.status !== "Pending" || order.payload.paymentStatus === "Paid" || order.payload.paymentReference) {
         return res.status(409).json({ status: "failed", message: "Only pending orders can be cancelled" });
     }
-    order.payload = { ...order.payload, status: "Cancelled" };
-    await order.save();
+    const cancelled = await AdminRecord.findOneAndUpdate(
+        { _id: order._id, resource: "order", "payload.status": "Pending", "payload.paymentStatus": { $ne: "Paid" }, "payload.paymentReference": { $exists: false } },
+        { $set: { "payload.status": "Cancelled", "payload.inventoryReserved": false } },
+        { new: true }
+    );
+    if (!cancelled) return res.status(409).json({ status: "failed", message: "This order can no longer be cancelled" });
+    if (order.payload.inventoryReserved) await releaseInventory(order.payload.items);
+    order.payload = cancelled.payload;
     return res.status(200).json({ status: "success", data: presentOrder(order) });
 });
 router.get("/orders/:id/track", auth, async (req, res) => {
@@ -268,12 +298,18 @@ router.post("/orders/:id/status", auth, admin, async (req, res) => {
         !["Pending", "Processing", "Delivered", "Cancelled"].includes(req.body?.status)) {
         return res.status(400).json({ status: "failed", message: "Invalid order status" });
     }
+    const current = await AdminRecord.findOne({ _id: req.params.id, resource: "order" });
+    if (!current) return res.status(404).json({ status: "failed", message: "Order not found" });
+    if (req.body.status === "Cancelled" && current.payload.paymentStatus === "Paid") {
+        return res.status(409).json({ status: "failed", message: "Paid orders require a refund before cancellation" });
+    }
     const order = await AdminRecord.findOneAndUpdate(
-        { _id: req.params.id, resource: "order" },
-        { $set: { "payload.status": req.body.status } },
+        { _id: req.params.id, resource: "order", ...(req.body.status === "Cancelled" && { "payload.paymentStatus": { $ne: "Paid" } }) },
+        { $set: { "payload.status": req.body.status, ...(req.body.status === "Cancelled" && { "payload.inventoryReserved": false }) } },
         { new: true }
     );
-    if (!order) return res.status(404).json({ status: "failed", message: "Order not found" });
+    if (!order) return res.status(409).json({ status: "failed", message: "Order could not be updated" });
+    if (req.body.status === "Cancelled" && current.payload.inventoryReserved) await releaseInventory(current.payload.items);
     return res.status(200).json({ status: "success", data: presentOrder(order) });
 });
 
@@ -337,12 +373,87 @@ router.delete("/customers/account", auth, async (req, res) => {
     return res.status(200).json({ status: "success", message: "Account deleted" });
 });
 
+const getBankDetails = () => ({
+    accountName: process.env.BANK_ACCOUNT_NAME || "Niceman Agro & Farms",
+    bankName: process.env.BANK_NAME || "Access Bank",
+    accountNumber: process.env.BANK_ACCOUNT_NUMBER || "1234567890",
+});
+
+router.post("/payments/bank-transfer/reference", auth, checkoutLimiter, async (req, res) => {
+    const orderId = req.body?.orderId;
+    if (!mongoose.isValidObjectId(orderId)) return res.status(400).json({ status: "failed", message: "Invalid order" });
+    const order = await AdminRecord.findOne(ownedOrder(orderId, req.user._id));
+    if (!order) return res.status(404).json({ status: "failed", message: "Order not found" });
+    if (order.payload.paymentStatus === "Paid" || order.payload.status === "Cancelled" || !order.payload.inventoryReserved) {
+        return res.status(409).json({ status: "failed", message: "This order is no longer available for payment" });
+    }
+    let paymentReference = order.payload.paymentReference;
+    if (!paymentReference) {
+        paymentReference = `BT-${crypto.randomUUID()}`;
+        await AdminRecord.updateOne(
+            { _id: order._id, resource: "order", "payload.status": "Pending", "payload.paymentStatus": "Pending", "payload.inventoryReserved": true, "payload.paymentReference": { $exists: false } },
+            { $set: { "payload.paymentReference": paymentReference, "payload.paymentMethod": "Bank Transfer" } }
+        );
+    }
+    const bankDetails = getBankDetails();
+    return res.status(200).json({
+        status: "success",
+        data: {
+            orderId: order.id,
+            orderNumber: order.payload.orderNumber,
+            paymentReference,
+            total: order.payload.total,
+            deliveryFee: order.payload.deliveryFee,
+            bankDetails,
+            customerName: order.payload.customer?.name || order.payload.customer,
+            customerEmail: order.payload.email,
+        },
+    });
+});
+
+router.get("/payments/bank-transfer/details", auth, async (_req, res) => {
+    const bankDetails = getBankDetails();
+    return res.status(200).json({ status: "success", data: bankDetails });
+});
+
+router.post("/orders/:id/confirm-payment", auth, admin, async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(400).json({ status: "failed", message: "Invalid order id" });
+    }
+    const { transactionReference } = req.body ?? {};
+    const order = await AdminRecord.findOne({ _id: req.params.id, resource: "order" });
+    if (!order) return res.status(404).json({ status: "failed", message: "Order not found" });
+    if (order.payload.paymentStatus === "Paid") {
+        return res.status(409).json({ status: "failed", message: "This order is already marked as paid" });
+    }
+    if (order.payload.status === "Cancelled") {
+        return res.status(409).json({ status: "failed", message: "Cancelled orders cannot be paid" });
+    }
+    const confirmedOrder = await confirmBankTransferPayment(order, transactionReference, req.user._id);
+    if (!confirmedOrder) return res.status(500).json({ status: "failed", message: "Unable to confirm payment" });
+    return res.status(200).json({ status: "success", data: presentOrder(confirmedOrder) });
+});
+
+router.get("/orders/:id/receipt", auth, async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(400).json({ status: "failed", message: "Invalid order id" });
+    }
+    const order = await AdminRecord.findOne(ownedOrder(req.params.id, req.user._id));
+    if (!order) return res.status(404).json({ status: "failed", message: "Order not found" });
+    if (order.payload.paymentStatus !== "Paid") {
+        return res.status(409).json({ status: "failed", message: "Receipt is only available after payment is confirmed" });
+    }
+    return res.status(200).json({ status: "success", data: presentOrder(order) });
+});
+
 router.post("/payments/initialize", auth, checkoutLimiter, async (req, res) => {
     const orderId = req.body?.orderId;
     if (!mongoose.isValidObjectId(orderId)) return res.status(400).json({ status: "failed", message: "Invalid order" });
     const order = await AdminRecord.findOne(ownedOrder(orderId, req.user._id));
     if (!order) return res.status(404).json({ status: "failed", message: "Order not found" });
-    if (order.payload.paymentStatus === "Paid") return res.status(409).json({ status: "failed", message: "This order has already been paid" });
+    if (order.payload.paymentStatus === "Paid" || order.payload.status === "Cancelled" || !order.payload.inventoryReserved) {
+        return res.status(409).json({ status: "failed", message: "This order is no longer available for payment" });
+    }
     if (!process.env.CLIENT_URL) return res.status(503).json({ status: "failed", message: "Client URL is not configured" });
     const reference = `NA-${crypto.randomUUID()}`;
     const callbackState = jwt.sign(
@@ -350,15 +461,32 @@ router.post("/payments/initialize", auth, checkoutLimiter, async (req, res) => {
         process.env.JWT_SECRET,
         { expiresIn: "24h" }
     );
-    order.payload = { ...order.payload, paymentReference: reference, paymentMethod: "Paystack" };
-    await order.save();
-    const transaction = await initializePaystackTransaction(
-        order.payload.email,
-        Math.round(Number(order.payload.total) * 100),
-        reference,
-        `${process.env.CLIENT_URL.replace(/\/$/, "")}/payment/success?state=${encodeURIComponent(callbackState)}`,
-        { order_id: order.id, user_id: req.user._id.toString() }
+    const claimedOrder = await AdminRecord.findOneAndUpdate(
+        { _id: order._id, resource: "order", "payload.status": "Pending", "payload.paymentStatus": { $ne: "Paid" }, "payload.inventoryReserved": true, "payload.paymentReference": { $exists: false } },
+        { $set: {
+            "payload.paymentReference": reference,
+            "payload.paymentMethod": "Paystack",
+            "payload.reservationExpiresAt": new Date(Date.now() + 24 * 60 * 60 * 1000),
+        } },
+        { new: true }
     );
+    if (!claimedOrder) return res.status(409).json({ status: "failed", message: "This order is no longer available for payment" });
+    let transaction;
+    try {
+        transaction = await initializePaystackTransaction(
+            claimedOrder.payload.email,
+            Math.round(Number(claimedOrder.payload.total) * 100),
+            reference,
+            `${process.env.CLIENT_URL.replace(/\/$/, "")}/payment/success?state=${encodeURIComponent(callbackState)}`,
+            { order_id: claimedOrder.id, user_id: req.user._id.toString() }
+        );
+    } catch (error) {
+        await AdminRecord.updateOne(
+            { _id: claimedOrder._id, "payload.paymentReference": reference, "payload.paymentStatus": { $ne: "Paid" } },
+            { $unset: { "payload.paymentReference": "", "payload.paymentMethod": "" } }
+        );
+        throw error;
+    }
     return res.status(200).json({ status: "success", data: { authorizationUrl: transaction.authorization_url, reference } });
 });
 

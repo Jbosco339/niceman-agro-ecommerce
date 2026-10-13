@@ -1,104 +1,7 @@
 
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-
-const products = [
-  {
-    id: 1,
-    name: "Fresh Tomatoes",
-    category: "vegetables",
-    price: "₦3,500",
-    image: "/images/products/3.jpg",
-    description: "Fresh, healthy and naturally grown tomatoes.",
-  },
-  {
-    id: 2,
-    name: "Fresh Pepper",
-    category: "vegetables",
-    price: "₦2,500",
-    image: "/images/products/2.jpg",
-    description: "Fresh farm-grown pepper with great flavor.",
-  },
-  {
-    id: 3,
-    name: "Fresh Carrots",
-    category: "vegetables",
-    price: "₦2,000",
-    image: "/images/products/1.jpg",
-    description: "Crisp and nutritious fresh carrots.",
-  },
-  {
-    id: 4,
-    name: "Premium Rice",
-    category: "grains",
-    price: "₦45,000",
-    image: "/images/products/4.jpg",
-    description: "Quality locally sourced premium rice.",
-  },
-  {
-    id: 5,
-    name: "Yellow Corn",
-    category: "grains",
-    price: "₦15,000",
-    image: "/images/products/9.jpg",
-    description: "Fresh and carefully selected maize.",
-  },
-  {
-    id: 6,
-    name: "Fresh Yam",
-    category: "tubers",
-    price: "₦4,500",
-    image: "/images/products/3.jpg",
-    description: "Fresh quality yam directly from the farm.",
-  },
-  {
-    id: 7,
-    name: "Cassava",
-    category: "tubers",
-    price: "₦3,000",
-    image: "/images/products/2.jpg",
-    description: "Freshly harvested cassava.",
-  },
-  {
-    id: 8,
-    name: "Fresh Chicken",
-    category: "poultry",
-    price: "₦12,000",
-    image: "/images/products/6.jpg",
-    description: "Quality farm-raised chicken.",
-  },
-  {
-    id: 9,
-    name: "Farm Eggs",
-    category: "poultry",
-    price: "₦6,500",
-    image: "/images/products/5.jpg",
-    description: "Fresh eggs from healthy farm-raised birds.",
-  },
-  {
-    id: 10,
-    name: "Fresh Oranges",
-    category: "fruits",
-    price: "₦4,000",
-    image: "/images/products/1.jpg",
-    description: "Fresh and juicy farm-grown oranges.",
-  },
-  {
-    id: 11,
-    name: "Fresh Pineapple",
-    category: "fruits",
-    price: "₦3,000",
-    image: "/images/products/10.jpg",
-    description: "Sweet and naturally grown pineapple.",
-  },
-  {
-    id: 12,
-    name: "Farm Goat",
-    category: "livestock",
-    price: "₦85,000",
-    image: "/images/products/14.jpg",
-    description: "Healthy and well-raised farm goat.",
-  },
-];
+import { getProducts } from "../../../services/productService";
 
 const categoryNames = {
   vegetables: "Fresh Vegetables",
@@ -111,15 +14,62 @@ const categoryNames = {
 
 const CategoryByProduct = () => {
   const { category } = useParams();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const currentCategory = category?.toLowerCase();
+  const categoryName = categoryNames[currentCategory] || "Products";
 
-  const categoryProducts = products.filter(
-    (product) => product.category === currentCategory
-  );
+  useEffect(() => {
+    if (!currentCategory) return;
+    setLoading(true);
+    getProducts({ category: currentCategory })
+      .then((response) => {
+        setProducts(response.data || []);
+        setError("");
+      })
+      .catch(() => {
+        setError("Failed to load products.");
+      })
+      .finally(() => setLoading(false));
+  }, [currentCategory]);
 
-  const categoryName =
-    categoryNames[currentCategory] || "Products";
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <section className="bg-green-950 px-4 py-12 text-white">
+          <div className="mx-auto max-w-7xl">
+            <h1 className="text-3xl font-bold md:text-4xl">{categoryName}</h1>
+          </div>
+        </section>
+
+        <main className="mx-auto max-w-7xl px-4 py-12">
+          <div className="rounded-2xl bg-white px-6 py-16 text-center shadow-sm">
+            <p className="text-lg text-gray-600">Loading products...</p>
+          </div>
+        </main>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <section className="bg-green-950 px-4 py-12 text-white">
+          <div className="mx-auto max-w-7xl">
+            <h1 className="text-3xl font-bold md:text-4xl">{categoryName}</h1>
+          </div>
+        </section>
+
+        <main className="mx-auto max-w-7xl px-4 py-12">
+          <div className="rounded-2xl bg-white px-6 py-16 text-center shadow-sm">
+            <p className="text-lg text-gray-600">{error}</p>
+          </div>
+        </main>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -169,14 +119,13 @@ const CategoryByProduct = () => {
           </div>
 
           <p className="text-sm text-gray-500">
-            {categoryProducts.length}{" "}
-            {categoryProducts.length === 1 ? "product" : "products"} available
+            {products.length} {products.length === 1 ? "product" : "products"} available
           </p>
         </div>
 
-        {categoryProducts.length > 0 ? (
+        {products.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {categoryProducts.map((product) => (
+            {products.map((product) => (
               <div
                 key={product.id}
                 className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
@@ -212,7 +161,7 @@ const CategoryByProduct = () => {
 
                   <div className="mt-5 flex items-center justify-between">
                     <span className="text-xl font-extrabold text-green-800">
-                      {product.price}
+                                             {'\u20A6'}{Number(product.price).toLocaleString("en-NG")}
                     </span>
 
                     <Link

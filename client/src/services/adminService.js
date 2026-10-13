@@ -104,6 +104,13 @@ export const updateOrderStatus = async (id, status) => {
   });
 };
 
+export const confirmPayment = async (id, transactionReference) => {
+  return adminRequest(`/orders/${encodeURIComponent(id)}/confirm-payment`, {
+    method: "POST",
+    body: JSON.stringify({ transactionReference }),
+  });
+};
+
 // ==================== CUSTOMERS ====================
 
 export const getCustomers = async () => {
@@ -236,6 +243,7 @@ export default {
   getOrders,
   getOrder,
   updateOrderStatus,
+  confirmPayment,
 
   getCustomers,
   getCustomer,

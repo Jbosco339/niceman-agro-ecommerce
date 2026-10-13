@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getOrder } from "../../../services/adminService";
+import { getOrder, confirmPayment, updateOrderStatus } from "../../../services/adminService";
 
 const formatCurrency = (amount) =>
   `₦${amount.toLocaleString("en-NG")}`;
@@ -9,6 +9,10 @@ export default function OrderDetails() {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [transactionReference, setTransactionReference] = useState("");
+  const [confirmError, setConfirmError] = useState("");
 
   useEffect(() => {
     if (!id) return;
@@ -32,6 +36,34 @@ export default function OrderDetails() {
     0
   );
   const total = Number(order.total ?? subtotal + deliveryFee);
+  const canConfirmPayment =
+    order.paymentStatus !== "Paid" &&
+    order.status !== "Cancelled" &&
+    order.paymentMethod === "Bank Transfer";
+
+  const handleConfirmPayment = async () => {
+    setConfirming(true);
+    setConfirmError("");
+    try {
+      const { data } = await confirmPayment(order.id, transactionReference);
+      setOrder(data);
+      setShowConfirmModal(false);
+      setTransactionReference("");
+    } catch (requestError) {
+      setConfirmError(requestError.message || "Could not confirm payment.");
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus) => {
+    try {
+      const { data } = await updateOrderStatus(order.id, newStatus);
+      setOrder(data);
+    } catch (requestError) {
+      setError(requestError.message || "Could not update order status.");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -54,10 +86,24 @@ export default function OrderDetails() {
           </p>
         </div>
 
-        <span className="w-fit rounded-full bg-yellow-100 px-4 py-2 text-sm font-semibold text-yellow-700">
+        <span
+          className={`w-fit rounded-full px-4 py-2 text-sm font-semibold ${
+            order.status === "Delivered"
+              ? "bg-green-100 text-green-700"
+              : order.status === "Processing"
+                ? "bg-blue-100 text-blue-700"
+                : order.status === "Cancelled"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-yellow-100 text-yellow-700"
+          }`}
+        >
           {order.status}
         </span>
       </div>
+
+      {error && (
+        <p role="alert" className="text-sm text-red-700">{error}</p>
+      )}
 
       {/* Order Summary */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -82,7 +128,7 @@ export default function OrderDetails() {
                 Email
               </p>
               <p className="mt-1 text-sm text-gray-700">
-                {customer.email}
+                {customer.email || order.email || "—"}
               </p>
             </div>
 
@@ -100,12 +146,14 @@ export default function OrderDetails() {
                 Delivery Address
               </p>
               <p className="mt-1 text-sm text-gray-700">
-                {customer.address ?? order.address ?? "—"}
+                {order.deliveryAddress
+                  ? `${order.deliveryAddress.address || ""}, ${order.deliveryAddress.city || ""}, ${order.deliveryAddress.state || ""}`
+                  : "—"}
               </p>
             </div>
 
             <Link
-              to="/admin/Customers"
+              to="/admin/customers"
               className="inline-block text-sm font-semibold text-green-600 hover:text-green-800"
             >
               View Customer
@@ -125,7 +173,7 @@ export default function OrderDetails() {
                 Payment Method
               </p>
               <p className="mt-1 text-sm font-medium text-gray-900">
-                {order.paymentMethod ?? order.payment ?? "—"}
+                {order.paymentMethod ?? "—"}
               </p>
             </div>
 
@@ -133,10 +181,58 @@ export default function OrderDetails() {
               <p className="text-xs font-semibold uppercase text-gray-400">
                 Payment Status
               </p>
-              <span className="mt-1 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+              <span
+                className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                  order.paymentStatus === "Paid"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-yellow-100 text-yellow-700"
+                }`}
+              >
                 {order.paymentStatus ?? order.payment ?? "—"}
               </span>
             </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase text-gray-400">
+                Payment Reference
+              </p>
+              <p className="mt-1 break-all text-sm font-mono text-gray-900">
+                {order.paymentReference || "—"}
+              </p>
+            </div>
+
+            {order.paidAt && (
+              <div>
+                <p className="text-xs font-semibold uppercase text-gray-400">
+                  Paid On
+                </p>
+                <p className="mt-1 text-sm text-gray-700">
+                  {new Date(order.paidAt).toLocaleString()}
+                </p>
+              </div>
+            )}
+
+            {order.receiptNumber && (
+              <div>
+                <p className="text-xs font-semibold uppercase text-gray-400">
+                  Receipt Number
+                </p>
+                <p className="mt-1 text-sm font-medium text-gray-900">
+                  {order.receiptNumber}
+                </p>
+              </div>
+            )}
+
+            {order.paymentConfirmationDate && (
+              <div>
+                <p className="text-xs font-semibold uppercase text-gray-400">
+                  Confirmed On
+                </p>
+                <p className="mt-1 text-sm text-gray-700">
+                  {new Date(order.paymentConfirmationDate).toLocaleString()}
+                </p>
+              </div>
+            )}
 
             <div>
               <p className="text-xs font-semibold uppercase text-gray-400">
@@ -181,6 +277,15 @@ export default function OrderDetails() {
               </div>
             </div>
           </div>
+
+          {canConfirmPayment && (
+            <button
+              onClick={() => setShowConfirmModal(true)}
+              className="mt-6 w-full rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-800"
+            >
+              Confirm Payment
+            </button>
+          )}
         </div>
       </div>
 
@@ -193,7 +298,7 @@ export default function OrderDetails() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-162.5">
+          <table className="w-full min-w-[600px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500">
@@ -229,9 +334,7 @@ export default function OrderDetails() {
                   </td>
 
                   <td className="px-5 py-4 text-right text-sm font-semibold text-gray-900">
-                    {formatCurrency(
-                      item.price * item.quantity
-                    )}
+                    {formatCurrency(item.price * item.quantity)}
                   </td>
                 </tr>
               ))}
@@ -242,24 +345,71 @@ export default function OrderDetails() {
 
       {/* Order Actions */}
       <div className="flex flex-wrap gap-3">
-        <button className="rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700">
-          Mark as Delivered
-        </button>
-
-        <button className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50">
-          Update Status
-        </button>
-
-        <button className="rounded-lg border border-red-300 px-5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50">
-          Cancel Order
-        </button>
+        <select
+          value={order.status}
+          onChange={(e) => handleStatusChange(e.target.value)}
+          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 outline-none hover:bg-gray-50"
+        >
+          <option value="Pending">Pending</option>
+          <option value="Processing">Processing</option>
+          <option value="Delivered">Delivered</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
       </div>
 
-      {/* Backend Note */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> This page currently uses sample order
-        data. Connect the order ID to your backend API later.
-      </div>
+      {/* Confirm Payment Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-xl bg-white p-6">
+            <h3 className="mb-4 text-lg font-bold text-gray-900">
+              Confirm Bank Transfer Payment
+            </h3>
+
+            <p className="mb-4 text-sm text-gray-600">
+              Enter the transaction reference from your bank to confirm this
+              payment. This will mark the order as paid and send the official
+              receipt to the customer.
+            </p>
+
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Transaction Reference
+              </label>
+              <input
+                type="text"
+                value={transactionReference}
+                onChange={(e) => setTransactionReference(e.target.value)}
+                placeholder="e.g. TNX-20261012-001"
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm outline-none transition focus:border-green-700 focus:bg-white"
+                maxLength={200}
+              />
+            </div>
+
+            {confirmError && (
+              <p role="alert" className="mb-3 text-sm text-red-700">
+                {confirmError}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                disabled={confirming}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmPayment}
+                disabled={confirming}
+                className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:cursor-wait disabled:opacity-60"
+              >
+                {confirming ? "Confirming…" : "Confirm Payment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

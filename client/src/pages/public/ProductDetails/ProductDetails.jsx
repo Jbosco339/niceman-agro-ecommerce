@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,146 +10,46 @@ import {
   Star,
 } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
-
-const products = [
-  {
-    id: 1,
-    name: "Premium Crop Fertilizer",
-    category: "Fertilizers",
-    price: 25000,
-    image: "/images/products/fertilizer.jpg",
-    description:
-      "A quality fertilizer formulated to support healthy crop growth, strong development, and improved farm productivity.",
-    features: [
-      "Supports healthy crop growth",
-      "Suitable for a wide range of crops",
-      "Helps improve soil nutrient availability",
-      "Ideal for farm and commercial use",
-    ],
-  },
-  {
-    id: 2,
-    name: "Crop Protection Herbicide",
-    category: "Herbicides",
-    price: 18500,
-    image: "/images/products/herbicide.jpg",
-    description:
-      "An agricultural herbicide designed to help farmers manage unwanted weeds and maintain cleaner, more productive fields.",
-    features: [
-      "Effective weed management",
-      "Suitable for agricultural use",
-      "Helps reduce weed competition",
-      "Easy to apply according to product instructions",
-    ],
-  },
-  {
-    id: 3,
-    name: "Farm Insect Control",
-    category: "Insecticides",
-    price: 14500,
-    image: "/images/products/insecticide.jpg",
-    description:
-      "A crop protection solution designed to help farmers manage insect pests and protect valuable crops.",
-    features: [
-      "Helps control common agricultural pests",
-      "Supports crop protection",
-      "Suitable for farm use",
-      "Use according to label instructions",
-    ],
-  },
-  {
-    id: 4,
-    name: "Quality Maize Seeds",
-    category: "Seeds",
-    price: 12000,
-    image: "/images/products/seeds.jpg",
-    description:
-      "Quality maize seeds selected to give farmers a reliable starting point for productive maize cultivation.",
-    features: [
-      "Quality planting material",
-      "Suitable for farm cultivation",
-      "Good option for maize production",
-      "Store properly before planting",
-    ],
-  },
-  {
-    id: 5,
-    name: "NPK Fertilizer",
-    category: "Fertilizers",
-    price: 22000,
-    image: "/images/products/fertilizer.jpg",
-    description:
-      "A balanced fertilizer option for supporting crop nutrition throughout the growing cycle.",
-    features: [
-      "Provides essential crop nutrients",
-      "Suitable for different farming applications",
-      "Supports crop development",
-      "Easy to incorporate into farm operations",
-    ],
-  },
-  {
-    id: 6,
-    name: "Broad Spectrum Herbicide",
-    category: "Herbicides",
-    price: 16500,
-    image: "/images/products/herbicide.jpg",
-    description:
-      "A practical weed-control product for farmers looking to maintain cleaner and healthier growing areas.",
-    features: [
-      "Helps manage unwanted weeds",
-      "Suitable for agricultural applications",
-      "Supports better crop establishment",
-      "Follow application instructions carefully",
-    ],
-  },
-  {
-    id: 7,
-    name: "Agricultural Insecticide",
-    category: "Insecticides",
-    price: 13500,
-    image: "/images/products/insecticide.jpg",
-    description:
-      "An agricultural insect-control product intended to help protect crops from damaging insect activity.",
-    features: [
-      "Helps protect crops from insects",
-      "Suitable for agricultural use",
-      "Supports crop health",
-      "Apply according to product instructions",
-    ],
-  },
-  {
-    id: 8,
-    name: "Improved Vegetable Seeds",
-    category: "Seeds",
-    price: 9500,
-    image: "/images/products/seeds.jpg",
-    description:
-      "Quality vegetable seeds for farmers looking to establish productive vegetable-growing operations.",
-    features: [
-      "Quality planting material",
-      "Suitable for vegetable farming",
-      "Useful for farm and garden production",
-      "Store in a cool, dry place",
-    ],
-  },
-];
+import { getProduct } from "../../../services/productService";
 
 function ProductDetails() {
   const { id } = useParams();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const { addToCart, cartItems } = useCart();
 
-  const product = useMemo(
-    () => products.find((item) => String(item.id) === id),
-    [id],
-  );
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    getProduct(id)
+      .then((data) => {
+        setProduct(data);
+        setError("");
+      })
+      .catch(() => {
+        setError("Failed to load product.");
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [addFeedback, setAddFeedback] = useState("");
-  const { addToCart, cartItems } = useCart();
 
   const formatPrice = (price) => `₦${price.toLocaleString("en-NG")}`;
 
-  if (!product) {
+  if (loading) {
+    return (
+      <section className="min-h-[60vh] bg-gray-50 px-4 py-20">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="text-lg text-gray-600">Loading product...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error || !product) {
     return (
       <section className="min-h-[60vh] bg-gray-50 px-4 py-20">
         <div className="mx-auto max-w-4xl text-center">
@@ -158,7 +58,8 @@ function ProductDetails() {
           </h1>
 
           <p className="mt-4 text-gray-600">
-            The product you are looking for could not be found.
+            {error ||
+              "The product you are looking for could not be found."}
           </p>
 
           <Link
@@ -174,7 +75,9 @@ function ProductDetails() {
   }
 
   const increaseQuantity = () => {
-    setQuantity((current) => current + 1);
+    if (quantity < (product.stock || 0)) {
+      setQuantity((current) => current + 1);
+    }
   };
 
   const decreaseQuantity = () => {
@@ -271,7 +174,12 @@ function ProductDetails() {
               </h3>
 
               <ul className="mt-4 space-y-3">
-                {product.features.map((feature) => (
+                {(product.features || [
+                  "Quality agricultural product",
+                  "Suitable for farm use",
+                  "Follow application instructions",
+                  "Store in a cool, dry place",
+                ]).map((feature) => (
                   <li
                     key={feature}
                     className="flex items-start gap-3 text-gray-600"

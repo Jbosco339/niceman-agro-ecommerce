@@ -2,13 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../../../context/CartContext";
 import { useAuth } from "../../../context/useAuth";
-import { calculateCheckout, createOrder, initializePayment } from "../../../services/checkoutService";
-
-const bankDetails = {
-  accountName: "Niceman Agro & Farms",
-  bankName: "Access Bank",
-  accountNumber: "1234567890",
-};
+import { calculateCheckout, createOrder, getBankTransferReference, initializePayment, getBankDetails as fetchBankDetails } from "../../../services/checkoutService";
 
 const Checkout = () => {
   const location = useLocation();
@@ -30,6 +24,7 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState("paystack");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [bankDetails, setBankDetails] = useState(null);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -66,6 +61,14 @@ const Checkout = () => {
 
   const formatPrice = (price) => `₦${price.toLocaleString()}`;
 
+  useEffect(() => {
+    if (paymentMethod === "bank-transfer") {
+      fetchBankDetails()
+        .then(({ data }) => setBankDetails(data))
+        .catch(() => setBankDetails(null));
+    }
+  }, [paymentMethod]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -97,8 +100,16 @@ const Checkout = () => {
         window.location.assign(payment.authorizationUrl);
         return;
       }
+      const { data: bankTransfer } = await getBankTransferReference(order.id);
       navigate("/checkout/order-confirmation", {
-        state: { order: { ...order, customerName: order.customer?.name, paymentMethod: "Bank Transfer" } },
+        state: {
+          order: {
+            ...order,
+            ...bankTransfer,
+            customerName: order.customer?.name,
+            paymentMethod: "Bank Transfer",
+          },
+        },
       });
     } catch (error) {
       setSubmitError(error.message || "We could not start checkout. Please try again.");
@@ -493,8 +504,9 @@ const Checkout = () => {
                             <span className="font-medium text-gray-500">
                               Account Name
                             </span>
+
                             <span className="font-semibold text-gray-900">
-                              {bankDetails.accountName}
+                              {bankDetails?.accountName || "—"}
                             </span>
                           </div>
 
@@ -502,8 +514,9 @@ const Checkout = () => {
                             <span className="font-medium text-gray-500">
                               Bank Name
                             </span>
+
                             <span className="font-semibold text-gray-900">
-                              {bankDetails.bankName}
+                              {bankDetails?.bankName || "—"}
                             </span>
                           </div>
 
@@ -511,10 +524,15 @@ const Checkout = () => {
                             <span className="font-medium text-gray-500">
                               Account Number
                             </span>
+
                             <span className="font-semibold text-gray-900">
-                              {bankDetails.accountNumber}
+                              {bankDetails?.accountNumber || "—"}
                             </span>
                           </div>
+
+                          <p className="mt-3 text-xs text-gray-500">
+                            Transfer the exact total amount and allow up to 24 hours for payment confirmation.
+                          </p>
                         </div>
                       </div>
                     )}
