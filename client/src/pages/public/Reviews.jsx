@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import useReviews from "../../hooks/useReviews";
+import useAuth from "../../hooks/useAuth";
 import AnimateOnScroll from "../../components/AnimateOnScroll";
 
 export default function Reviews() {
   const { getGeneralReviews } = useReviews();
+  const { isAuthenticated } = useAuth();
   const reviews = getGeneralReviews().filter(
     (review) => review.status === "Approved",
   );
@@ -21,12 +23,14 @@ export default function Reviews() {
             </h1>
           </div>
 
-          <Link
-            to="/write-review"
-            className="inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-800"
-          >
-            Write a Review
-          </Link>
+          {isAuthenticated && (
+            <Link
+              to="/write-review"
+              className="inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-800"
+            >
+              Write a Review
+            </Link>
+          )}
         </div>
 
         {reviews.length === 0 ? (

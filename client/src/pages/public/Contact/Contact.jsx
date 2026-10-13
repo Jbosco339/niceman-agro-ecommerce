@@ -1,3 +1,4 @@
+import { Clock3, Mail, MapPin, Phone } from "lucide-react";
 
 const Contact = () => {
   return (
@@ -25,7 +26,6 @@ const Contact = () => {
       {/* Contact Section */}
       <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-2">
-          
           {/* Contact Information */}
           <div>
             <p className="text-sm font-semibold uppercase tracking-widest text-green-700">
@@ -45,8 +45,8 @@ const Contact = () => {
             <div className="mt-10 space-y-7">
               {/* Address */}
               <div className="flex gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-xl">
-                  📍
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                  <MapPin size={20} />
                 </div>
 
                 <div>
@@ -61,25 +61,34 @@ const Contact = () => {
 
               {/* Phone */}
               <div className="flex gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-xl">
-                  ☎
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                  <Phone size={20} />
                 </div>
 
                 <div>
-                  <h3 className="font-bold text-slate-900">Phone</h3>
+                  <h3 className="font-bold text-slate-900">Phone 1</h3>
                   <a
                     href="tel:+234 812 797 1171"
                     className="mt-1 block text-slate-600 hover:text-green-700"
                   >
-                    +234 812 797 1171
+                    +234 812 797 1171 ,
+                  </a>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">Phone 2</h3>
+                  <a
+                    href="tel:+234 812 797 1171"
+                    className="mt-1 block text-slate-600 hover:text-green-700"
+                  >
+                    +234 808 801 1217
                   </a>
                 </div>
               </div>
 
               {/* Email */}
               <div className="flex gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-xl">
-                  ✉
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                  <Mail size={20} />
                 </div>
 
                 <div>
@@ -95,8 +104,8 @@ const Contact = () => {
 
               {/* Business Hours */}
               <div className="flex gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-xl">
-                  🕒
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                  <Clock3 size={20} />
                 </div>
 
                 <div>
@@ -168,7 +177,7 @@ const Contact = () => {
                 <input
                   id="phone"
                   type="tel"
-                  placeholder="Enter your phone number"
+                  placeholder="phone number"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
                 />
               </div>
@@ -222,9 +231,7 @@ const Contact = () => {
       {/* CTA */}
       <section className="bg-green-800">
         <div className="mx-auto max-w-4xl px-6 py-16 text-center lg:px-8">
-          <h2 className="text-3xl font-bold text-white">
-            Let's grow together
-          </h2>
+          <h2 className="text-3xl font-bold text-white">Let's grow together</h2>
 
           <p className="mt-4 leading-7 text-green-50">
             We welcome opportunities to connect with customers, partners,

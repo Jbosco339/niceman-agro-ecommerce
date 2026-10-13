@@ -40,6 +40,7 @@ function Navbar() {
         {/* Logo */}
         <Link
           to="/"
+          onClick={closeMobileMenu}
           className="flex items-center"
           aria-label="Niceman Agro & Farms Home"
         >
@@ -208,6 +209,7 @@ function Navbar() {
         <div className="flex items-center gap-2 lg:hidden">
           <Link
             to="/cart"
+            onClick={closeMobileMenu}
             className="relative flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-slate-700 transition hover:border-green-600 hover:text-green-700"
             aria-label="Cart"
             title="Cart"
@@ -221,14 +223,9 @@ function Navbar() {
             )}
           </Link>
 
-          {/* cart amount for mobile view */}
-
-          {/* <span className="ml-1 text-sm font-semibold text-slate-700 truncate max-w-22.5">
-            {formattedCartTotal}
-          </span> */}
-
           <Link
             to="/login"
+            onClick={closeMobileMenu}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-green-600 hover:text-green-700"
             aria-label="Login"
             title="Login"

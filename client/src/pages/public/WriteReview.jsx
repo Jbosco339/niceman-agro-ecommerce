@@ -81,7 +81,7 @@ export default function WriteReview() {
     });
 
     setSuccess(
-      "Thank you! Your review has been submitted and is awaiting approval before it appears publicly.",
+      "Thank you for your review.",
     );
     setForm(emptyForm);
     setIsSubmitting(false);
