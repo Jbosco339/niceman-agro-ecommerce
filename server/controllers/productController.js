@@ -3,6 +3,15 @@ import { Product } from "../models/Product.js";
 
 const editableFields = ["name", "category", "price", "stock", "description", "image", "status"];
 
+const isValidImageUrl = (image) => {
+    if (!image) return true;
+    if (typeof image !== "string") return false;
+    if (image.trim() === "") return true;
+    const isLocalPath = image.startsWith("/") && !image.startsWith("//");
+    const isUrl = /^https?:\/\/[^\s]+$/i.test(image.trim());
+    return isLocalPath || isUrl;
+};
+
 const productPayload = (body, partial = false) => {
     if (!body || typeof body !== "object" || Array.isArray(body)) return null;
     const payload = Object.fromEntries(
@@ -13,7 +22,7 @@ const productPayload = (body, partial = false) => {
     if (payload.name !== undefined && (typeof payload.name !== "string" || !payload.name.trim())) return null;
     if (payload.category !== undefined && (typeof payload.category !== "string" || !payload.category.trim())) return null;
     if (payload.description !== undefined && typeof payload.description !== "string") return null;
-    if (payload.image !== undefined && typeof payload.image !== "string") return null;
+    if (payload.image !== undefined && !isValidImageUrl(payload.image)) return null;
     if (payload.status !== undefined && !["Active", "Inactive"].includes(payload.status)) return null;
     for (const field of ["price", "stock"]) {
         if (payload[field] !== undefined && (!Number.isFinite(Number(payload[field])) || Number(payload[field]) < 0)) {
@@ -74,7 +83,7 @@ export const updateProduct = async (req, res) => {
     const product = await Product.findByIdAndUpdate(
         req.params.id,
         { $set: payload },
-        { new: true, runValidators: true }
+        { returnDocument: 'after', runValidators: true }
     );
     if (!product) return res.status(404).json({ status: "failed", message: "Product not found" });
     return res.status(200).json({ status: "success", data: presentProduct(product.toObject()) });

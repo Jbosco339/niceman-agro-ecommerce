@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createCategory } from "../../../services/adminService";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 const AddCategory = () => {
   const navigate = useNavigate();
@@ -22,6 +23,19 @@ const AddCategory = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleImageFile = async (e) => {
+    try {
+      const url = await handleLocalImageUpload(e, (nextImage) => {
+        setFormData((prev) => ({ ...prev, image: nextImage }));
+      });
+      if (url) {
+        setFormData((prev) => ({ ...prev, image: url }));
+      }
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -63,7 +77,11 @@ const AddCategory = () => {
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border p-5 sm:p-8"
       >
-        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+        {error && (
+          <p role="alert" className="mb-4 text-sm text-red-700">
+            {error}
+          </p>
+        )}
         <div className="space-y-6">
           {/* Category Name */}
           <div>
@@ -101,8 +119,19 @@ const AddCategory = () => {
           {/* Image */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Category Image URL
+              Category Image
             </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageFile}
+              className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-500"
+            />
+
+            <p className="mt-2 text-xs text-gray-500">
+              You can also paste an image URL below after uploading.
+            </p>
 
             <input
               type="text"
@@ -110,7 +139,7 @@ const AddCategory = () => {
               value={formData.image}
               onChange={handleChange}
               placeholder="/images/categories/vegetables.jpg"
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 mt-2 outline-none focus:ring-2 focus:ring-green-500"
             />
 
             {formData.image && (

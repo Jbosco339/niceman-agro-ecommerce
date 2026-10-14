@@ -5,13 +5,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import {
-  categoriesSeed,
-  readLocalStorage,
-  writeLocalStorage,
-} from "../data/mockData";
-
-export const initialCategories = categoriesSeed;
+import { getCategories } from "../services/categoryService";
 
 const slugify = (value = "") =>
   value
@@ -22,18 +16,35 @@ const slugify = (value = "") =>
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "") || "category";
 
+export const initialCategories = [];
+
 export const CategoryContext = createContext(null);
 
 export function CategoryProvider({ children }) {
-  const [categories, setCategories] = useState(() => {
-    const saved = readLocalStorage("niceman-categories", categoriesSeed);
-    return saved.length ? saved : categoriesSeed;
-  });
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    writeLocalStorage("niceman-categories", categories);
-  }, [categories]);
+    let active = true;
+
+    setLoading(true);
+    getCategories()
+      .then(({ data }) => {
+        if (!active) return;
+        const next = Array.isArray(data) ? data : [];
+        setCategories(next);
+      })
+      .catch(() => {
+        if (active) setCategories([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const addCategory = (category) => {
     const nextCategory = {

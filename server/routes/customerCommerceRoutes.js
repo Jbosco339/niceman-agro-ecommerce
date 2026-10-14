@@ -266,7 +266,7 @@ router.post("/orders/:id/cancel", auth, async (req, res) => {
     const cancelled = await AdminRecord.findOneAndUpdate(
         { _id: order._id, resource: "order", "payload.status": "Pending", "payload.paymentStatus": { $ne: "Paid" }, "payload.paymentReference": { $exists: false } },
         { $set: { "payload.status": "Cancelled", "payload.inventoryReserved": false } },
-        { new: true }
+        { returnDocument: 'after' }
     );
     if (!cancelled) return res.status(409).json({ status: "failed", message: "This order can no longer be cancelled" });
     if (order.payload.inventoryReserved) await releaseInventory(order.payload.items);
@@ -306,7 +306,7 @@ router.post("/orders/:id/status", auth, admin, async (req, res) => {
     const order = await AdminRecord.findOneAndUpdate(
         { _id: req.params.id, resource: "order", ...(req.body.status === "Cancelled" && { "payload.paymentStatus": { $ne: "Paid" } }) },
         { $set: { "payload.status": req.body.status, ...(req.body.status === "Cancelled" && { "payload.inventoryReserved": false }) } },
-        { new: true }
+        { returnDocument: 'after' }
     );
     if (!order) return res.status(409).json({ status: "failed", message: "Order could not be updated" });
     if (req.body.status === "Cancelled" && current.payload.inventoryReserved) await releaseInventory(current.payload.items);
@@ -326,7 +326,7 @@ router.put("/customers/profile", auth, async (req, res) => {
     const user = await User.findByIdAndUpdate(
         req.user._id,
         { $set: { ...(userName !== undefined && { userName }), ...(image !== undefined && { image }), ...(phone !== undefined && { phone }) } },
-        { new: true, runValidators: true }
+        { returnDocument: 'after', runValidators: true }
     ).select("-password -verificationToken -passwordResetToken -passwordResetExpires");
     return res.status(200).json({ status: "success", data: user });
 });
@@ -355,7 +355,7 @@ router.put("/customers/addresses", auth, async (req, res) => {
     const user = await User.findByIdAndUpdate(
         req.user._id,
         { $push: { addresses: values } },
-        { new: true, runValidators: true }
+        { returnDocument: 'after', runValidators: true }
     );
     return res.status(200).json({ status: "success", data: user.addresses });
 });
@@ -468,7 +468,7 @@ router.post("/payments/initialize", auth, checkoutLimiter, async (req, res) => {
             "payload.paymentMethod": "Paystack",
             "payload.reservationExpiresAt": new Date(Date.now() + 24 * 60 * 60 * 1000),
         } },
-        { new: true }
+        { returnDocument: 'after' }
     );
     if (!claimedOrder) return res.status(409).json({ status: "failed", message: "This order is no longer available for payment" });
     let transaction;

@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { adminLogin, adminLogout, getCurrentAdmin } from "../services/adminService";
+import {
+  adminLogin,
+  adminLogout,
+  getCurrentAdmin,
+} from "../services/adminService";
 import { AdminContext } from "./adminContextValue";
 
 export function AdminProvider({ children }) {
@@ -11,10 +15,16 @@ export function AdminProvider({ children }) {
     let active = true;
     getCurrentAdmin()
       .then(({ data }) => {
-        if (active) setAdmin(data);
+        if (!active) return;
+        if (data?.role === "admin") {
+          setAdmin(data);
+          return;
+        }
+        setAdmin(null);
       })
       .catch((error) => {
         if (!active) return;
+        setAdmin(null);
         if (error.status !== 401 && error.status !== 403) {
           setAuthError(error.message);
         }
@@ -29,18 +39,26 @@ export function AdminProvider({ children }) {
   }, []);
 
   const login = async (credentials) => {
-    const { data } = await adminLogin(credentials);
+    const response = await adminLogin(credentials);
+    const adminData = response?.data ?? response;
+
+    if (!adminData || adminData.role !== "admin") {
+      setAdmin(null);
+      throw new Error("Administrator access required.");
+    }
+
     setAuthError("");
-    setAdmin(data);
-    return data;
+    setAdmin(adminData);
+    return adminData;
   };
 
   const logout = async () => {
     await adminLogout();
     setAdmin(null);
+    setAuthError("");
   };
 
-  const isAuthenticated = !!admin;
+  const isAuthenticated = !!admin && admin.role === "admin";
 
   return (
     <AdminContext.Provider

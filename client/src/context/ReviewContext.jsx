@@ -5,13 +5,9 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import {
-  reviewsSeed,
-  readLocalStorage,
-  writeLocalStorage,
-} from "../data/mockData";
+import { getReviews } from "../services/adminService";
 
-export const initialReviews = reviewsSeed;
+export const initialReviews = [];
 
 const normalizeReview = (review, fallbackId = Date.now()) => {
   if (!review || typeof review !== "object") return null;
@@ -59,23 +55,32 @@ const normalizeReview = (review, fallbackId = Date.now()) => {
 export const ReviewContext = createContext(null);
 
 export function ReviewProvider({ children }) {
-  const [reviews, setReviews] = useState(() => {
-    const saved = readLocalStorage("niceman-reviews", reviewsSeed);
-
-    if (!Array.isArray(saved) || saved.length === 0) {
-      return reviewsSeed.map((review, index) =>
-        normalizeReview(review, `seed-${index + 1}`),
-      );
-    }
-
-    return saved
-      .map((review, index) => normalizeReview(review, `stored-${index + 1}`))
-      .filter(Boolean);
-  });
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    writeLocalStorage("niceman-reviews", reviews);
-  }, [reviews]);
+    let active = true;
+
+    setLoading(true);
+    getReviews()
+      .then(({ data }) => {
+        if (!active) return;
+        const next = Array.isArray(data)
+          ? data.map(normalizeReview).filter(Boolean)
+          : [];
+        setReviews(next);
+      })
+      .catch(() => {
+        if (active) setReviews([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const updateReview = (id, changes) => {
     setReviews((current) =>
@@ -127,6 +132,7 @@ export function ReviewProvider({ children }) {
     () => ({
       reviews,
       setReviews,
+      loading,
       addReview,
       updateReview,
       deleteReview,
@@ -136,7 +142,7 @@ export function ReviewProvider({ children }) {
       getGeneralReviews,
       getProductReviews,
     }),
-    [reviews],
+    [reviews, loading],
   );
 
   return (

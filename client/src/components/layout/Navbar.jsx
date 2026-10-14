@@ -12,25 +12,13 @@ function Navbar() {
     <nav className="bg-white">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
         {/* Logo */}
-        <Link
-          to="/"
-          className="flex items-center gap-3"
-          aria-label="Niceman Agro & Farms Home"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-700 text-xl text-white">
-            🌱
-          </div>
-
-          <div className="leading-tight">
-            <span className="block text-base font-bold text-green-900">
-              Niceman Agro
-            </span>
-
-            <span className="block text-xs font-medium text-green-700">
-              & Farms
-            </span>
-          </div>
-        </Link>
+        <Link to="/" className="flex items-center">
+            <img
+              src="/images/NicemanAgroLogoGreen.png"
+              alt="Niceman Agro & Farms"
+              className="h-17 w-auto object-contain"
+            />
+          </Link>
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-7 lg:flex">

@@ -4,12 +4,13 @@ import { Link, useParams } from "react-router-dom";
 import { getProducts } from "../../../services/productService";
 
 const categoryNames = {
-  vegetables: "Fresh Vegetables",
-  fruits: "Fresh Fruits",
-  grains: "Grains & Cereals",
-  tubers: "Tubers",
-  livestock: "Livestock",
-  poultry: "Poultry",
+  vegetables: "Herbicides",
+  fruits: "Fungicides",
+  grains: "Pesticides",
+  tubers: "Fertilizers",
+  livestock: "Farm Tools & Equipment",
+  poultry: "Seeds & Seedlings",
+
 };
 
 const CategoryByProduct = () => {

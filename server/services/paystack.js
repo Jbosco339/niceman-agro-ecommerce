@@ -78,7 +78,7 @@ export const releaseExpiredReservations = async () => {
                 "payload.paymentStatus": "Expired",
                 "payload.status": "Cancelled",
             } },
-            { new: true }
+            { returnDocument: 'after' }
         );
         if (!order) break;
         await releaseInventory(order.payload.items);
@@ -112,7 +112,7 @@ export const markOrderPaid = async (transaction) => {
                 "payload.paystackTransactionId": String(transaction.id),
                 "payload.inventoryReserved": false,
             } },
-            { new: true }
+            { returnDocument: 'after' }
         );
         if (!order) return null;
         await User.updateOne({ _id: order.createdBy }, { $set: { cart: [] } });
@@ -162,7 +162,7 @@ export const confirmBankTransferPayment = async (order, transactionReference, ad
             "payload.receiptNumber": generateReceiptNumber(),
             "payload.inventoryReserved": false,
         } },
-        { new: true }
+        { returnDocument: 'after' }
     );
 
     if (!confirmedOrder) return null;

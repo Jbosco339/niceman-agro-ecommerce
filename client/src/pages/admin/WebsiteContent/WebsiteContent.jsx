@@ -1,17 +1,21 @@
 import { useEffect, useState } from "react";
-import { getWebsiteContent, updateWebsiteContent } from "../../../services/adminService";
+import {
+  getWebsiteContent,
+  updateWebsiteContent,
+} from "../../../services/adminService";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 export default function WebsiteContent() {
   const [activeTab, setActiveTab] = useState("hero");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState({});
 
   const [content, setContent] = useState({
     hero: {
       title: "Fresh From Our Farm to Your Table",
-      subtitle:
-        "Quality farm produce delivered fresh to your doorstep.",
+      subtitle: "Quality farm produce delivered fresh to your doorstep.",
       buttonText: "Shop Now",
       buttonLink: "/shop",
       image: "/images/hero-bg.jpg",
@@ -32,8 +36,7 @@ export default function WebsiteContent() {
     },
 
     footer: {
-      description:
-        "Quality farm produce delivered fresh to your doorstep.",
+      description: "Quality farm produce delivered fresh to your doorstep.",
       copyright: "© 2026 Niceman Agro & Farms. All rights reserved.",
     },
   });
@@ -65,6 +68,35 @@ export default function WebsiteContent() {
     }));
   };
 
+  const handleImageUpload = async (section, field, event) => {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+
+    const currentValue = content?.[section]?.[field] || "";
+    const uploadKey = `${section}:${field}`;
+
+    setError("");
+    try {
+      setUploadingImage((current) => ({ ...current, [uploadKey]: true }));
+      const uploadedUrl = await handleLocalImageUpload(event, (nextImage) => {
+        updateContent(section, field, nextImage);
+      });
+
+      if (uploadedUrl) {
+        updateContent(section, field, uploadedUrl);
+      } else if (currentValue) {
+        updateContent(section, field, currentValue);
+      }
+    } catch (requestError) {
+      setError(requestError.message || "Image upload failed.");
+      if (currentValue) {
+        updateContent(section, field, currentValue);
+      }
+    } finally {
+      setUploadingImage((current) => ({ ...current, [uploadKey]: false }));
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
@@ -86,20 +118,28 @@ export default function WebsiteContent() {
     { id: "footer", label: "Footer" },
   ];
 
+  const isUploading = Object.values(uploadingImage).some(Boolean);
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Website Content
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">Website Content</h1>
 
         <p className="mt-1 text-sm text-gray-500">
           Manage the content displayed across your website.
         </p>
       </div>
-      {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
-      {saved && <p role="status" className="mb-4 text-sm text-green-700">Website content saved.</p>}
+      {error && (
+        <p role="alert" className="mb-4 text-sm text-red-700">
+          {error}
+        </p>
+      )}
+      {saved && (
+        <p role="status" className="mb-4 text-sm text-green-700">
+          Website content saved.
+        </p>
+      )}
 
       {/* Tabs */}
       <div className="mb-6 overflow-x-auto rounded-xl bg-white shadow-sm">
@@ -141,9 +181,7 @@ export default function WebsiteContent() {
               <input
                 type="text"
                 value={content.hero.title}
-                onChange={(e) =>
-                  updateContent("hero", "title", e.target.value)
-                }
+                onChange={(e) => updateContent("hero", "title", e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
               />
             </div>
@@ -195,24 +233,39 @@ export default function WebsiteContent() {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
-                Hero Image URL
+                Hero Image
               </label>
 
               <input
-                type="text"
-                value={content.hero.image}
-                onChange={(e) =>
-                  updateContent("hero", "image", e.target.value)
-                }
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload("hero", "image", e)}
+                className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600"
               />
+
+              <p className="mt-2 text-xs text-gray-500">
+                {uploadingImage["hero:image"]
+                  ? "Uploading image…"
+                  : "Choose a local image to upload."}
+              </p>
+
+              {content.hero.image && (
+                <img
+                  src={content.hero.image}
+                  alt="Hero preview"
+                  className="mt-4 h-48 w-full rounded-xl border border-gray-200 bg-gray-50 object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
             </div>
           </div>
 
           <button
             onClick={handleSave}
-            disabled={saving}
-            className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
+            disabled={saving || isUploading}
+            className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800 disabled:bg-gray-400"
           >
             Save Hero Content
           </button>
@@ -265,24 +318,39 @@ export default function WebsiteContent() {
 
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
-                Image URL
+                About Image
               </label>
 
               <input
-                type="text"
-                value={content.about.image}
-                onChange={(e) =>
-                  updateContent("about", "image", e.target.value)
-                }
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-600"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload("about", "image", e)}
+                className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600"
               />
+
+              <p className="mt-2 text-xs text-gray-500">
+                {uploadingImage["about:image"]
+                  ? "Uploading image…"
+                  : "Choose a local image to upload."}
+              </p>
+
+              {content.about.image && (
+                <img
+                  src={content.about.image}
+                  alt="About preview"
+                  className="mt-4 h-48 w-full rounded-xl border border-gray-200 bg-gray-50 object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
             </div>
           </div>
 
           <button
             onClick={handleSave}
-            disabled={saving}
-            className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
+            disabled={saving || isUploading}
+            className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800 disabled:bg-gray-400"
           >
             Save About Content
           </button>
@@ -366,8 +434,8 @@ export default function WebsiteContent() {
 
           <button
             onClick={handleSave}
-            disabled={saving}
-            className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
+            disabled={saving || isUploading}
+            className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800 disabled:bg-gray-400"
           >
             Save Contact Information
           </button>
@@ -421,8 +489,8 @@ export default function WebsiteContent() {
 
           <button
             onClick={handleSave}
-            disabled={saving}
-            className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800"
+            disabled={saving || isUploading}
+            className="mt-6 rounded-lg bg-green-700 px-5 py-3 text-sm font-medium text-white hover:bg-green-800 disabled:bg-gray-400"
           >
             Save Footer Content
           </button>
@@ -431,8 +499,8 @@ export default function WebsiteContent() {
 
       {/* Backend Note */}
       <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        Website content is currently stored locally for development.
-        Connect these sections to the backend API when the server is ready.
+        Website content is currently stored locally for development. Connect
+        these sections to the backend API when the server is ready.
       </div>
     </div>
   );

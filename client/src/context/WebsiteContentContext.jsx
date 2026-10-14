@@ -1,26 +1,34 @@
 import React, { createContext, useEffect, useMemo, useState } from "react";
-import {
-  websiteContentSeed,
-  readLocalStorage,
-  writeLocalStorage,
-} from "../data/mockData";
+import { getWebsiteContent } from "../services/adminService";
 
-export const initialWebsiteContent = websiteContentSeed;
+export const initialWebsiteContent = {};
 
 export const WebsiteContentContext = createContext(null);
 
 export function WebsiteContentProvider({ children }) {
-  const [content, setContent] = useState(() => {
-    const saved = readLocalStorage(
-      "niceman-website-content",
-      websiteContentSeed,
-    );
-    return saved && Object.keys(saved).length ? saved : websiteContentSeed;
-  });
+  const [content, setContent] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    writeLocalStorage("niceman-website-content", content);
-  }, [content]);
+    let active = true;
+
+    setLoading(true);
+    getWebsiteContent()
+      .then(({ data }) => {
+        if (!active) return;
+        setContent(data && typeof data === "object" ? data : {});
+      })
+      .catch(() => {
+        if (active) setContent({});
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const updateSection = (section, updates) => {
     setContent((cur) => ({
@@ -34,8 +42,8 @@ export function WebsiteContentProvider({ children }) {
   };
 
   const value = useMemo(
-    () => ({ content, setContent, updateSection, setSection }),
-    [content],
+    () => ({ content, setContent, loading, updateSection, setSection }),
+    [content, loading],
   );
 
   return (

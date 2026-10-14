@@ -16,11 +16,16 @@ const AdminLogin = () => {
     setSubmitting(true);
     const formData = new FormData(e.currentTarget);
     try {
-      await login({
+      const adminData = await login({
         email: formData.get("email"),
         password: formData.get("password"),
       });
-      navigate("/admin/Admindashboard", { replace: true });
+
+      if (adminData?.role !== "admin") {
+        throw new Error("Administrator access required.");
+      }
+
+      navigate("/admin/dashboard", { replace: true });
     } catch (loginError) {
       setError(loginError.message);
     } finally {
@@ -53,9 +58,7 @@ const AdminLogin = () => {
             Niceman Agro & Farms
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Admin Management Portal
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Admin Management Portal</p>
         </div>
 
         {/* Login Card */}

@@ -1,23 +1,29 @@
 import React, { createContext, useEffect, useMemo, useState } from "react";
-import {
-  blogPostsSeed,
-  readLocalStorage,
-  writeLocalStorage,
-} from "../data/mockData";
+import { getPublishedPosts } from "../services/blogService";
 
-export const initialBlogPosts = blogPostsSeed;
+export const initialBlogPosts = [];
 
 export const BlogContext = createContext(null);
 
 export function BlogProvider({ children }) {
-  const [posts, setPosts] = useState(() => {
-    const saved = readLocalStorage("niceman-blogposts", blogPostsSeed);
-    return saved && saved.length ? saved : blogPostsSeed;
-  });
+  const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    writeLocalStorage("niceman-blogposts", posts);
-  }, [posts]);
+    let active = true;
+
+    getPublishedPosts()
+      .then(({ data }) => {
+        if (!active) return;
+        setPosts(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (active) setPosts([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const addPost = (post) => {
     const next = {

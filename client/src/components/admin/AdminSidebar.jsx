@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
+import { useAdmin } from "../../context/useAdmin";
 
 const menuItems = [
   {
@@ -61,13 +62,15 @@ const AdminSidebar = ({
   onToggleCollapse = () => {},
 }) => {
   const navigate = useNavigate();
+  const { logout: logoutAdmin } = useAdmin();
 
-  const handleLogout = () => {
-    // Clear admin authentication data
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminUser");
-
-    navigate("/admin/login");
+  const handleLogout = async () => {
+    try {
+      await logoutAdmin();
+    } catch {
+      // Ignore backend logout failures and continue redirecting.
+    }
+    navigate("/admin/login", { replace: true });
   };
 
   const handleNavClick = () => {

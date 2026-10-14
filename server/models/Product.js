@@ -12,8 +12,10 @@ const productSchema = new mongoose.Schema(
             default: "",
             maxlength: 2048,
             validate(value) {
-                return !value || value.startsWith("/") && !value.startsWith("//") ||
-                    /^https?:\/\/[^\s]+$/i.test(value);
+                if (!value) return true;
+                const isLocalPath = value.startsWith("/") && !value.startsWith("//");
+                const isUrl = /^https?:\/\/[^\s]+$/i.test(value);
+                return isLocalPath || isUrl;
             },
         },
         status: { type: String, enum: ["Active", "Inactive"], default: "Active" },

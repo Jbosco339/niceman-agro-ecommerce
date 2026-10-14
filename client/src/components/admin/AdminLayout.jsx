@@ -9,23 +9,17 @@ import {
 } from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
+import { useAdmin } from "../../context/useAdmin";
 
 const AdminLayout = () => {
   const location = useLocation();
+  const { admin } = useAdmin();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const closeMobileSidebar = () => setMobileSidebarOpen(false);
 
-  const adminName = (() => {
-    try {
-      const adminUser =
-        JSON.parse(localStorage.getItem("adminUser") || "{}") || {};
-      return adminUser?.name || adminUser?.email || "Admin";
-    } catch {
-      return "Admin";
-    }
-  })();
+  const adminName = admin?.userName || admin?.email || "Admin";
 
   const breadcrumbItems = (() => {
     const currentPath = location.pathname;

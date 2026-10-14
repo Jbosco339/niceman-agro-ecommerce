@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getProduct, updateProduct } from "../../../services/adminService";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
+
+const normalizeProduct = (product) => ({
+  ...product,
+  id: product?.id ?? product?._id ?? "",
+  category: product?.category ?? "",
+  name: product?.name ?? "Unnamed Product",
+  price: String(product?.price ?? ""),
+  stock: String(product?.stock ?? ""),
+  image: product?.image || "",
+});
 
 export default function EditProduct() {
   const { id } = useParams();
@@ -10,17 +21,16 @@ export default function EditProduct() {
   const [preview, setPreview] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     getProduct(id)
       .then(({ data }) => {
-        setFormData({
-          ...data,
-          price: String(data.price),
-          stock: String(data.stock),
-        });
-        setPreview(data.image || "");
+        const nextProduct = normalizeProduct(data);
+        setFormData(nextProduct);
+        setPreview(nextProduct.image || "");
+        setError("");
       })
       .catch((requestError) => setError(requestError.message));
   }, [id]);
@@ -32,9 +42,20 @@ export default function EditProduct() {
       ...prev,
       [name]: value,
     }));
+  };
 
-    if (name === "image") {
-      setPreview(value);
+  const handleImageUpload = async (e) => {
+    setError("");
+    try {
+      setUploadingImage(true);
+      await handleLocalImageUpload(e, (nextImage) => {
+        setFormData((prev) => ({ ...prev, image: nextImage }));
+        setPreview(nextImage);
+      });
+    } catch (requestError) {
+      setError(requestError.message || "Image upload failed.");
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -42,21 +63,67 @@ export default function EditProduct() {
     e.preventDefault();
     setSaving(true);
     setError("");
+
+    if (!formData) {
+      setSaving(false);
+      return;
+    }
+
+    const payload = {
+      name: formData.name.trim(),
+      category: formData.category.trim(),
+      description: formData.description.trim(),
+      price: Number(formData.price),
+      stock: Number(formData.stock),
+      image: formData.image || "",
+      status: formData.status,
+    };
+
+    if (!payload.name || !payload.category || !payload.description) {
+      setError("Name, category, and description are required.");
+      setSaving(false);
+      return;
+    }
+
+    if (!payload.image) {
+      setError("Please upload a product image before saving.");
+      setSaving(false);
+      return;
+    }
+
+    if (!Number.isFinite(payload.price) || payload.price < 0) {
+      setError("Price must be a valid non-negative number.");
+      setSaving(false);
+      return;
+    }
+
+    if (!Number.isInteger(payload.stock) || payload.stock < 0) {
+      setError("Stock must be a whole non-negative number.");
+      setSaving(false);
+      return;
+    }
+
     try {
-      await updateProduct(id, formData);
+      await updateProduct(id, payload);
       navigate("/admin/products");
     } catch (requestError) {
-      setError(requestError.message);
+      setError(requestError.message || "Unable to update product.");
     } finally {
       setSaving(false);
     }
   };
 
   if (!formData) {
-    const message = error || (id
-      ? "Loading product…"
-      : "Select a product from the products list to edit it.");
-    return <p role={error ? "alert" : "status"} className="p-6">{message}</p>;
+    const message =
+      error ||
+      (id
+        ? "Loading product…"
+        : "Select a product from the products list to edit it.");
+    return (
+      <p role={error ? "alert" : "status"} className="p-6">
+        {message}
+      </p>
+    );
   }
 
   return (
@@ -70,9 +137,7 @@ export default function EditProduct() {
           ← Back to Products
         </Link>
 
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">
-          Edit Product
-        </h1>
+        <h1 className="mt-2 text-2xl font-bold text-gray-900">Edit Product</h1>
 
         <p className="mt-1 text-sm text-gray-500">
           Update product information and inventory.
@@ -84,7 +149,11 @@ export default function EditProduct() {
         onSubmit={handleSubmit}
         className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
       >
-        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+        {error && (
+          <p role="alert" className="mb-4 text-sm text-red-700">
+            {error}
+          </p>
+        )}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Product Name */}
           <div>
@@ -116,13 +185,9 @@ export default function EditProduct() {
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
             >
               <option value="">Select category</option>
-              <option value="Fresh Vegetables">
-                Fresh Vegetables
-              </option>
+              <option value="Fresh Vegetables">Fresh Vegetables</option>
               <option value="Fruits">Fruits</option>
-              <option value="Grains & Cereals">
-                Grains & Cereals
-              </option>
+              <option value="Grains & Cereals">Grains & Cereals</option>
               <option value="Tubers">Tubers</option>
               <option value="Livestock">Livestock</option>
               <option value="Poultry">Poultry</option>
@@ -180,20 +245,24 @@ export default function EditProduct() {
             </select>
           </div>
 
-          {/* Image URL */}
+          {/* Image Upload */}
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">
-              Product Image URL
+              Product Image
             </label>
 
             <input
-              type="text"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              placeholder="/images/products/product.jpg"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
             />
+
+            <p className="mt-2 text-xs text-gray-500">
+              {uploadingImage
+                ? "Uploading image…"
+                : "Upload a new image to replace the current one. Supported: JPG, PNG, GIF, WebP, SVG, BMP, TIFF, AVIF, ICO."}
+            </p>
           </div>
 
           {/* Description */}
@@ -207,6 +276,7 @@ export default function EditProduct() {
               value={formData.description}
               onChange={handleChange}
               rows="5"
+              placeholder="Describe the product..."
               required
               className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
             />
@@ -244,19 +314,13 @@ export default function EditProduct() {
 
           <button
             type="submit"
-            disabled={saving}
-            className="rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700"
+            disabled={saving || uploadingImage}
+            className="rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:bg-gray-400"
           >
             {saving ? "Saving…" : "Save Changes"}
           </button>
         </div>
       </form>
-
-      {/* Backend Note */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        <strong>Note:</strong> This currently uses sample product
-        data. Connect the product ID to your backend API later.
-      </div>
     </div>
   );
 }

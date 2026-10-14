@@ -2,28 +2,39 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useState,
   useMemo,
+  useState,
 } from "react";
-import {
-  customersSeed,
-  readLocalStorage,
-  writeLocalStorage,
-} from "../data/mockData";
+import { getCustomers } from "../services/adminService";
 
-export const initialCustomers = customersSeed;
+export const initialCustomers = [];
 
 export const CustomerContext = createContext(null);
 
 export function CustomerProvider({ children }) {
-  const [customers, setCustomers] = useState(() => {
-    const saved = readLocalStorage("niceman-customers", customersSeed);
-    return saved && saved.length ? saved : customersSeed;
-  });
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    writeLocalStorage("niceman-customers", customers);
-  }, [customers]);
+    let active = true;
+
+    setLoading(true);
+    getCustomers()
+      .then(({ data }) => {
+        if (!active) return;
+        setCustomers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (active) setCustomers([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const addCustomer = (customer) => {
     const next = {
@@ -63,16 +74,20 @@ export function CustomerProvider({ children }) {
     [customers],
   );
 
-  const value = {
-    customers,
-    setCustomers,
-    addCustomer,
-    updateCustomer,
-    deleteCustomer,
-    getCustomer,
-    activeCustomers,
-    inactiveCustomers,
-  };
+  const value = useMemo(
+    () => ({
+      customers,
+      setCustomers,
+      loading,
+      addCustomer,
+      updateCustomer,
+      deleteCustomer,
+      getCustomer,
+      activeCustomers,
+      inactiveCustomers,
+    }),
+    [customers, loading, activeCustomers, inactiveCustomers],
+  );
 
   return (
     <CustomerContext.Provider value={value}>

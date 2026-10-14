@@ -236,7 +236,7 @@ function Home() {
               </h2>
 
               <p className="mb-5 text-base leading-8 text-gray-600 sm:text-lg">
-                Our purpose is to empower  farmers in Africa and improve
+                Our purpose is to empower farmers in Nigeria and Africa at large and improve
                 agricultural productivity by providing access to quality agro
                 inputs, reliable farming equipment, and practical agricultural
                 knowledge. Through innovation, trusted partnerships, and

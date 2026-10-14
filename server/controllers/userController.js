@@ -7,7 +7,11 @@ import {
 } from "../utils/jwt.js";
 import bcrypt from "bcrypt";
 import validator from "validator";
-import { clearAuthCookies, setAuthCookies } from "../utils/authCookies.js";
+import {
+  clearAuthCookies,
+  getAuthCookieOptions,
+  setAuthCookies,
+} from "../utils/authCookies.js";
 import { createHash, randomBytes } from "node:crypto";
 import { sendPasswordResetEmail } from "../config/email.js";
 import { emailVerificationEnabled } from "../utils/verification.js";
@@ -29,10 +33,12 @@ export const addUser = async (req, res) => {
       typeof email !== "string" ||
       typeof password !== "string"
     ) {
-      return res.status(400).json({
-        status: "fail",
-        message: "Name, email and password are required",
-      });
+      return res
+        .status(400)
+        .json({
+          status: "fail",
+          message: "Name, email and password are required",
+        });
     }
 
     if (password !== confirmPassword) {
@@ -64,7 +70,7 @@ export const addUser = async (req, res) => {
         id: user._id,
         email: user.email,
       });
-      const verificationLink = `${process.env.API_URL}/user/verify-email/${verificationToken}`;
+      const verificationLink = `${process.env.API_URL || "http://localhost:5000/api/v1"}/user/verify-email/${verificationToken}`;
 
       await User.findByIdAndUpdate(user._id, {
         verificationToken: createHash("sha256")
@@ -133,7 +139,9 @@ export const verifyEmail = async (req, res) => {
     user.verificationToken = undefined;
     await user.save();
 
-    return res.redirect(`${process.env.CLIENT_URL}/login`);
+    return res.redirect(
+      `${process.env.CLIENT_URL || "http://localhost:5173"}/login`,
+    );
   } catch (error) {
     return res
       .status(400)
@@ -239,7 +247,7 @@ export const forgotPassword = async (req, res) => {
     user.passwordResetToken = passwordResetToken;
     user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
     await user.save();
-    const resetLink = `${process.env.CLIENT_URL}/reset-password/${token}`;
+    const resetLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/reset-password/${token}`;
     try {
       await sendPasswordResetEmail(user, resetLink);
     } catch {
@@ -282,11 +290,13 @@ export const resetPassword = async (req, res) => {
       minSymbols: 1,
     })
   ) {
-    return res.status(400).json({
-      status: "failed",
-      message:
-        "Password must include uppercase, lowercase, number and symbol characters",
-    });
+    return res
+      .status(400)
+      .json({
+        status: "failed",
+        message:
+          "Password must include uppercase, lowercase, number and symbol characters",
+      });
   }
   const passwordResetToken = createHash("sha256").update(token).digest("hex");
   const user = await User.findOne({
@@ -311,10 +321,12 @@ export const resetPassword = async (req, res) => {
 export const changePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body ?? {};
   if (typeof currentPassword !== "string" || typeof newPassword !== "string") {
-    return res.status(400).json({
-      status: "failed",
-      message: "Current and new passwords are required",
-    });
+    return res
+      .status(400)
+      .json({
+        status: "failed",
+        message: "Current and new passwords are required",
+      });
   }
   const user = await User.findById(req.user._id).select("+password");
   if (!user || !(await bcrypt.compare(currentPassword, user.password))) {
@@ -336,19 +348,23 @@ export const changePassword = async (req, res) => {
       minSymbols: 1,
     })
   ) {
-    return res.status(400).json({
-      status: "failed",
-      message:
-        "Password must include uppercase, lowercase, number and symbol characters",
-    });
+    return res
+      .status(400)
+      .json({
+        status: "failed",
+        message:
+          "Password must include uppercase, lowercase, number and symbol characters",
+      });
   }
   user.password = newPassword;
   await user.save();
   clearAuthCookies(res);
-  return res.status(200).json({
-    status: "success",
-    message: "Password changed. Please sign in again.",
-  });
+  return res
+    .status(200)
+    .json({
+      status: "success",
+      message: "Password changed. Please sign in again.",
+    });
 };
 
 // get all users
@@ -386,7 +402,7 @@ export const updateUser = async (req, res) => {
     const user = await User.findOneAndUpdate(
       { email: email.toLowerCase() },
       updateData,
-      { new: true, runValidators: true },
+      { returnDocument: 'after', runValidators: true },
     ).select("-password");
 
     if (!user) {
@@ -452,11 +468,9 @@ export const refreshTokenRoute = async (req, res) => {
       return res.sendStatus(403);
 
     const accessToken = generateAccessToken({ id: user._id });
+    const cookieOptions = getAuthCookieOptions();
     res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/api/v1",
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
     return res

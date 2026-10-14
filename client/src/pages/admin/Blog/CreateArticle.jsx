@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createBlogPost } from "../../../services/adminService";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 const CreateArticle = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const CreateArticle = () => {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const categories = [
     "Agriculture",
@@ -32,6 +34,27 @@ const CreateArticle = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleImageUpload = async (e) => {
+    setError("");
+    try {
+      setUploadingImage(true);
+      const uploadedUrl = await handleLocalImageUpload(e, (nextImage) => {
+        setFormData((prev) => ({ ...prev, image: nextImage }));
+      });
+
+      if (uploadedUrl) {
+        setFormData((prev) => ({ ...prev, image: uploadedUrl }));
+      }
+    } catch (requestError) {
+      setError(requestError.message || "Image upload failed.");
+      if (formData.image) {
+        setFormData((prev) => ({ ...prev, image: prev.image }));
+      }
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -77,7 +100,11 @@ const CreateArticle = () => {
         onSubmit={handleSubmit}
         className="max-w-5xl mx-auto bg-white rounded-2xl shadow-sm border p-5 sm:p-8"
       >
-        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+        {error && (
+          <p role="alert" className="mb-4 text-sm text-red-700">
+            {error}
+          </p>
+        )}
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
@@ -167,17 +194,21 @@ const CreateArticle = () => {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Featured Image URL
+                Featured Image
               </label>
 
               <input
-                type="text"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="/images/blog/article.jpg"
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="w-full border border-dashed border-gray-300 bg-gray-50 rounded-lg px-4 py-3 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-green-500"
               />
+
+              <p className="mt-2 text-xs text-gray-500">
+                {uploadingImage
+                  ? "Uploading image…"
+                  : "Choose a local image to upload."}
+              </p>
             </div>
 
             <div>
@@ -228,14 +259,14 @@ const CreateArticle = () => {
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploadingImage}
             className="px-6 py-3 bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white rounded-lg font-semibold transition"
           >
             {saving
               ? "Saving..."
               : formData.status === "Published"
-              ? "Publish Article"
-              : "Save Draft"}
+                ? "Publish Article"
+                : "Save Draft"}
           </button>
         </div>
       </form>
