@@ -29,6 +29,9 @@ export default function EditCategory() {
   });
 
   const [preview, setPreview] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -97,29 +100,41 @@ export default function EditCategory() {
   };
 
   const handleImageUpload = async (e) => {
-    const dataUrl = await handleLocalImageUpload(e, (nextImage) => {
-      setFormData((prev) => ({ ...prev, image: nextImage }));
-      setPreview(nextImage);
-    });
-
-    if (!dataUrl && formData.image) {
-      setPreview(formData.image);
+    setError("");
+    setUploadingImage(true);
+    try {
+      const uploadedUrl = await handleLocalImageUpload(e, (nextImage) => {
+        setFormData((prev) => ({ ...prev, image: nextImage }));
+        setPreview(nextImage);
+      });
+      if (!uploadedUrl && formData.image) setPreview(formData.image);
+    } catch (requestError) {
+      setError(requestError.message || "Image upload failed.");
+    } finally {
+      setUploadingImage(false);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    updateCategory(id, {
-      ...formData,
-      name: formData.name.trim() || category.name,
-      slug: formData.slug.trim() || slugify(formData.name || category.name),
-      description: formData.description || "",
-      image: formData.image || "",
-      status: formData.status || "Active",
-    });
-
-    navigate("/admin/categories");
+    if (uploadingImage) return;
+    setSaving(true);
+    setError("");
+    try {
+      await updateCategory(id, {
+        ...formData,
+        name: formData.name.trim() || category.name,
+        slug: formData.slug.trim() || slugify(formData.name || category.name),
+        description: formData.description || "",
+        image: formData.image || "",
+        status: formData.status || "Active",
+      });
+      navigate("/admin/categories");
+    } catch (requestError) {
+      setError(requestError.message || "Unable to update category.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -142,6 +157,11 @@ export default function EditCategory() {
           onSubmit={handleSubmit}
           className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8"
         >
+          {error && (
+            <p role="alert" className="mb-4 text-sm text-red-700">
+              {error}
+            </p>
+          )}
           <div className="space-y-6">
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
@@ -197,7 +217,9 @@ export default function EditCategory() {
               />
 
               <p className="mt-2 text-xs text-gray-500">
-                Upload a new category image to replace the current image.
+                {uploadingImage
+                  ? "Uploading image to Cloudinary…"
+                  : "Upload a new image to Cloudinary to replace the current image."}
               </p>
 
               {preview && (
@@ -237,9 +259,10 @@ export default function EditCategory() {
             </Link>
             <button
               type="submit"
-              className="rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-800"
+              disabled={saving || uploadingImage}
+              className="rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-800 disabled:bg-gray-400"
             >
-              Update Category
+              {saving ? "Saving…" : "Update Category"}
             </button>
           </div>
         </form>

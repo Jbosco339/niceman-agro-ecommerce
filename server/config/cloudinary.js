@@ -19,4 +19,8 @@ if (process.env.CLOUDINARY_API_SECRET) {
 
 cloudinary.config(config);
 
+export const missingCloudinaryConfiguration = () =>
+    ["CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET"]
+        .filter((key) => !process.env[key]?.trim());
+
 export default cloudinary;

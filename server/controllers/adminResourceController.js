@@ -65,6 +65,54 @@ const slugifyCategory = (value = "") =>
 const escapeRegExp = (value = "") =>
   String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+const isCloudinaryImageUrl = (value) => {
+  if (typeof value !== "string" || !value.trim()) return false;
+  try {
+    const url = new URL(value.trim());
+    return (
+      url.protocol === "https:" &&
+      url.hostname === "res.cloudinary.com" &&
+      /^\/[^/]+\/image\/upload\//.test(url.pathname)
+    );
+  } catch {
+    return false;
+  }
+};
+
+export const hasUnuploadedAdminImage = (
+  value,
+  previousValue = null,
+  allowWebsiteDefaults = false,
+) => {
+  if (!value || typeof value !== "object") return false;
+
+  return Object.entries(value).some(([key, child]) => {
+    const previousChild = previousValue?.[key];
+    if (key.toLowerCase().includes("image")) {
+      if (child === "" || child === undefined || child === null) return false;
+      return (
+        !isCloudinaryImageUrl(child) &&
+        child !== previousChild &&
+        !(
+          allowWebsiteDefaults &&
+          previousValue == null &&
+          ["hero-bg.jpg", "about.jpg"].some((name) =>
+            typeof child === "string" &&
+            child === `/images/${name}`,
+          )
+        )
+      );
+    }
+    return child && typeof child === "object"
+      ? hasUnuploadedAdminImage(
+          child,
+          previousChild,
+          allowWebsiteDefaults,
+        )
+      : false;
+  });
+};
+
 const normalizeCategoryPayload = (payload) => {
   if (!payload || typeof payload !== "object") return payload;
   const categoryName =
@@ -112,14 +160,23 @@ const categoryConflict = async (payload, excludeId = null) => {
   return query.$or.length ? AdminRecord.findOne(query).lean() : null;
 };
 
-const inputPayload = (resource, value, partial = false) => {
+const inputPayload = (
+  resource,
+  value,
+  partial = false,
+  existingPayload = null,
+) => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return null;
   }
 
   if (resource === "website-content") {
     const serialized = JSON.stringify(value);
-    return serialized.length <= 20000 && hasSafeKeys(value) ? value : null;
+    return serialized.length <= 20000 &&
+      hasSafeKeys(value) &&
+      !hasUnuploadedAdminImage(value, existingPayload, true)
+      ? value
+      : null;
   }
 
   const allowed = fields[resource];
@@ -131,6 +188,7 @@ const inputPayload = (resource, value, partial = false) => {
   if (!Object.keys(payload).length) return null;
   if (!hasSafeKeys(payload)) return null;
   if (resource === "category") normalizeCategoryPayload(payload);
+  if (hasUnuploadedAdminImage(payload, existingPayload)) return null;
   if (
     !partial &&
     resource === "category" &&
@@ -337,6 +395,12 @@ export const getAdminRecord = (resource) => async (req, res) => {
 export const createAdminRecord = (resource) => async (req, res) => {
   const payload = inputPayload(resource, req.body, false);
   if (!payload) {
+    if (hasUnuploadedAdminImage(req.body)) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Upload images through the admin image uploader before saving.",
+      });
+    }
     return res
       .status(400)
       .json({ status: "failed", message: "Invalid or empty request data" });
@@ -364,17 +428,23 @@ export const updateAdminRecord = (resource) => async (req, res) => {
       .status(400)
       .json({ status: "failed", message: "Invalid record id" });
   }
-  const payload = inputPayload(resource, req.body, true);
-  if (!payload) {
-    return res
-      .status(400)
-      .json({ status: "failed", message: "Invalid or empty request data" });
-  }
   const existing = await AdminRecord.findOne({ _id: req.params.id, resource });
   if (!existing)
     return res
       .status(404)
       .json({ status: "failed", message: "Record not found" });
+  const payload = inputPayload(resource, req.body, true, existing.payload);
+  if (!payload) {
+    if (hasUnuploadedAdminImage(req.body, existing.payload)) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Upload images through the admin image uploader before saving.",
+      });
+    }
+    return res
+      .status(400)
+      .json({ status: "failed", message: "Invalid or empty request data" });
+  }
   if (resource === "category") {
     const conflict = await categoryConflict(payload, existing._id);
     if (conflict) {

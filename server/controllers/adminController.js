@@ -64,10 +64,23 @@ export const registerAdminWithInvitation = async (req, res) => {
       },
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        status: "failed",
+        message: "An account already exists for this administrator email.",
+      });
+    }
+
     const message = error.message || "Unable to create administrator account.";
     return res
       .status(error.name === "ValidationError" ? 400 : 500)
-      .json({ status: "failed", message });
+      .json({
+        status: "failed",
+        message:
+          error.name === "ValidationError"
+            ? message
+            : "Unable to create the administrator account right now. Please try again later.",
+      });
   }
 };
 
@@ -82,16 +95,30 @@ export const loginAdmin = async (req, res) => {
   const user = await User.findOne({ email: email.toLowerCase().trim() }).select(
     "+password",
   );
-  if (
-    !user ||
-    user.role !== "admin" ||
-    (emailVerificationEnabled() && !user.isVerified) ||
-    !user.isActive ||
-    !(await bcrypt.compare(password, user.password))
-  ) {
+  if (!user || user.role !== "admin") {
     return res
       .status(401)
-      .json({ status: "failed", message: "Invalid email or password" });
+      .json({ status: "failed", message: "Invalid email or password." });
+  }
+
+  if (!(await bcrypt.compare(password, user.password))) {
+    return res
+      .status(401)
+      .json({ status: "failed", message: "Invalid email or password." });
+  }
+
+  if (emailVerificationEnabled() && !user.isVerified) {
+    return res.status(403).json({
+      status: "failed",
+      message: "Please verify your email before signing in.",
+    });
+  }
+
+  if (!user.isActive) {
+    return res.status(403).json({
+      status: "failed",
+      message: "This administrator account is inactive. Contact your system administrator.",
+    });
   }
 
   setAuthCookies(

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { API_URL } from "../../../services/api";
+import { post } from "../../../services/api";
 
 const AdminSignup = () => {
   const navigate = useNavigate();
@@ -40,24 +40,11 @@ const AdminSignup = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/admin/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          fullName: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-        }),
+      await post("/admin/signup", {
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Admin registration failed.");
-      }
 
       alert("Admin account created successfully!");
       navigate("/admin/AdminLogin");

@@ -11,6 +11,7 @@ import {
 import {
   createAdminRecord,
   deleteAdminRecord,
+  hasUnuploadedAdminImage,
   getAdminRecord,
   listAdminRecords,
   listCustomers,
@@ -36,6 +37,10 @@ const adminLoginLimiter = rateLimit({
   limit: 10,
   standardHeaders: "draft-8",
   legacyHeaders: false,
+  handler: (_req, res) => res.status(429).json({
+    status: "failed",
+    message: "Too many admin login or signup attempts. Please wait 15 minutes before trying again.",
+  }),
 });
 
 router.post("/signup", adminLoginLimiter, registerAdminWithInvitation);
@@ -92,8 +97,22 @@ router.get("/website-content", auth, admin, async (_req, res) => {
     .json({ status: "success", data: record?.payload ?? {} });
 });
 router.put("/website-content", auth, admin, async (req, res) => {
-  const payload = validateAdminPayload("website-content", req.body);
+  const existingRecord = await AdminRecord.findOne({
+    resource: "website-content",
+  }).sort({ updatedAt: -1 });
+  const payload = validateAdminPayload(
+    "website-content",
+    req.body,
+    false,
+    existingRecord?.payload,
+  );
   if (!payload) {
+    if (hasUnuploadedAdminImage(req.body, existingRecord?.payload, true)) {
+      return res.status(400).json({
+        status: "failed",
+        message: "Upload images through the admin image uploader before saving.",
+      });
+    }
     return res
       .status(400)
       .json({ status: "failed", message: "Invalid website content" });

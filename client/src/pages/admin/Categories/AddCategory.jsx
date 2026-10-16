@@ -14,6 +14,7 @@ const AddCategory = () => {
   });
 
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
@@ -26,7 +27,9 @@ const AddCategory = () => {
   };
 
   const handleImageFile = async (e) => {
+    setError("");
     try {
+      setUploadingImage(true);
       const url = await handleLocalImageUpload(e, (nextImage) => {
         setFormData((prev) => ({ ...prev, image: nextImage }));
       });
@@ -34,12 +37,15 @@ const AddCategory = () => {
         setFormData((prev) => ({ ...prev, image: url }));
       }
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Image upload failed.");
+    } finally {
+      setUploadingImage(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (uploadingImage) return;
     setSaving(true);
     setError("");
     try {
@@ -130,17 +136,10 @@ const AddCategory = () => {
             />
 
             <p className="mt-2 text-xs text-gray-500">
-              You can also paste an image URL below after uploading.
+              {uploadingImage
+                ? "Uploading image to Cloudinary…"
+                : "Choose an image to upload to Cloudinary."}
             </p>
-
-            <input
-              type="text"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              placeholder="/images/categories/vegetables.jpg"
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 mt-2 outline-none focus:ring-2 focus:ring-green-500"
-            />
 
             {formData.image && (
               <img
@@ -184,7 +183,7 @@ const AddCategory = () => {
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploadingImage}
             className="px-6 py-3 bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white rounded-lg font-semibold transition"
           >
             {saving ? "Saving..." : "Add Category"}

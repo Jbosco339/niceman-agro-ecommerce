@@ -1,5 +1,5 @@
 import multer from "multer";
-import cloudinary from "../config/cloudinary.js";
+import cloudinary, { missingCloudinaryConfiguration } from "../config/cloudinary.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -37,6 +37,16 @@ const upload = multer({
 export const saveUpload = (req, res, next) => {
   if (!req.file) return next();
 
+  const missingConfiguration = missingCloudinaryConfiguration();
+  if (missingConfiguration.length) {
+    const error = new Error(
+      `Cloudinary upload is unavailable. Configure: ${missingConfiguration.join(", ")}.`,
+    );
+    error.statusCode = 503;
+    error.expose = true;
+    return next(error);
+  }
+
   const uploadStream = cloudinary.uploader.upload_stream(
     {
       folder: "mern_uploads",
@@ -65,7 +75,17 @@ export const saveUpload = (req, res, next) => {
             error.message ||
             "Cloudinary upload failed",
         );
-        appError.statusCode = error.http_code || error.statusCode || 500;
+        appError.statusCode =
+          error.http_code >= 500 || !error.http_code
+            ? 502
+            : error.http_code;
+        appError.expose = true;
+        return next(appError);
+      }
+      if (!result?.secure_url || !result.public_id) {
+        const appError = new Error("Cloudinary did not return an image URL.");
+        appError.statusCode = 502;
+        appError.expose = true;
         return next(appError);
       }
       req.file.path = result.secure_url;

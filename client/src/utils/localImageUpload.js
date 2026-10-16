@@ -1,4 +1,4 @@
-import { API_URL } from "../services/api";
+import { upload } from "../services/api";
 
 export function readFileAsDataUrl(file) {
   if (!file || !file.type || !file.type.startsWith("image/")) {
@@ -30,19 +30,7 @@ export async function handleLocalImageUpload(event, onImageReady) {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetch(`${API_URL}/files/upload`, {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-    });
-
-    const payload = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(
-        payload?.message || payload?.error || "Image upload failed.",
-      );
-    }
+    const payload = await upload("/files/upload", formData);
 
     const uploadedUrl =
       payload?.file?.url ||

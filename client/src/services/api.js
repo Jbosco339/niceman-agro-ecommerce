@@ -37,11 +37,28 @@ const api = async (endpoint, options = {}) => {
     if (refreshResponse.ok) response = await sendRequest();
   }
 
-  const data = await response.json().catch(() => ({}));
+  const responseText = await response.text();
+  let data = {};
+  if (responseText) {
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      data = { message: responseText };
+    }
+  }
 
   if (!response.ok) {
+    const responseMessage =
+      data.message ||
+      data.error ||
+      (Array.isArray(data.errors) ? data.errors.join(", ") : data.errors);
+    const message =
+      typeof responseMessage === "string" &&
+      !/^\s*</.test(responseMessage)
+        ? responseMessage
+        : response.statusText || "The request could not be completed.";
     const error = new Error(
-      data.message || "Something went wrong with the API request.",
+      message,
     );
     error.status = response.status;
     throw error;

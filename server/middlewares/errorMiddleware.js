@@ -16,7 +16,7 @@ const errorMiddleware = (err, req, res, next) => {
         success: false,
         status: err.status,
         message: err.statusCode >= 500
-            ? (process.env.NODE_ENV !== "production" ? err.message : "Internal server error")
+            ? (process.env.NODE_ENV !== "production" || err.expose ? err.message : "Internal server error")
             : err.message,
         ...(process.env.NODE_ENV !== "production" ? { stack: err.stack } : {}),
     });

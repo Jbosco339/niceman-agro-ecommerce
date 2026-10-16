@@ -9,13 +9,18 @@ const productSchema = new mongoose.Schema(
         description: { type: String, required: true, trim: true, maxlength: 5000 },
         image: {
             type: String,
-            default: "",
+            required: true,
             maxlength: 2048,
             validate(value) {
-                if (!value) return true;
-                const isLocalPath = value.startsWith("/") && !value.startsWith("//");
-                const isUrl = /^https?:\/\/[^\s]+$/i.test(value);
-                return isLocalPath || isUrl;
+                if (!value) return false;
+                try {
+                    const url = new URL(value);
+                    return url.protocol === "https:" &&
+                        url.hostname === "res.cloudinary.com" &&
+                        /^\/[^/]+\/image\/upload\//.test(url.pathname);
+                } catch {
+                    return false;
+                }
             },
         },
         status: { type: String, enum: ["Active", "Inactive"], default: "Active" },

@@ -101,12 +101,19 @@ export const addUser = async (req, res) => {
       },
     });
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({
+        status: "failed",
+        message: "An account already exists for this email address.",
+      });
+    }
+
     res.status(err.name === "ValidationError" ? 400 : 500).json({
       status: "failed",
       message:
         err.name === "ValidationError"
           ? err.message
-          : "Unable to register user",
+          : "Unable to create your account right now. Please try again later.",
     });
   }
 };
@@ -164,17 +171,16 @@ export const loginUser = async (req, res) => {
       email: email.trim().toLowerCase(),
     }).select("+password");
 
-    // return an error response if user doies not exist
     if (!user) {
       return res
-        .status(404)
-        .json({ status: "fail", message: "invalid Email or Password" });
+        .status(401)
+        .json({ status: "failed", message: "Invalid email or password." });
     }
 
     if (emailVerificationEnabled() && !user.isVerified) {
       return res.status(403).json({
         status: "failed",
-        message: "please verify your email before logging in",
+        message: "Please verify your email before signing in.",
       });
     }
 
@@ -185,7 +191,7 @@ export const loginUser = async (req, res) => {
     if (!comparePassword) {
       return res.status(403).json({
         status: "failed",
-        message: "invalid email or password",
+        message: "Invalid email or password.",
       });
     }
 
@@ -214,7 +220,7 @@ export const loginUser = async (req, res) => {
   } catch (err) {
     res.status(500).json({
       status: "failed",
-      message: "Unable to log in",
+      message: "Unable to sign in right now. Please try again later.",
     });
   }
 };
