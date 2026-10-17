@@ -5,7 +5,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { getReviews } from "../services/adminService";
+import { getReviews as fetchReviews } from "../services/adminService";
 
 export const initialReviews = [];
 
@@ -57,21 +57,25 @@ export const ReviewContext = createContext(null);
 export function ReviewProvider({ children }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
 
     setLoading(true);
-    getReviews()
+    fetchReviews()
       .then(({ data }) => {
         if (!active) return;
         const next = Array.isArray(data)
           ? data.map(normalizeReview).filter(Boolean)
           : [];
         setReviews(next);
+        setError("");
       })
-      .catch(() => {
-        if (active) setReviews([]);
+      .catch((requestError) => {
+        if (!active) return;
+        setReviews([]);
+        setError(requestError?.message || "Failed to load reviews.");
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -118,7 +122,7 @@ export function ReviewProvider({ children }) {
   const approveReview = (id) => updateReview(id, { status: "Approved" });
   const rejectReview = (id) => updateReview(id, { status: "Rejected" });
 
-  const getReviews = () => reviews;
+  const getReviewsState = () => reviews;
   const getGeneralReviews = () =>
     reviews.filter((review) => review.type === "general");
   const getProductReviews = (productId) =>
@@ -133,16 +137,17 @@ export function ReviewProvider({ children }) {
       reviews,
       setReviews,
       loading,
+      error,
       addReview,
       updateReview,
       deleteReview,
       approveReview,
       rejectReview,
-      getReviews,
+      getReviews: getReviewsState,
       getGeneralReviews,
       getProductReviews,
     }),
-    [reviews, loading],
+    [reviews, loading, error],
   );
 
   return (

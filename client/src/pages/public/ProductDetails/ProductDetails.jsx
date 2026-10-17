@@ -23,7 +23,7 @@ function ProductDetails() {
     if (!id) return;
     setLoading(true);
     getProduct(id)
-      .then((data) => {
+      .then(({ data }) => {
         setProduct(data);
         setError("");
       })
@@ -58,8 +58,7 @@ function ProductDetails() {
           </h1>
 
           <p className="mt-4 text-gray-600">
-            {error ||
-              "The product you are looking for could not be found."}
+            {error || "The product you are looking for could not be found."}
           </p>
 
           <Link
@@ -174,12 +173,14 @@ function ProductDetails() {
               </h3>
 
               <ul className="mt-4 space-y-3">
-                {(product.features || [
-                  "Quality agricultural product",
-                  "Suitable for farm use",
-                  "Follow application instructions",
-                  "Store in a cool, dry place",
-                ]).map((feature) => (
+                {(
+                  product.features || [
+                    "Quality agricultural product",
+                    "Suitable for farm use",
+                    "Follow application instructions",
+                    "Store in a cool, dry place",
+                  ]
+                ).map((feature) => (
                   <li
                     key={feature}
                     className="flex items-start gap-3 text-gray-600"

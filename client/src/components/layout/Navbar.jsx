@@ -13,12 +13,12 @@ function Navbar() {
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
         {/* Logo */}
         <Link to="/" className="flex items-center">
-            <img
-              src="/images/NicemanAgroLogoGreen.png"
-              alt="Niceman Agro & Farms"
-              className="h-17 w-auto object-contain"
-            />
-          </Link>
+          <img
+            src="/images/NicemanAgroLogoGreen.png"
+            alt="Niceman Agro & Farms"
+            className="h-17 w-auto object-contain"
+          />
+        </Link>
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-7 lg:flex">
@@ -205,10 +205,10 @@ function Navbar() {
 
           {/* Customer Account */}
           <Link
-            to="/login"
+            to="/account/dashboard"
             className="rounded-md bg-green-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-green-800"
           >
-            Login
+            My Account
           </Link>
         </div>
 
@@ -216,7 +216,9 @@ function Navbar() {
         <button
           type="button"
           className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-green-800 lg:hidden"
-          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-label={
+            menuOpen ? "Close navigation menu" : "Open navigation menu"
+          }
           aria-expanded={menuOpen}
           aria-controls="mobile-navigation"
           onClick={() => setMenuOpen((open) => !open)}
@@ -225,7 +227,10 @@ function Navbar() {
         </button>
       </div>
       {menuOpen && (
-        <div id="mobile-navigation" className="border-t border-slate-100 bg-white px-5 py-4 shadow-lg lg:hidden">
+        <div
+          id="mobile-navigation"
+          className="border-t border-slate-100 bg-white px-5 py-4 shadow-lg lg:hidden"
+        >
           <div className="mx-auto flex max-w-7xl flex-col gap-1">
             {[
               ["Home", "/"],

@@ -1,5 +1,32 @@
 import { upload } from "../services/api";
 
+const extractUploadedUrl = (payload) => {
+  const candidates = [
+    payload?.file?.url,
+    payload?.file?.secure_url,
+    payload?.file?.secureUrl,
+    payload?.data?.file?.url,
+    payload?.data?.file?.secure_url,
+    payload?.data?.file?.secureUrl,
+    payload?.data?.url,
+    payload?.data?.secure_url,
+    payload?.data?.secureUrl,
+    payload?.url,
+    payload?.secure_url,
+    payload?.secureUrl,
+  ];
+
+  return (
+    candidates.find((candidate) => {
+      if (typeof candidate !== "string" || !candidate.trim()) return false;
+      return (
+        /^https:\/\//i.test(candidate) ||
+        /^https:\/\/res\.cloudinary\.com\//i.test(candidate)
+      );
+    }) || null
+  );
+};
+
 export function readFileAsDataUrl(file) {
   if (!file || !file.type || !file.type.startsWith("image/")) {
     return Promise.reject(new Error("Please select a valid image file."));
@@ -31,17 +58,7 @@ export async function handleLocalImageUpload(event, onImageReady) {
     formData.append("file", file);
 
     const payload = await upload("/files/upload", formData);
-
-    const uploadedUrl =
-      payload?.file?.url ||
-      payload?.file?.secure_url ||
-      payload?.file?.secureUrl ||
-      payload?.url ||
-      payload?.secureUrl ||
-      payload?.secure_url ||
-      payload?.data?.url ||
-      payload?.data?.secure_url ||
-      null;
+    const uploadedUrl = extractUploadedUrl(payload);
 
     if (!uploadedUrl) {
       throw new Error("Image upload did not return a valid URL.");

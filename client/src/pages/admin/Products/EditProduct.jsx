@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getProduct, updateProduct } from "../../../services/adminService";
+import { useCategoryContext } from "../../../context/CategoryContext";
 import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 const normalizeProduct = (product) => ({
@@ -16,6 +17,11 @@ const normalizeProduct = (product) => ({
 export default function EditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { categories = [] } = useCategoryContext();
+  const categoryOptions =
+    categories
+      .filter((category) => category?.name)
+      .map((category) => category.name) || [];
 
   const [formData, setFormData] = useState(null);
   const [preview, setPreview] = useState("");
@@ -185,12 +191,11 @@ export default function EditProduct() {
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
             >
               <option value="">Select category</option>
-              <option value="Fresh Vegetables">Fresh Vegetables</option>
-              <option value="Fruits">Fruits</option>
-              <option value="Grains & Cereals">Grains & Cereals</option>
-              <option value="Tubers">Tubers</option>
-              <option value="Livestock">Livestock</option>
-              <option value="Poultry">Poultry</option>
+              {categoryOptions.map((categoryName) => (
+                <option key={categoryName} value={categoryName}>
+                  {categoryName}
+                </option>
+              ))}
             </select>
           </div>
 

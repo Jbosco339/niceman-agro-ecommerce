@@ -5,15 +5,18 @@ import {
   SlidersHorizontal,
   ShoppingCart,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Heart,
   Check,
 } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
+import { useCategoryContext } from "../../../context/CategoryContext";
 import { getProducts } from "../../../services/productService";
 
-const categories = [
+function formatPrice(price) {
+  return `₦${price.toLocaleString("en-NG")}`;
+}
+
+const fallbackCategories = [
   "All Products",
   "Fertilizers",
   "Herbicides",
@@ -23,35 +26,45 @@ const categories = [
   "Farm Equipment",
 ];
 
-function formatPrice(price) {
-  return `₦${price.toLocaleString("en-NG")}`;
-}
-
 function Shop() {
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
   const { addToCart } = useCart();
+  const { activeCategories = [] } = useCategoryContext();
   const [addedProductId, setAddedProductId] = useState(null);
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState("");
 
+  const categories = [
+    "All Products",
+    ...activeCategories
+      .filter((category) => category?.name)
+      .map((category) => category.name),
+  ];
+
+  const categoryOptions = categories.length ? categories : fallbackCategories;
+
   useEffect(() => {
     let active = true;
-    setProductsLoading(true);
+
     getProducts()
       .then(({ data }) => {
-        if (active) setProducts(data);
+        if (active) setProducts(Array.isArray(data) ? data : []);
       })
       .catch((error) => {
-        if (active) setProductsError(error.message || "Could not load products.");
+        if (active)
+          setProductsError(error.message || "Could not load products.");
       })
       .finally(() => {
         if (active) setProductsLoading(false);
       });
-    return () => { active = false; };
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleAddToCart = (product) => {
@@ -104,7 +117,7 @@ function Shop() {
     }
 
     return result;
-  }, [selectedCategory, searchTerm, sortOption]);
+  }, [products, selectedCategory, searchTerm, sortOption]);
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -194,7 +207,7 @@ function Shop() {
                 </h2>
 
                 <div className="mt-5 space-y-1">
-                  {categories.map((category) => {
+                  {categoryOptions.map((category) => {
                     const active = selectedCategory === category;
 
                     return (
@@ -246,10 +259,12 @@ function Shop() {
 
               {/* Product Grid */}
               {productsLoading ? (
-            <p className="text-gray-500">Loading products…</p>
-          ) : productsError ? (
-            <p role="alert" className="text-red-700">{productsError}</p>
-          ) : filteredProducts.length > 0 ? (
+                <p className="text-gray-500">Loading products…</p>
+              ) : productsError ? (
+                <p role="alert" className="text-red-700">
+                  {productsError}
+                </p>
+              ) : filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                   {filteredProducts.map((product) => (
                     <article
@@ -258,147 +273,83 @@ function Shop() {
                     >
                       {/* Product Image */}
                       <div className="relative aspect-square overflow-hidden bg-slate-50">
-                        <Link
-                          to={`/product/${product.id}`}
-                          className="block h-full w-full"
-                        >
+                        <Link to={`/product/${product.id}`}>
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="h-full w-full object-contain p-7 transition duration-300 group-hover:scale-105"
+                            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                           />
                         </Link>
 
-                         {product.stock > 0 && (
-                           <span className="absolute left-4 top-4 rounded-full bg-green-700 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
-                             In Stock
-                           </span>
-                         )}
-
                         <button
                           type="button"
-                          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm transition hover:text-red-500"
-                          aria-label={`Add ${product.name} to wishlist`}
+                          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-sm transition hover:bg-white"
+                          aria-label={`Save ${product.name} to favorites`}
                         >
-                          <Heart size={17} />
+                          <Heart size={16} />
                         </button>
                       </div>
 
-                      {/* Product Information */}
-                      <div className="p-5">
-                        <span className="text-[11px] font-bold uppercase tracking-wide text-green-700">
-                          {product.category}
-                        </span>
+                      <div className="p-4">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold uppercase tracking-wide text-green-700">
+                            {product.category}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {product.stock > 0
+                              ? `${product.stock} in stock`
+                              : "Out of stock"}
+                          </span>
+                        </div>
 
                         <Link
                           to={`/product/${product.id}`}
-                          className="mt-2 block"
+                          className="mt-3 block"
                         >
-                          <h3 className="min-h-12 text-base font-bold leading-6 text-green-950 transition hover:text-green-700">
+                          <h3 className="text-lg font-bold text-slate-900 transition hover:text-green-700">
                             {product.name}
                           </h3>
                         </Link>
 
-                        <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">
+                        <p className="mt-2 line-clamp-2 text-sm text-slate-600">
                           {product.description}
                         </p>
 
-                        <div className="mt-5 flex items-center justify-between gap-3">
-                          <strong className="text-lg font-bold text-green-950">
+                        <div className="mt-4 flex items-center justify-between gap-3">
+                          <span className="text-xl font-extrabold text-green-800">
                             {formatPrice(product.price)}
-                          </strong>
+                          </span>
 
                           <button
                             type="button"
                             onClick={() => handleAddToCart(product)}
-                            className="flex h-10 items-center gap-2 rounded-md bg-green-700 px-4 text-sm font-semibold text-white transition hover:bg-green-800"
+                            className="inline-flex items-center gap-2 rounded-md bg-green-700 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-green-800"
                           >
-                            {addedProductId === product.id ? (
-                              <>
-                                <Check size={16} />
-                                Added
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingCart size={16} />
-                                Add
-                              </>
-                            )}
+                            <ShoppingCart size={16} />
+                            {addedProductId === product.id
+                              ? "Added"
+                              : "Add to Cart"}
                           </button>
                         </div>
+
+                        {addedProductId === product.id && (
+                          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-green-700">
+                            <Check size={15} />
+                            Added to cart
+                          </div>
+                        )}
                       </div>
                     </article>
                   ))}
                 </div>
               ) : (
-                /* Empty State */
-                <div className="rounded-lg border border-slate-200 bg-white px-6 py-16 text-center">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-700">
-                    <Search size={24} />
-                  </div>
-
-                  <h3 className="mt-5 text-lg font-bold text-green-950">
-                    No products found
-                  </h3>
-
-                  <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                    We couldn't find any products matching your search or
-                    selected category.
+                <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
+                  <p className="text-lg font-semibold text-slate-800">
+                    No products match your filters.
                   </p>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchTerm("");
-                      setSelectedCategory("All Products");
-                    }}
-                    className="mt-5 font-semibold text-green-700 hover:underline"
-                  >
-                    Clear filters
-                  </button>
-                </div>
-              )}
-
-              {/* Pagination */}
-              {filteredProducts.length > 0 && (
-                <div className="mt-10 flex items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    disabled
-                    className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-300"
-                    aria-label="Previous page"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-md bg-green-700 text-sm font-semibold text-white"
-                  >
-                    1
-                  </button>
-
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-600 hover:border-green-600 hover:text-green-700"
-                  >
-                    2
-                  </button>
-
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-600 hover:border-green-600 hover:text-green-700"
-                  >
-                    3
-                  </button>
-
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-green-600 hover:text-green-700"
-                    aria-label="Next page"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Try another category or search term.
+                  </p>
                 </div>
               )}
             </div>
