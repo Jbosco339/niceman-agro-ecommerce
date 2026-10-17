@@ -138,7 +138,7 @@ const Categories = () => {
       {/* Categories Table */}
       <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[750px]">
+          <table className="w-full min-w-187.5">
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="text-left px-6 py-4 text-sm font-semibold">

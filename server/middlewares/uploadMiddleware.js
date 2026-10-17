@@ -1,5 +1,7 @@
 import multer from "multer";
-import cloudinary, { missingCloudinaryConfiguration } from "../config/cloudinary.js";
+import cloudinary, {
+  missingCloudinaryConfiguration,
+} from "../config/cloudinary.js";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -47,26 +49,28 @@ export const saveUpload = (req, res, next) => {
     return next(error);
   }
 
+  const allowedFormats = [
+    "jpg",
+    "jpeg",
+    "png",
+    "gif",
+    "webp",
+    "svg",
+    "bmp",
+    "tiff",
+    "tif",
+    "avif",
+    "ico",
+    "mp4",
+    "mov",
+    "avi",
+  ];
+
   const uploadStream = cloudinary.uploader.upload_stream(
     {
       folder: "mern_uploads",
       resource_type: "auto",
-      allowed_formats: [
-        "jpg",
-        "jpeg",
-        "png",
-        "gif",
-        "webp",
-        "svg",
-        "bmp",
-        "tiff",
-        "tif",
-        "avif",
-        "ico",
-        "mp4",
-        "mov",
-        "avi",
-      ],
+      allowed_formats: allowedFormats.join(","),
     },
     (error, result) => {
       if (error) {
@@ -76,9 +80,7 @@ export const saveUpload = (req, res, next) => {
             "Cloudinary upload failed",
         );
         appError.statusCode =
-          error.http_code >= 500 || !error.http_code
-            ? 502
-            : error.http_code;
+          error.http_code >= 500 || !error.http_code ? 502 : error.http_code;
         appError.expose = true;
         return next(appError);
       }
@@ -93,7 +95,7 @@ export const saveUpload = (req, res, next) => {
       req.file.filename = result.public_id;
       req.file.resource_type = result.resource_type;
       return next();
-    }
+    },
   );
   uploadStream.end(req.file.buffer);
 };
