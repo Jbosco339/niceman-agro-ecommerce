@@ -1,9 +1,12 @@
 const rawApiBase =
   import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_CLIENT_URL ||
-  (typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:5000"
-    : "");
+  (typeof window !== "undefined" &&
+  window.location.hostname === "www.nicemanagro.com"
+    ? "https://niceman-agro-ecommerce.onrender.com/api/v1"
+    : import.meta.env.VITE_CLIENT_URL ||
+      (typeof window !== "undefined" && window.location.hostname === "localhost"
+        ? "http://localhost:5000"
+        : ""));
 
 const normalizeApiBase = (value) => {
   const trimmed = (value || "").trim().replace(/\/+$/, "");
