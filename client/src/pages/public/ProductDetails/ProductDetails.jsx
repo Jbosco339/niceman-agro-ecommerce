@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Check,
@@ -10,20 +10,38 @@ import {
   Star,
 } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
+import useAuth from "../../../hooks/useAuth";
 import { getProduct } from "../../../services/productService";
+import {
+  createReview,
+  getProductReviews,
+} from "../../../services/reviewService";
+
+const emptyReview = {
+  rating: 5,
+  review: "",
+};
 
 function ProductDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { addToCart, cartItems } = useCart();
+  const { addToCart, cartItems, updateQuantity, removeFromCart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const [productReviews, setProductReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [reviewSuccess, setReviewSuccess] = useState("");
+  const [reviewForm, setReviewForm] = useState(emptyReview);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
     getProduct(id)
-      .then((data) => {
+      .then(({ data }) => {
         setProduct(data);
         setError("");
       })
@@ -33,11 +51,149 @@ function ProductDetails() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const [quantity, setQuantity] = useState(1);
+  useEffect(() => {
+    if (!id) return;
+
+    setReviewsLoading(true);
+    getProductReviews(id)
+      .then(({ data }) => {
+        const approvedReviews = Array.isArray(data)
+          ? data.filter((review) => review?.status === "Approved")
+          : [];
+        setProductReviews(approvedReviews);
+      })
+      .catch(() => {
+        setProductReviews([]);
+      })
+      .finally(() => setReviewsLoading(false));
+  }, [id]);
+
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [addFeedback, setAddFeedback] = useState("");
 
+  const averageRating =
+    productReviews.length > 0
+      ? (
+          productReviews.reduce(
+            (total, review) => total + Number(review.rating || 0),
+            0,
+          ) / productReviews.length
+        ).toFixed(1)
+      : "5.0";
+
   const formatPrice = (price) => `₦${price.toLocaleString("en-NG")}`;
+
+  const existingCartItem = product
+    ? cartItems.find((item) => String(item.id) === String(product.id))
+    : null;
+  const quantity = existingCartItem ? existingCartItem.quantity : 1;
+
+  const handleReviewChange = (event) => {
+    const { name, value } = event.target;
+    setReviewForm((current) => ({ ...current, [name]: value }));
+    if (reviewError) setReviewError("");
+    if (reviewSuccess) setReviewSuccess("");
+  };
+
+  const handleProductReviewSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!isAuthenticated) {
+      navigate("/account/login", {
+        state: { from: `/products/${id}` },
+      });
+      return;
+    }
+
+    if (!product?.id) {
+      setReviewError("Product information is unavailable to submit a review.");
+      return;
+    }
+
+    const trimmedReview = reviewForm.review.trim();
+
+    if (!trimmedReview) {
+      setReviewError("Please write a short review before submitting.");
+      return;
+    }
+
+    if (trimmedReview.length < 10) {
+      setReviewError(
+        "Please share a bit more detail so your review is helpful.",
+      );
+      return;
+    }
+
+    setSubmittingReview(true);
+    setReviewError("");
+    setReviewSuccess("");
+
+    try {
+      const payload = {
+        type: "product",
+        product: String(product.id),
+        customer: "",
+        email: "",
+        rating: Number(reviewForm.rating),
+        review: trimmedReview,
+        comment: trimmedReview,
+        status: "Pending",
+        date: new Date().toISOString(),
+      };
+
+      const { data } = await createReview(payload);
+      setReviewSuccess("Thanks for your review. It is awaiting approval.");
+      setReviewForm(emptyReview);
+      setProductReviews((current) => {
+        const next = current.filter((item) => item.id !== data?.id);
+        return next;
+      });
+    } catch (requestError) {
+      setReviewError(
+        requestError?.message || "Unable to submit your review right now.",
+      );
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const increaseQuantity = () => {
+    if (existingCartItem) {
+      const next = existingCartItem.quantity + 1;
+      updateQuantity(product.id, next);
+      return;
+    }
+
+    addToCart(product, 1);
+  };
+
+  const decreaseQuantity = () => {
+    if (!existingCartItem) {
+      return;
+    }
+
+    const currentQty = existingCartItem.quantity;
+
+    if (currentQty > 1) {
+      updateQuantity(product.id, currentQty - 1);
+      return;
+    }
+
+    removeFromCart(product.id);
+  };
+
+  const handleAddToCart = () => {
+    if (existingCartItem) {
+      const nextQty = existingCartItem.quantity + 1;
+      updateQuantity(product.id, nextQty);
+      setAddFeedback(`${product.name} quantity increased (${nextQty} in cart)`);
+    } else {
+      addToCart(product, 1);
+      setAddFeedback(`${product.name} added to cart (1 in cart)`);
+    }
+
+    window.setTimeout(() => setAddFeedback(""), 1200);
+  };
 
   if (loading) {
     return (
@@ -58,8 +214,7 @@ function ProductDetails() {
           </h1>
 
           <p className="mt-4 text-gray-600">
-            {error ||
-              "The product you are looking for could not be found."}
+            {error || "The product you are looking for could not be found."}
           </p>
 
           <Link
@@ -73,27 +228,6 @@ function ProductDetails() {
       </section>
     );
   }
-
-  const increaseQuantity = () => {
-    if (quantity < (product.stock || 0)) {
-      setQuantity((current) => current + 1);
-    }
-  };
-
-  const decreaseQuantity = () => {
-    setQuantity((current) => Math.max(1, current - 1));
-  };
-
-  const isProductInCart = cartItems.find((item) => item.id === product.id);
-
-  const handleAddToCart = () => {
-    addToCart(product, quantity);
-    const existingQty = isProductInCart ? isProductInCart.quantity : 0;
-    const nextQty = existingQty + quantity;
-    setAddFeedback(`${product.name} added to cart (${nextQty} in cart)`);
-
-    window.setTimeout(() => setAddFeedback(""), 1200);
-  };
 
   return (
     <div className="bg-white">
@@ -123,11 +257,11 @@ function ProductDetails() {
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2">
           {/* Product Image */}
           <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
-            <div className="aspect-square">
+            <div className="aspect-square overflow-hidden p-2 sm:p-4">
               <img
                 src={product.image}
                 alt={product.name}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain object-center transition duration-300"
               />
             </div>
           </div>
@@ -153,7 +287,8 @@ function ProductDetails() {
               </div>
 
               <span className="text-sm text-gray-500">
-                5.0 (Customer rating)
+                {averageRating} ({productReviews.length} review
+                {productReviews.length === 1 ? "" : "s"})
               </span>
             </div>
 
@@ -174,12 +309,14 @@ function ProductDetails() {
               </h3>
 
               <ul className="mt-4 space-y-3">
-                {(product.features || [
-                  "Quality agricultural product",
-                  "Suitable for farm use",
-                  "Follow application instructions",
-                  "Store in a cool, dry place",
-                ]).map((feature) => (
+                {(
+                  product.features || [
+                    "Quality agricultural product",
+                    "Suitable for farm use",
+                    "Follow application instructions",
+                    "Store in a cool, dry place",
+                  ]
+                ).map((feature) => (
                   <li
                     key={feature}
                     className="flex items-start gap-3 text-gray-600"
@@ -269,6 +406,168 @@ function ProductDetails() {
                 will be connected to the store system later.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Reviews Section */}
+      <section className="bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-700">
+                Product Reviews
+              </p>
+              <h3 className="mt-2 text-2xl font-bold text-green-950">
+                Customer feedback
+              </h3>
+            </div>
+          </div>
+
+          {reviewsLoading ? (
+            <div className="rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-600">
+              Loading reviews...
+            </div>
+          ) : productReviews.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-sm text-gray-600">
+              No approved product reviews yet.
+            </div>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {productReviews.map((review) => (
+                <article
+                  key={review.id}
+                  className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">
+                        {review.customer || "Anonymous"}
+                      </h4>
+                      <p className="text-xs text-gray-500">{review.date}</p>
+                    </div>
+                    <div className="flex items-center gap-1 text-yellow-400">
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <span
+                          key={index}
+                          className={
+                            index < review.rating
+                              ? "text-yellow-400"
+                              : "text-gray-300"
+                          }
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="mt-4 text-sm leading-6 text-gray-700">
+                    “{review.comment || review.review || "Great product."}”
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+
+          {/* Review Form */}
+          <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-5">
+              <h3 className="text-xl font-bold text-green-950">
+                Leave a product review
+              </h3>
+              <p className="mt-2 text-sm text-gray-600">
+                {isAuthenticated
+                  ? "Share your experience with this product."
+                  : "Sign in to share your experience with this product."}
+              </p>
+            </div>
+
+            {!isAuthenticated ? (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-gray-600">
+                  You need to be logged in to submit a review.
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate("/account/login", {
+                      state: { from: `/products/${id}` },
+                    })
+                  }
+                  className="inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-800"
+                >
+                  Sign in
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleProductReviewSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Rating
+                  </label>
+                  <div className="mt-2 flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() =>
+                          setReviewForm((current) => ({
+                            ...current,
+                            rating: star,
+                          }))
+                        }
+                        className={`text-2xl ${
+                          star <= reviewForm.rating
+                            ? "text-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                        aria-label={`Rate ${star} out of 5`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="product-review"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Your review
+                  </label>
+                  <textarea
+                    id="product-review"
+                    name="review"
+                    rows={5}
+                    value={reviewForm.review}
+                    onChange={handleReviewChange}
+                    placeholder="Tell other customers about your experience with this product."
+                    className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-green-600"
+                  />
+                </div>
+
+                {reviewError && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {reviewError}
+                  </div>
+                )}
+
+                {reviewSuccess && (
+                  <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                    {reviewSuccess}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submittingReview}
+                  className="inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-green-500"
+                >
+                  {submittingReview ? "Submitting..." : "Submit Review"}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </section>

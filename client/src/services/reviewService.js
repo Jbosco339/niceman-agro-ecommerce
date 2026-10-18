@@ -3,6 +3,10 @@ import adminService from "./adminService";
 
 // ==================== PUBLIC REVIEWS ====================
 
+export const getPublicReviews = async () => {
+  return get("/reviews");
+};
+
 export const getProductReviews = async (productId) => {
   return get(`/reviews/product/${productId}`);
 };
@@ -48,6 +52,7 @@ export const rejectReview = async (reviewId) => {
 };
 
 export default {
+  getPublicReviews,
   getProductReviews,
   getReview,
   createReview,

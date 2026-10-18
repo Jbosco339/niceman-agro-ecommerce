@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   User,
   ShoppingBag,
@@ -17,6 +17,7 @@ import {
   RefreshCw,
   LogIn,
   Store,
+  LogOut,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { getMyOrders } from "../../services/orderService";
@@ -44,7 +45,11 @@ const navItems = [
   { to: "/account/profile", label: "My Profile", icon: User },
   { to: "/account/orders", label: "My Orders", icon: ShoppingBag },
   { to: "/account/settings", label: "Saved Addresses", icon: MapPin },
-  { to: "/account/change-password", label: "Change Password", icon: LockKeyhole },
+  {
+    to: "/account/change-password",
+    label: "Change Password",
+    icon: LockKeyhole,
+  },
 ];
 
 const quickActions = [
@@ -113,29 +118,40 @@ const Skeleton = ({ className = "" }) => (
 );
 
 const AccountDashboard = () => {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      // Ignore backend logout failures and continue redirecting.
+    }
+    navigate("/account/login", { replace: true });
+  };
+
   const fetchDashboard = useCallback(async () => {
-    const [ordersResult, cartResult, addressesResult] = await Promise.allSettled([
-      getMyOrders(),
-      getCartSummary(),
-      getCustomerAddresses(),
-    ]);
+    const [ordersResult, cartResult, addressesResult] =
+      await Promise.allSettled([
+        getMyOrders(),
+        getCartSummary(),
+        getCustomerAddresses(),
+      ]);
 
     return {
       orders:
         ordersResult.status === "fulfilled"
-          ? ordersResult.value.data ?? []
+          ? (ordersResult.value.data ?? [])
           : [],
       cart:
         cartResult.status === "fulfilled"
-          ? cartResult.value.data ?? { items: 0, subtotal: 0 }
+          ? (cartResult.value.data ?? { items: 0, subtotal: 0 })
           : { items: 0, subtotal: 0 },
       addresses:
         addressesResult.status === "fulfilled"
-          ? addressesResult.value.data ?? []
+          ? (addressesResult.value.data ?? [])
           : [],
       failed: ordersResult.status === "rejected",
     };
@@ -175,16 +191,18 @@ const AccountDashboard = () => {
   const orderList = useMemo(() => data?.orders ?? [], [data]);
 
   const stats = useMemo(() => {
-    const activeOrders = orderList.filter((order) => order.status !== "Cancelled");
+    const activeOrders = orderList.filter(
+      (order) => order.status !== "Cancelled",
+    );
     const totalSpent = activeOrders.reduce(
       (sum, order) => sum + (Number(order.total) || 0),
-      0
+      0,
     );
     const pending = orderList.filter(
-      (order) => order.status === "Pending" || order.status === "Processing"
+      (order) => order.status === "Pending" || order.status === "Processing",
     ).length;
     const delivered = orderList.filter(
-      (order) => order.status === "Delivered"
+      (order) => order.status === "Delivered",
     ).length;
 
     return [
@@ -300,7 +318,7 @@ const AccountDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <section className="bg-gradient-to-r from-green-800 to-green-600">
+      <section className="bg-linear-to-r from-green-800 to-green-600">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
             <div>
@@ -473,10 +491,11 @@ const AccountDashboard = () => {
                 <div className="divide-y divide-gray-100">
                   {recentOrders.map((order) => {
                     const StatusIcon = STATUS_ICONS[order.status] || Package;
-                    const itemCount = order.items?.reduce(
-                      (count, item) => count + (Number(item.quantity) || 0),
-                      0
-                    ) ?? 0;
+                    const itemCount =
+                      order.items?.reduce(
+                        (count, item) => count + (Number(item.quantity) || 0),
+                        0,
+                      ) ?? 0;
                     const itemNames = (order.items ?? [])
                       .slice(0, 2)
                       .map((item) => item.name)
@@ -604,6 +623,17 @@ const AccountDashboard = () => {
                 })}
               </div>
             </section>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 hover:text-red-800"
+              >
+                <LogOut size={17} />
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </main>

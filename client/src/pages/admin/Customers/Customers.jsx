@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { deleteCustomer as removeCustomer, getCustomers, updateCustomer } from "../../../services/adminService";
+import {
+  deleteCustomer as removeCustomer,
+  getCustomers,
+  updateCustomer,
+} from "../../../services/adminService";
 
-const formatCurrency = (amount) =>
-  `₦${amount.toLocaleString("en-NG")}`;
+const formatCurrency = (amount) => `₦${amount.toLocaleString("en-NG")}`;
 
 export default function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -13,19 +16,30 @@ export default function Customers() {
 
   useEffect(() => {
     getCustomers()
-      .then(({ data }) => setCustomers(data.map((customer) => ({
-        ...customer,
-        orders: Number(customer.orders ?? 0),
-        totalSpent: Number(customer.totalSpent ?? 0),
-      }))))
+      .then(({ data }) =>
+        setCustomers(
+          data.map((customer) => ({
+            ...customer,
+            orders: Number(customer.orders ?? 0),
+            totalSpent: Number(customer.totalSpent ?? 0),
+          })),
+        ),
+      )
       .catch((requestError) => setError(requestError.message));
   }, []);
 
   const filteredCustomers = customers.filter((customer) => {
+    const term = search.toLowerCase();
     const matchesSearch =
-      customer.name.toLowerCase().includes(search.toLowerCase()) ||
-      customer.email.toLowerCase().includes(search.toLowerCase()) ||
-      customer.phone.includes(search);
+      String(customer.name || "")
+        .toLowerCase()
+        .includes(term) ||
+      String(customer.email || "")
+        .toLowerCase()
+        .includes(term) ||
+      String(customer.phone || "")
+        .toLowerCase()
+        .includes(term);
 
     const matchesStatus =
       statusFilter === "All" || customer.status === statusFilter;
@@ -40,9 +54,18 @@ export default function Customers() {
       const { data } = await updateCustomer(id, {
         status: customer.status === "Active" ? "Inactive" : "Active",
       });
-      setCustomers((prev) => prev.map((item) => item.id === id
-        ? { ...item, ...data, orders: Number(data.orders ?? item.orders), totalSpent: Number(data.totalSpent ?? item.totalSpent) }
-        : item));
+      setCustomers((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                ...data,
+                orders: Number(data.orders ?? item.orders),
+                totalSpent: Number(data.totalSpent ?? item.totalSpent),
+              }
+            : item,
+        ),
+      );
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -61,10 +84,10 @@ export default function Customers() {
 
   const totalCustomers = customers.length;
   const activeCustomers = customers.filter(
-    (customer) => customer.status === "Active"
+    (customer) => customer.status === "Active",
   ).length;
   const inactiveCustomers = customers.filter(
-    (customer) => customer.status === "Inactive"
+    (customer) => customer.status === "Inactive",
   ).length;
 
   return (
@@ -77,7 +100,11 @@ export default function Customers() {
             Manage and view all registered customers.
           </p>
         </div>
-        {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-red-700">
+            {error}
+          </p>
+        )}
       </div>
 
       {/* Stats */}
@@ -157,10 +184,7 @@ export default function Customers() {
             <tbody className="divide-y divide-gray-100">
               {filteredCustomers.length > 0 ? (
                 filteredCustomers.map((customer) => (
-                  <tr
-                    key={customer.id}
-                    className="hover:bg-gray-50"
-                  >
+                  <tr key={customer.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-semibold text-gray-900">

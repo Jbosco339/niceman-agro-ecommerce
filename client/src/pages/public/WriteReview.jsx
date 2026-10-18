@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import useReviews from "../../hooks/useReviews";
+import useAuth from "../../hooks/useAuth";
+import { createReview } from "../../services/reviewService";
 
 const emptyForm = {
   customer: "",
@@ -9,11 +11,23 @@ const emptyForm = {
 };
 
 export default function WriteReview() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { addReview } = useReviews();
+  const { isAuthenticated } = useAuth();
   const [form, setForm] = useState(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/account/login", {
+        replace: true,
+        state: { from: location.pathname },
+      });
+    }
+  }, [isAuthenticated, location.pathname, navigate]);
 
   const remainingChars = 400 - form.review.length;
 
@@ -34,8 +48,16 @@ export default function WriteReview() {
     if (success) setSuccess("");
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!isAuthenticated) {
+      navigate("/account/login", {
+        replace: true,
+        state: { from: location.pathname },
+      });
+      return;
+    }
 
     const customerName = form.customer.trim();
     const reviewText = form.review.trim();
@@ -67,25 +89,57 @@ export default function WriteReview() {
     setIsSubmitting(true);
     setError("");
 
-    addReview({
-      type: "general",
-      customer: customerName,
-      rating: Number(form.rating),
-      review: reviewText,
-      status: "Pending",
-      date: new Date().toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-    });
+    try {
+      const payload = {
+        type: "general",
+        customer: customerName,
+        email: "",
+        rating: Number(form.rating),
+        review: reviewText,
+        comment: reviewText,
+        status: "Pending",
+        date: new Date().toISOString(),
+      };
 
-    setSuccess(
-      "Thank you for your review.",
-    );
-    setForm(emptyForm);
-    setIsSubmitting(false);
+      const { data } = await createReview(payload);
+      addReview({
+        ...data,
+        type: "general",
+        status: data.status || "Pending",
+      });
+
+      setSuccess("Thank you for your review. It is awaiting approval.");
+      setForm(emptyForm);
+    } catch (requestError) {
+      setError(
+        requestError?.message || "Unable to submit your review right now.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-xl rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="text-2xl font-bold text-green-950">
+            Sign in to write a review
+          </h1>
+          <p className="mt-3 text-sm text-gray-600">
+            You need to be signed in to share feedback about your experience.
+          </p>
+          <Link
+            to="/account/login"
+            state={{ from: location.pathname }}
+            className="mt-6 inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-800"
+          >
+            Go to Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">

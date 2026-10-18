@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createCategory } from "../../../services/adminService";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 const AddCategory = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const AddCategory = () => {
   });
 
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
@@ -24,8 +26,26 @@ const AddCategory = () => {
     }));
   };
 
+  const handleImageFile = async (e) => {
+    setError("");
+    try {
+      setUploadingImage(true);
+      const url = await handleLocalImageUpload(e, (nextImage) => {
+        setFormData((prev) => ({ ...prev, image: nextImage }));
+      });
+      if (url) {
+        setFormData((prev) => ({ ...prev, image: url }));
+      }
+    } catch (err) {
+      setError(err.message || "Image upload failed.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (uploadingImage) return;
     setSaving(true);
     setError("");
     try {
@@ -63,7 +83,11 @@ const AddCategory = () => {
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border p-5 sm:p-8"
       >
-        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+        {error && (
+          <p role="alert" className="mb-4 text-sm text-red-700">
+            {error}
+          </p>
+        )}
         <div className="space-y-6">
           {/* Category Name */}
           <div>
@@ -101,17 +125,21 @@ const AddCategory = () => {
           {/* Image */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Category Image URL
+              Category Image
             </label>
 
             <input
-              type="text"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              placeholder="/images/categories/vegetables.jpg"
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+              type="file"
+              accept="image/*"
+              onChange={handleImageFile}
+              className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-500"
             />
+
+            <p className="mt-2 text-xs text-gray-500">
+              {uploadingImage
+                ? "Uploading image to Cloudinary…"
+                : "Choose an image to upload to Cloudinary."}
+            </p>
 
             {formData.image && (
               <img
@@ -155,7 +183,7 @@ const AddCategory = () => {
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploadingImage}
             className="px-6 py-3 bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white rounded-lg font-semibold transition"
           >
             {saving ? "Saving..." : "Add Category"}

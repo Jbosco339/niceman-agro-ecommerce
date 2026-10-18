@@ -1,16 +1,22 @@
 import { Link } from "react-router-dom";
-import useWebsiteContent from "../../hooks/useWebsiteContent";
+
+const footerInfo = {
+  description:
+    "Quality agricultural inputs, practical farming knowledge and solutions for healthier crops and a greener future.",
+  address: "145 Aka Obot Idim Road, Uyo Akwa Ibom State",
+  phone: "+234 812 797 1171",
+  phone2: "+234 808 801 1217",
+  email: "support@nicemanagro.com",
+  socials: {
+    facebook: "#",
+    x: "#",
+    instagram: "#",
+    youtube: "#",
+  },
+};
 
 function Footer() {
-  const { content } = useWebsiteContent();
-
-  const footer = content?.footer || {};
-  const contact = content?.contact || {};
-  const socials = footer?.socials || {};
-  const facebookUrl = socials.facebook || footer.facebook || null;
-  const twitterUrl = socials.x || socials.twitter || footer.twitter || null;
-  const instagramUrl = socials.instagram || footer.instagram || null;
-  const youtubeUrl = socials.youtube || footer.youtube || null;
+  const { description, address, phone, phone2, email, socials } = footerInfo;
 
   return (
     <footer className="bg-green-950 text-white">
@@ -27,27 +33,17 @@ function Footer() {
           </Link>
 
           <p className="mt-3 md:mt-5 max-w-full sm:max-w-xs text-sm leading-6 text-green-100/75 wrap-break-word">
-            {footer.description ||
-              "Quality agricultural inputs, practical farming knowledge and solutions for healthier crops and a greener future."}
+            {description}
           </p>
 
           <div className="mt-3 md:mt-5 flex gap-3">
             <a
-              href={facebookUrl || "#"}
-              target={facebookUrl ? "_blank" : undefined}
-              rel={facebookUrl ? "noopener noreferrer" : undefined}
+              href={socials.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white transition-colors duration-150 hover:bg-[#1A4329]"
-              aria-label={
-                facebookUrl ? "Facebook" : "Facebook (placeholder - update URL)"
-              }
-              data-placeholder={
-                !facebookUrl ? "MISSING_FACEBOOK_URL" : undefined
-              }
-              title={
-                facebookUrl
-                  ? "Visit our Facebook"
-                  : "Update footer.socials.facebook with URL"
-              }
+              aria-label="Facebook"
+              title="Visit our Facebook"
             >
               <svg
                 className="h-4 w-4"
@@ -60,19 +56,12 @@ function Footer() {
             </a>
 
             <a
-              href={twitterUrl || "#"}
-              target={twitterUrl ? "_blank" : undefined}
-              rel={twitterUrl ? "noopener noreferrer" : undefined}
+              href={socials.x}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white transition-colors duration-150 hover:bg-[#1A4329]"
-              aria-label={
-                twitterUrl ? "X (Twitter)" : "X (placeholder - update URL)"
-              }
-              data-placeholder={!twitterUrl ? "MISSING_X_URL" : undefined}
-              title={
-                twitterUrl
-                  ? "Visit our X profile"
-                  : "Update footer.socials.x with URL"
-              }
+              aria-label="X (Twitter)"
+              title="Visit our X profile"
             >
               <svg
                 className="h-4 w-4"
@@ -85,23 +74,12 @@ function Footer() {
             </a>
 
             <a
-              href={instagramUrl || "#"}
-              target={instagramUrl ? "_blank" : undefined}
-              rel={instagramUrl ? "noopener noreferrer" : undefined}
+              href={socials.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white transition-colors duration-150 hover:bg-[#1A4329]"
-              aria-label={
-                instagramUrl
-                  ? "Instagram"
-                  : "Instagram (placeholder - update URL)"
-              }
-              data-placeholder={
-                !instagramUrl ? "MISSING_INSTAGRAM_URL" : undefined
-              }
-              title={
-                instagramUrl
-                  ? "Visit our Instagram"
-                  : "Update footer.socials.instagram with URL"
-              }
+              aria-label="Instagram"
+              title="Visit our Instagram"
             >
               <svg
                 className="h-4 w-4"
@@ -114,19 +92,12 @@ function Footer() {
             </a>
 
             <a
-              href={youtubeUrl || "#"}
-              target={youtubeUrl ? "_blank" : undefined}
-              rel={youtubeUrl ? "noopener noreferrer" : undefined}
+              href={socials.youtube}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white transition-colors duration-150 hover:bg-[#1A4329]"
-              aria-label={
-                youtubeUrl ? "YouTube" : "YouTube (placeholder - update URL)"
-              }
-              data-placeholder={!youtubeUrl ? "MISSING_YOUTUBE_URL" : undefined}
-              title={
-                youtubeUrl
-                  ? "Visit our YouTube channel"
-                  : "Update footer.socials.youtube with URL"
-              }
+              aria-label="YouTube"
+              title="Visit our YouTube channel"
             >
               <svg
                 className="h-4 w-4"
@@ -168,12 +139,6 @@ function Footer() {
                 Checkout
               </Link>
             </li>
-
-            {/* <li>
-              <Link to="/orders" className="transition hover:text-white">
-                Track Order
-              </Link>
-            </li> */}
           </ul>
         </div>
 
@@ -221,24 +186,18 @@ function Footer() {
           <div className="mt-3 md:mt-5 space-y-3 md:space-y-4 text-sm text-green-100/75">
             <div>
               <p className="font-semibold text-white">Address</p>
-              <p className="mt-1 leading-6 wrap-break-word">
-                {contact.address || "Nigeria"}
-              </p>
+              <p className="mt-1 leading-6 wrap-break-word">{address}</p>
             </div>
 
             <div>
               <p className="font-semibold text-white">Phone</p>
-              <p className="mt-1 wrap-break-word">{contact.phone}</p>
-              <p className="mt-1 wrap-break-word">
-                {contact.whatsapp || contact.phone}
-              </p>
+              <p className="mt-1 wrap-break-word">{phone}</p>
+              <p className="mt-1 wrap-break-word">{phone2}</p>
             </div>
 
             <div>
               <p className="font-semibold text-white">Email</p>
-              <p className="mt-1 wrap-break-word">
-                {contact.email || "support@nicemanagro.com"}
-              </p>
+              <p className="mt-1 wrap-break-word">{email}</p>
             </div>
           </div>
         </div>

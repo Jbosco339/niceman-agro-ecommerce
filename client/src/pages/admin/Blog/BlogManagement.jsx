@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { createBlogPost, deleteBlogPost, getBlogPosts, updateBlogPost } from "../../../services/adminService";
+import {
+  createBlogPost,
+  deleteBlogPost,
+  getBlogPosts,
+  updateBlogPost,
+} from "../../../services/adminService";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 const BlogManagement = () => {
   const [posts, setPosts] = useState([]);
@@ -21,8 +27,11 @@ const BlogManagement = () => {
     category: "Agriculture",
     author: "",
     content: "",
+    image: "",
     status: "Draft",
+    featuredOnHomepage: false,
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const categories = [
     "Agriculture",
@@ -36,8 +45,7 @@ const BlogManagement = () => {
       .toLowerCase()
       .includes(search.toLowerCase());
 
-    const matchesCategory =
-      category === "All" || post.category === category;
+    const matchesCategory = category === "All" || post.category === category;
 
     return matchesSearch && matchesCategory;
   });
@@ -49,14 +57,37 @@ const BlogManagement = () => {
     });
   };
 
+  const handleImageUpload = async (e) => {
+    setError("");
+    try {
+      setUploadingImage(true);
+      const uploadedUrl = await handleLocalImageUpload(e, (nextImage) => {
+        setFormData((prev) => ({ ...prev, image: nextImage }));
+      });
+      if (uploadedUrl) setFormData((prev) => ({ ...prev, image: uploadedUrl }));
+    } catch (requestError) {
+      setError(requestError.message || "Image upload failed.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const result = editingPost
         ? await updateBlogPost(editingPost.id, formData)
-        : await createBlogPost({ ...formData, author: formData.author || "Admin" });
+        : await createBlogPost({
+            ...formData,
+            author: formData.author || "Admin",
+            date: new Date().toISOString(),
+          });
       if (editingPost) {
-        setPosts((current) => current.map((post) => post.id === editingPost.id ? result.data : post));
+        setPosts((current) =>
+          current.map((post) =>
+            post.id === editingPost.id ? result.data : post,
+          ),
+        );
       } else {
         setPosts((current) => [result.data, ...current]);
       }
@@ -74,6 +105,7 @@ const BlogManagement = () => {
       author: "",
       content: "",
       status: "Draft",
+      featuredOnHomepage: false,
     });
 
     setEditingPost(null);
@@ -88,7 +120,10 @@ const BlogManagement = () => {
       category: post.category,
       author: post.author,
       content: post.content ?? "",
+      image: post.image ?? "",
       status: post.status,
+      featuredOnHomepage: !!post.featuredOnHomepage,
+      date: post.date ?? "",
     });
 
     setShowForm(true);
@@ -112,7 +147,39 @@ const BlogManagement = () => {
       const { data } = await updateBlogPost(id, {
         status: post.status === "Published" ? "Draft" : "Published",
       });
-      setPosts((current) => current.map((item) => item.id === id ? data : item));
+      setPosts((current) =>
+        current.map((item) => (item.id === id ? data : item)),
+      );
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  const toggleFeatured = async (post) => {
+    setError("");
+    const enabling = !post.featuredOnHomepage;
+    // quick client-side check: count published featured posts (excluding current)
+    const publishedFeaturedCount = posts.filter(
+      (p) =>
+        p.status === "Published" && p.featuredOnHomepage && p.id !== post.id,
+    ).length;
+
+    if (
+      enabling &&
+      post.status === "Published" &&
+      publishedFeaturedCount >= 3
+    ) {
+      setError(
+        "Homepage can display only three published featured articles. Deselect another first.",
+      );
+      return;
+    }
+
+    try {
+      const { data } = await updateBlogPost(post.id, {
+        featuredOnHomepage: enabling,
+      });
+      setPosts((current) => current.map((p) => (p.id === post.id ? data : p)));
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -130,7 +197,11 @@ const BlogManagement = () => {
             Create and manage Niceman Agro & Farms blog posts.
           </p>
         </div>
-        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+        {error && (
+          <p role="alert" className="mb-4 text-sm text-red-700">
+            {error}
+          </p>
+        )}
 
         <button
           onClick={() => {
@@ -211,6 +282,9 @@ const BlogManagement = () => {
                 <th className="text-left px-6 py-4 text-sm font-semibold">
                   Status
                 </th>
+                <th className="text-left px-6 py-4 text-sm font-semibold">
+                  Homepage
+                </th>
                 <th className="text-right px-6 py-4 text-sm font-semibold">
                   Actions
                 </th>
@@ -225,17 +299,11 @@ const BlogManagement = () => {
                       {post.title}
                     </td>
 
-                    <td className="px-6 py-4 text-gray-600">
-                      {post.category}
-                    </td>
+                    <td className="px-6 py-4 text-gray-600">{post.category}</td>
 
-                    <td className="px-6 py-4 text-gray-600">
-                      {post.author}
-                    </td>
+                    <td className="px-6 py-4 text-gray-600">{post.author}</td>
 
-                    <td className="px-6 py-4 text-gray-600">
-                      {post.date}
-                    </td>
+                    <td className="px-6 py-4 text-gray-600">{post.date}</td>
 
                     <td className="px-6 py-4">
                       <button
@@ -248,6 +316,18 @@ const BlogManagement = () => {
                       >
                         {post.status}
                       </button>
+                    </td>
+
+                    <td className="px-6 py-4 text-gray-600">
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={!!post.featuredOnHomepage}
+                          onChange={() => toggleFeatured(post)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">Featured</span>
+                      </label>
                     </td>
 
                     <td className="px-6 py-4">
@@ -271,10 +351,7 @@ const BlogManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan="6"
-                    className="text-center py-10 text-gray-500"
-                  >
+                  <td colSpan="7" className="text-center py-10 text-gray-500">
                     No blog posts found.
                   </td>
                 </tr>
@@ -370,8 +447,41 @@ const BlogManagement = () => {
 
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Status
+                  Featured Image
                 </label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="w-full border border-dashed border-gray-300 bg-gray-50 rounded-lg px-4 py-3 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-green-500"
+                />
+
+                <p className="mt-2 text-xs text-gray-500">
+                  {uploadingImage
+                    ? "Uploading image…"
+                    : "Choose a local image to upload."}
+                </p>
+
+                {formData.image && (
+                  <div className="mt-3">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">
+                      Image Preview
+                    </p>
+                    <img
+                      src={formData.image}
+                      alt="Article preview"
+                      className="w-full h-40 object-cover rounded-lg"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Status</label>
 
                 <select
                   name="status"
@@ -382,6 +492,29 @@ const BlogManagement = () => {
                   <option value="Draft">Draft</option>
                   <option value="Published">Published</option>
                 </select>
+              </div>
+
+              <div className="mt-3">
+                <label className="inline-flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.featuredOnHomepage}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        featuredOnHomepage: e.target.checked,
+                      }))
+                    }
+                    disabled={formData.status !== "Published"}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Feature on homepage</span>
+                </label>
+                {formData.status !== "Published" && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Articles must be published to appear on the homepage.
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-3">

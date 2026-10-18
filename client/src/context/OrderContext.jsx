@@ -1,23 +1,40 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import {
-  ordersSeed,
-  readLocalStorage,
-  writeLocalStorage,
-} from "../data/mockData";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { getOrders } from "../services/adminService";
 
-export const initialOrders = ordersSeed;
+export const initialOrders = [];
 
 export const OrderContext = createContext(null);
 
 export function OrderProvider({ children }) {
-  const [orders, setOrders] = useState(() => {
-    const saved = readLocalStorage("niceman-orders", ordersSeed);
-    return saved && saved.length ? saved : ordersSeed;
-  });
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    writeLocalStorage("niceman-orders", orders);
-  }, [orders]);
+    let active = true;
+
+    setLoading(true);
+    getOrders()
+      .then(({ data }) => {
+        if (!active) return;
+        setOrders(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (active) setOrders([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const updateOrder = (id, changes) => {
     setOrders((current) =>
@@ -29,12 +46,16 @@ export function OrderProvider({ children }) {
 
   const getOrder = (id) => orders.find((o) => String(o.id) === String(id));
 
-  const value = {
-    orders,
-    setOrders,
-    updateOrder,
-    getOrder,
-  };
+  const value = useMemo(
+    () => ({
+      orders,
+      setOrders,
+      loading,
+      updateOrder,
+      getOrder,
+    }),
+    [orders, loading],
+  );
 
   return (
     <OrderContext.Provider value={value}>{children}</OrderContext.Provider>

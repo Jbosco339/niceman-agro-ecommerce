@@ -1,6 +1,6 @@
 import File from "../models/File.js";
 
-export const uploadFile = async (req, res) => {
+export const uploadFile = async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -23,7 +23,7 @@ export const uploadFile = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       status: "Failed",
-      message: "File upload failed",
+      message: error.message || "File upload failed",
     });
   }
 };

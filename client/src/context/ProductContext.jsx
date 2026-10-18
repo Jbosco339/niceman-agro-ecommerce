@@ -5,26 +5,37 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import {
-  productsSeed,
-  readLocalStorage,
-  writeLocalStorage,
-} from "../data/mockData";
+import { getProducts } from "../services/productService";
 
-export const initialProducts = productsSeed;
+export const initialProducts = [];
 
 export const ProductContext = createContext(null);
 
 export function ProductProvider({ children }) {
-  const [products, setProducts] = useState(() => {
-    const saved = readLocalStorage("niceman-products", productsSeed);
-    return saved.length ? saved : productsSeed;
-  });
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    writeLocalStorage("niceman-products", products);
-  }, [products]);
+    let active = true;
+
+    setLoading(true);
+    getProducts()
+      .then(({ data }) => {
+        if (!active) return;
+        const next = Array.isArray(data) ? data : [];
+        setProducts(next);
+      })
+      .catch(() => {
+        if (active) setProducts([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const addProduct = (product) => {
     const newProduct = {

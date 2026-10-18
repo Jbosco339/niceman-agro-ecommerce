@@ -49,7 +49,7 @@ function Favorites() {
                   key={product.id}
                   className="group overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200"
                 >
-                  <div className="relative h-56 overflow-hidden rounded-t-lg bg-white sm:aspect-square sm:h-auto sm:rounded-t-lg">
+                  <div className="relative h-52 overflow-hidden rounded-t-lg bg-gray-50 sm:h-56 sm:aspect-square sm:rounded-t-lg">
                     <Link
                       to={`/product/${product.id}`}
                       className="block h-full w-full"
@@ -57,7 +57,7 @@ function Favorites() {
                       <img
                         src={product.image}
                         alt={product.name}
-                        className="block h-full w-full object-contain object-center p-2 transition duration-300 group-hover:scale-105 sm:p-7"
+                        className="block h-full w-full object-contain object-center p-1.5 transition duration-300 group-hover:scale-105 sm:p-3"
                       />
                     </Link>
                     <button

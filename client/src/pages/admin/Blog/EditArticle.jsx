@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getBlogPost, updateBlogPost } from "../../../services/adminService";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
 
 const EditArticle = () => {
   const { id } = useParams();
@@ -10,6 +11,7 @@ const EditArticle = () => {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -26,12 +28,34 @@ const EditArticle = () => {
   ];
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const handleImageUpload = async (e) => {
+    setError("");
+    try {
+      setUploadingImage(true);
+      const uploadedUrl = await handleLocalImageUpload(e, (nextImage) => {
+        setFormData((prev) => ({ ...prev, image: nextImage }));
+      });
+
+      if (uploadedUrl) {
+        setFormData((prev) => ({ ...prev, image: uploadedUrl }));
+      } else if (formData?.image) {
+        setFormData((prev) => ({ ...prev, image: prev.image }));
+      }
+    } catch (requestError) {
+      setError(requestError.message || "Image upload failed.");
+      if (formData?.image) {
+        setFormData((prev) => ({ ...prev, image: prev.image }));
+      }
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -49,8 +73,16 @@ const EditArticle = () => {
   };
 
   if (!formData) {
-    const message = error || (id ? "Loading article…" : "Select an article from blog management to edit it.");
-    return <p role={error ? "alert" : "status"} className="p-6">{message}</p>;
+    const message =
+      error ||
+      (id
+        ? "Loading article…"
+        : "Select an article from blog management to edit it.");
+    return (
+      <p role={error ? "alert" : "status"} className="p-6">
+        {message}
+      </p>
+    );
   }
 
   return (
@@ -78,7 +110,11 @@ const EditArticle = () => {
         onSubmit={handleSubmit}
         className="max-w-5xl mx-auto bg-white rounded-2xl shadow-sm border p-5 sm:p-8"
       >
-        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+        {error && (
+          <p role="alert" className="mb-4 text-sm text-red-700">
+            {error}
+          </p>
+        )}
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
@@ -165,17 +201,21 @@ const EditArticle = () => {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Featured Image URL
+                Featured Image
               </label>
 
               <input
-                type="text"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="/images/blog/article.jpg"
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-green-500"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="w-full border border-dashed border-gray-300 bg-gray-50 rounded-lg px-4 py-3 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-green-500"
               />
+
+              <p className="mt-2 text-xs text-gray-500">
+                {uploadingImage
+                  ? "Uploading image…"
+                  : "Choose a local image to upload."}
+              </p>
             </div>
 
             <div>
@@ -192,6 +232,19 @@ const EditArticle = () => {
                 <option value="Draft">Draft</option>
                 <option value="Published">Published</option>
               </select>
+            </div>
+
+            <div className="mt-3">
+              <label className="inline-flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  name="featuredOnHomepage"
+                  checked={!!formData.featuredOnHomepage}
+                  onChange={handleChange}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">Feature on homepage</span>
+              </label>
             </div>
 
             {formData.image && (
@@ -225,7 +278,7 @@ const EditArticle = () => {
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploadingImage}
             className="px-6 py-3 bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white rounded-lg font-semibold transition"
           >
             {saving ? "Saving Changes..." : "Update Article"}

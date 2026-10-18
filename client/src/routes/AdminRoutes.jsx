@@ -1,12 +1,15 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useAdmin } from "../context/useAdmin";
+import AdminLayout from "../components/admin/AdminLayout";
 import AdminLogin from "../pages/admin/Login/AdminLogin";
+import AdminSignup from "../pages/admin/Signup/Signup";
 import Admindashboard from "../pages/admin/Dashboard/Admindashboard";
 import BlogManagement from "../pages/admin/Blog/BlogManagement";
 import CreateArticle from "../pages/admin/Blog/CreateArticle";
 import EditArticle from "../pages/admin/Blog/EditArticle";
 import Categories from "../pages/admin/Categories/Categories";
 import AddCategory from "../pages/admin/Categories/AddCategory";
+import EditCategory from "../pages/admin/Categories/EditCategory";
 import Products from "../pages/admin/Products/Products";
 import AddProduct from "../pages/admin/Products/AddProduct";
 import ProductDetails from "../pages/admin/Products/ProductDetails";
@@ -21,15 +24,27 @@ import Promotions from "../pages/admin/Promotions/Promotions";
 import WebsiteContent from "../pages/admin/WebsiteContent/WebsiteContent";
 
 function RequireAdmin() {
-  const { isAuthenticated, loading, authError } = useAdmin();
+  const { isAuthenticated, admin, loading, authError } = useAdmin();
 
   if (loading) {
-    return <p className="p-8 text-center text-gray-600">Checking administrator session…</p>;
+    return (
+      <p className="p-8 text-center text-gray-600">
+        Checking administrator session…
+      </p>
+    );
   }
   if (authError) {
-    return <p role="alert" className="p-8 text-center text-red-700">{authError}</p>;
+    return (
+      <p role="alert" className="p-8 text-center text-red-700">
+        {authError}
+      </p>
+    );
   }
-  return isAuthenticated ? <Outlet /> : <Navigate to="/admin/AdminLogin" replace />;
+  return isAuthenticated && admin?.role === "admin" ? (
+    <Outlet />
+  ) : (
+    <Navigate to="/admin/AdminLogin" replace />
+  );
 }
 
 function AdminRoutes() {
@@ -37,45 +52,50 @@ function AdminRoutes() {
     <Routes>
       <Route path="login" element={<AdminLogin />} />
       <Route path="AdminLogin" element={<AdminLogin />} />
+      <Route path="register-k8v3x9p2m7q4" element={<AdminSignup />} />
       <Route element={<RequireAdmin />}>
-        <Route index element={<Admindashboard />} />
-        <Route path="dashboard" element={<Admindashboard />} />
-        <Route path="Admindashboard" element={<Admindashboard />} />
-        <Route path="blog" element={<BlogManagement />} />
-        <Route path="BlogManagement" element={<BlogManagement />} />
-        <Route path="blog/create" element={<CreateArticle />} />
-        <Route path="CreateArticle" element={<CreateArticle />} />
-        <Route path="blog/edit/:id" element={<EditArticle />} />
-        <Route path="EditArticle" element={<EditArticle />} />
-        <Route path="categories" element={<Categories />} />
-        <Route path="Categories" element={<Categories />} />
-        <Route path="categories/add" element={<AddCategory />} />
-        <Route path="AddCategory" element={<AddCategory />} />
-        <Route path="products" element={<Products />} />
-        <Route path="Products" element={<Products />} />
-        <Route path="products/add" element={<AddProduct />} />
-        <Route path="AddProduct" element={<AddProduct />} />
-        <Route path="products/:id" element={<ProductDetails />} />
-        <Route path="ProductDetails" element={<ProductDetails />} />
-        <Route path="products/edit/:id" element={<EditProduct />} />
-        <Route path="EditProduct" element={<EditProduct />} />
-        <Route path="orders" element={<Orders />} />
-        <Route path="Orders" element={<Orders />} />
-        <Route path="OrderTable" element={<Orders />} />
-        <Route path="orders/:id" element={<OrderDetails />} />
-        <Route path="OrderDetails" element={<OrderDetails />} />
-        <Route path="customers" element={<Customers />} />
-        <Route path="Customers" element={<Customers />} />
-        <Route path="customers/:id" element={<CustomerDetails />} />
-        <Route path="CustomerDetails" element={<CustomerDetails />} />
-        <Route path="inventory" element={<Inventory />} />
-        <Route path="Inventory" element={<Inventory />} />
-        <Route path="reviews" element={<Reviews />} />
-        <Route path="Reviews" element={<Reviews />} />
-        <Route path="promotions" element={<Promotions />} />
-        <Route path="Promotions" element={<Promotions />} />
-        <Route path="website-content" element={<WebsiteContent />} />
-        <Route path="WebsiteContent" element={<WebsiteContent />} />
+        <Route element={<AdminLayout />}>
+          <Route index element={<Admindashboard />} />
+          <Route path="dashboard" element={<Admindashboard />} />
+          <Route path="Admindashboard" element={<Admindashboard />} />
+          <Route path="blog" element={<BlogManagement />} />
+          <Route path="BlogManagement" element={<BlogManagement />} />
+          <Route path="blog/create" element={<CreateArticle />} />
+          <Route path="CreateArticle" element={<CreateArticle />} />
+          <Route path="blog/edit/:id" element={<EditArticle />} />
+          <Route path="EditArticle" element={<EditArticle />} />
+          <Route path="categories" element={<Categories />} />
+          <Route path="Categories" element={<Categories />} />
+          <Route path="categories/add" element={<AddCategory />} />
+          <Route path="AddCategory" element={<AddCategory />} />
+          <Route path="categories/edit/:id" element={<EditCategory />} />
+          <Route path="EditCategory" element={<EditCategory />} />
+          <Route path="products" element={<Products />} />
+          <Route path="Products" element={<Products />} />
+          <Route path="products/add" element={<AddProduct />} />
+          <Route path="AddProduct" element={<AddProduct />} />
+          <Route path="products/:id" element={<ProductDetails />} />
+          <Route path="ProductDetails" element={<ProductDetails />} />
+          <Route path="products/edit/:id" element={<EditProduct />} />
+          <Route path="EditProduct" element={<EditProduct />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="Orders" element={<Orders />} />
+          <Route path="OrderTable" element={<Orders />} />
+          <Route path="orders/:id" element={<OrderDetails />} />
+          <Route path="OrderDetails" element={<OrderDetails />} />
+          <Route path="customers" element={<Customers />} />
+          <Route path="Customers" element={<Customers />} />
+          <Route path="customers/:id" element={<CustomerDetails />} />
+          <Route path="CustomerDetails" element={<CustomerDetails />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="Inventory" element={<Inventory />} />
+          <Route path="reviews" element={<Reviews />} />
+          <Route path="Reviews" element={<Reviews />} />
+          <Route path="promotions" element={<Promotions />} />
+          <Route path="Promotions" element={<Promotions />} />
+          <Route path="website-content" element={<WebsiteContent />} />
+          <Route path="WebsiteContent" element={<WebsiteContent />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/admin/AdminLogin" replace />} />
     </Routes>

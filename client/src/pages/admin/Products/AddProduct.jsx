@@ -1,23 +1,33 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createProduct } from "../../../services/adminService";
+import { useCategoryContext } from "../../../context/CategoryContext";
+import { handleLocalImageUpload } from "../../../utils/localImageUpload";
+
+const defaultFormData = {
+  name: "",
+  category: "",
+  price: "",
+  stock: "",
+  description: "",
+  image: "",
+  status: "Active",
+};
 
 export default function AddProduct() {
   const navigate = useNavigate();
+  const { categories = [] } = useCategoryContext();
+  const categoryOptions =
+    categories
+      .filter((category) => category?.name)
+      .map((category) => category.name) || [];
 
-  const [formData, setFormData] = useState({
-    name: "",
-    category: "",
-    price: "",
-    stock: "",
-    description: "",
-    image: "",
-    status: "Active",
-  });
+  const [formData, setFormData] = useState(defaultFormData);
 
   const [preview, setPreview] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,9 +36,20 @@ export default function AddProduct() {
       ...prev,
       [name]: value,
     }));
+  };
 
-    if (name === "image") {
-      setPreview(value);
+  const handleImageUpload = async (e) => {
+    setError("");
+    try {
+      setUploadingImage(true);
+      await handleLocalImageUpload(e, (nextImage) => {
+        setFormData((prev) => ({ ...prev, image: nextImage }));
+        setPreview(nextImage);
+      });
+    } catch (requestError) {
+      setError(requestError.message || "Image upload failed.");
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -36,11 +57,46 @@ export default function AddProduct() {
     e.preventDefault();
     setSaving(true);
     setError("");
+
+    const payload = {
+      name: formData.name.trim(),
+      category: formData.category.trim(),
+      description: formData.description.trim(),
+      price: Number(formData.price),
+      stock: Number(formData.stock),
+      image: formData.image || "",
+      status: formData.status,
+    };
+
+    if (!payload.name || !payload.category || !payload.description) {
+      setError("Name, category, and description are required.");
+      setSaving(false);
+      return;
+    }
+
+    if (!payload.image) {
+      setError("Please upload a product image before saving.");
+      setSaving(false);
+      return;
+    }
+
+    if (!Number.isFinite(payload.price) || payload.price < 0) {
+      setError("Price must be a valid non-negative number.");
+      setSaving(false);
+      return;
+    }
+
+    if (!Number.isInteger(payload.stock) || payload.stock < 0) {
+      setError("Stock must be a whole non-negative number.");
+      setSaving(false);
+      return;
+    }
+
     try {
-      await createProduct(formData);
+      await createProduct(payload);
       navigate("/admin/products");
     } catch (requestError) {
-      setError(requestError.message);
+      setError(requestError.message || "Unable to create product.");
     } finally {
       setSaving(false);
     }
@@ -57,9 +113,7 @@ export default function AddProduct() {
           ← Back to Products
         </Link>
 
-        <h1 className="mt-2 text-2xl font-bold text-gray-900">
-          Add Product
-        </h1>
+        <h1 className="mt-2 text-2xl font-bold text-gray-900">Add Product</h1>
 
         <p className="mt-1 text-sm text-gray-500">
           Add a new product to your store.
@@ -71,7 +125,11 @@ export default function AddProduct() {
         onSubmit={handleSubmit}
         className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
       >
-        {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+        {error && (
+          <p role="alert" className="mb-4 text-sm text-red-700">
+            {error}
+          </p>
+        )}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Product Name */}
           <div>
@@ -104,16 +162,11 @@ export default function AddProduct() {
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
             >
               <option value="">Select category</option>
-              <option value="Fresh Vegetables">
-                Fresh Vegetables
-              </option>
-              <option value="Fruits">Fruits</option>
-              <option value="Grains & Cereals">
-                Grains & Cereals
-              </option>
-              <option value="Tubers">Tubers</option>
-              <option value="Livestock">Livestock</option>
-              <option value="Poultry">Poultry</option>
+              {categoryOptions.map((categoryName) => (
+                <option key={categoryName} value={categoryName}>
+                  {categoryName}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -170,20 +223,24 @@ export default function AddProduct() {
             </select>
           </div>
 
-          {/* Image URL */}
+          {/* Image Upload */}
           <div>
             <label className="mb-2 block text-sm font-semibold text-gray-700">
-              Product Image URL
+              Product Image
             </label>
 
             <input
-              type="url"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              placeholder="https://example.com/product.jpg"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="w-full rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
             />
+
+            <p className="mt-2 text-xs text-gray-500">
+              {uploadingImage
+                ? "Uploading image…"
+                : "Choose a local image to upload. Supported: JPG, PNG, GIF, WebP, SVG, BMP, TIFF, AVIF, ICO."}
+            </p>
           </div>
 
           {/* Description */}
@@ -235,14 +292,13 @@ export default function AddProduct() {
 
           <button
             type="submit"
-            disabled={saving}
-            className="rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700"
+            disabled={saving || uploadingImage}
+            className="rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:bg-gray-400"
           >
             {saving ? "Saving…" : "Add Product"}
           </button>
         </div>
       </form>
-
     </div>
   );
 }

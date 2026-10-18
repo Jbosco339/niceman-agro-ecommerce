@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { deleteReview as removeReview, getReviews, updateReviewStatus } from "../../../services/adminService";
+import {
+  deleteReview as removeReview,
+  getReviews,
+  updateReviewStatus,
+} from "../../../services/adminService";
 
 export default function Reviews() {
   const [reviews, setReviews] = useState([]);
@@ -18,7 +22,9 @@ export default function Reviews() {
   const setReviewStatus = async (id, status) => {
     try {
       const { data } = await updateReviewStatus(id, status);
-      setReviews((current) => current.map((review) => review.id === id ? data : review));
+      setReviews((current) =>
+        current.map((review) => (review.id === id ? data : review)),
+      );
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -26,7 +32,7 @@ export default function Reviews() {
 
   const deleteReview = async (id) => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this review?"
+      "Are you sure you want to delete this review?",
     );
 
     if (!confirmed) return;
@@ -40,15 +46,23 @@ export default function Reviews() {
   };
 
   const filteredReviews = reviews.filter((review) => {
+    const q = search.toLowerCase();
     const matchesSearch =
-      review.customer.toLowerCase().includes(search.toLowerCase()) ||
-      review.email.toLowerCase().includes(search.toLowerCase()) ||
-      review.product.toLowerCase().includes(search.toLowerCase()) ||
-      review.comment.toLowerCase().includes(search.toLowerCase());
+      String(review.customer || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(review.email || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(review.product || "")
+        .toLowerCase()
+        .includes(q) ||
+      String(review.comment || "")
+        .toLowerCase()
+        .includes(q);
 
     const matchesRating =
-      ratingFilter === "All" ||
-      review.rating === Number(ratingFilter);
+      ratingFilter === "All" || review.rating === Number(ratingFilter);
 
     const matchesStatus =
       statusFilter === "All" || review.status === statusFilter;
@@ -58,10 +72,10 @@ export default function Reviews() {
 
   const totalReviews = reviews.length;
   const approvedReviews = reviews.filter(
-    (review) => review.status === "Approved"
+    (review) => review.status === "Approved",
   ).length;
   const pendingReviews = reviews.filter(
-    (review) => review.status === "Pending"
+    (review) => review.status === "Pending",
   ).length;
 
   const averageRating =
@@ -78,9 +92,7 @@ export default function Reviews() {
         {[1, 2, 3, 4, 5].map((star) => (
           <span
             key={star}
-            className={
-              star <= rating ? "text-yellow-400" : "text-gray-300"
-            }
+            className={star <= rating ? "text-yellow-400" : "text-gray-300"}
           >
             ★
           </span>
@@ -93,14 +105,16 @@ export default function Reviews() {
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Customer Reviews
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900">Customer Reviews</h1>
         <p className="mt-1 text-sm text-gray-500">
           Review and manage customer feedback about your products.
         </p>
       </div>
-      {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
+      {error && (
+        <p role="alert" className="mb-4 text-sm text-red-700">
+          {error}
+        </p>
+      )}
 
       {/* Stats */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -176,10 +190,7 @@ export default function Reviews() {
       {/* Reviews */}
       <div className="space-y-4">
         {filteredReviews.map((review) => (
-          <div
-            key={review.id}
-            className="rounded-xl bg-white p-5 shadow-sm"
-          >
+          <div key={review.id} className="rounded-xl bg-white p-5 shadow-sm">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               {/* Review Content */}
               <div className="flex-1">
@@ -188,9 +199,7 @@ export default function Reviews() {
                     <h3 className="font-semibold text-gray-900">
                       {review.customer}
                     </h3>
-                    <p className="text-xs text-gray-500">
-                      {review.email}
-                    </p>
+                    <p className="text-xs text-gray-500">{review.email}</p>
                   </div>
 
                   <span className="w-fit rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
@@ -266,10 +275,7 @@ export default function Reviews() {
       </div>
 
       {/* Backend Note */}
-      <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-        Review data is currently stored locally for development. Connect this
-        page to the backend API when the server is ready.
-      </div>
+      {/* Reviews are loaded from the backend Admin API; moderation actions persist to MongoDB. */}
     </div>
   );
 }

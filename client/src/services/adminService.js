@@ -1,241 +1,169 @@
-const API_URL = import.meta.env.VITE_API_URL;
-
-if (!API_URL) {
-  throw new Error("Missing VITE_API_URL in the client .env file.");
-}
-
-const adminRequest = async (endpoint, options = {}) => {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
-  });
-
-  const data = await response.json();
-
-const adminRequest = api;
+import { get, post, put, patch, del } from "./api";
 
 // ==================== AUTH ====================
 
 export const adminLogin = async (credentials) => {
-  return adminRequest("/admin/login", {
-    method: "POST",
-    body: JSON.stringify(credentials),
-  });
+  return post("/admin/login", credentials);
 };
 
 export const adminLogout = async () => {
-  return adminRequest("/admin/logout", {
-    method: "POST",
-  });
+  return post("/admin/logout");
 };
 
 export const getCurrentAdmin = async () => {
-  return adminRequest("/admin/me");
+  return get("/admin/me");
 };
 
 // ==================== DASHBOARD ====================
 
 export const getAdminDashboard = async () => {
-  return adminRequest("/admin/dashboard");
+  return get("/admin/dashboard");
 };
 
 // ==================== PRODUCTS ====================
 
 export const getProducts = async () => {
-  return adminRequest("/admin/products");
+  return get("/admin/products");
 };
 
 export const getProduct = async (id) => {
-  return adminRequest(`/admin/products/${encodeURIComponent(id)}`);
+  return get(`/admin/products/${encodeURIComponent(id)}`);
 };
 
 export const createProduct = async (product) => {
-  return adminRequest("/admin/products", {
-    method: "POST",
-    body: JSON.stringify(product),
-  });
+  return post("/admin/products", product);
 };
 
 export const updateProduct = async (id, product) => {
-  return adminRequest(`/admin/products/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    body: JSON.stringify(product),
-  });
+  return put(`/admin/products/${encodeURIComponent(id)}`, product);
 };
 
 export const deleteProduct = async (id) => {
-  return adminRequest(`/admin/products/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
+  return del(`/admin/products/${encodeURIComponent(id)}`);
 };
 
 // ==================== CATEGORIES ====================
 
 export const getCategories = async () => {
-  return adminRequest("/admin/categories");
+  return get("/admin/categories");
 };
 
 export const getCategory = async (id) => {
-  return adminRequest(`/admin/categories/${encodeURIComponent(id)}`);
+  return get(`/admin/categories/${encodeURIComponent(id)}`);
 };
 
 export const createCategory = async (category) => {
-  return adminRequest("/admin/categories", {
-    method: "POST",
-    body: JSON.stringify(category),
-  });
+  return post("/admin/categories", category);
 };
 
 export const updateCategory = async (id, category) => {
-  return adminRequest(`/admin/categories/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    body: JSON.stringify(category),
-  });
+  return put(`/admin/categories/${encodeURIComponent(id)}`, category);
 };
 
 export const deleteCategory = async (id) => {
-  return adminRequest(`/admin/categories/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
+  return del(`/admin/categories/${encodeURIComponent(id)}`);
 };
 
 // ==================== ORDERS ====================
 
 export const getOrders = async () => {
-  return adminRequest("/admin/orders");
+  return get("/admin/orders");
 };
 
 export const getOrder = async (id) => {
-  return adminRequest(`/admin/orders/${encodeURIComponent(id)}`);
+  return get(`/admin/orders/${encodeURIComponent(id)}`);
 };
 
 export const updateOrderStatus = async (id, status) => {
-  return adminRequest(`/admin/orders/${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ status }),
-  });
+  return patch(`/admin/orders/${encodeURIComponent(id)}`, { status });
 };
 
 export const confirmPayment = async (id, transactionReference) => {
-  return adminRequest(`/orders/${encodeURIComponent(id)}/confirm-payment`, {
-    method: "POST",
-    body: JSON.stringify({ transactionReference }),
+  return post(`/orders/${encodeURIComponent(id)}/confirm-payment`, {
+    transactionReference,
   });
 };
 
 // ==================== CUSTOMERS ====================
 
 export const getCustomers = async () => {
-  return adminRequest("/admin/customers");
+  return get("/admin/customers");
 };
 
 export const getCustomer = async (id) => {
-  return adminRequest(`/admin/customers/${encodeURIComponent(id)}`);
+  return get(`/admin/customers/${encodeURIComponent(id)}`);
 };
 
 export const updateCustomer = async (id, customer) => {
-  return adminRequest(`/admin/customers/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    body: JSON.stringify(customer),
-  });
+  return put(`/admin/customers/${encodeURIComponent(id)}`, customer);
 };
 
 export const deleteCustomer = async (id) => {
-  return adminRequest(`/admin/customers/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
+  return del(`/admin/customers/${encodeURIComponent(id)}`);
 };
 
 // ==================== REVIEWS ====================
 
 export const getReviews = async () => {
-  return adminRequest("/admin/reviews");
+  return get("/admin/reviews");
 };
 
 export const updateReviewStatus = async (id, status) => {
-  return adminRequest(`/admin/reviews/${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ status }),
-  });
+  return patch(`/admin/reviews/${encodeURIComponent(id)}`, { status });
 };
 
 export const deleteReview = async (id) => {
-  return adminRequest(`/admin/reviews/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
+  return del(`/admin/reviews/${encodeURIComponent(id)}`);
 };
 
 // ==================== PROMOTIONS ====================
 
 export const getPromotions = async () => {
-  return adminRequest("/admin/promotions");
+  return get("/admin/promotions");
 };
 
 export const createPromotion = async (promotion) => {
-  return adminRequest("/admin/promotions", {
-    method: "POST",
-    body: JSON.stringify(promotion),
-  });
+  return post("/admin/promotions", promotion);
 };
 
 export const updatePromotion = async (id, promotion) => {
-  return adminRequest(`/admin/promotions/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    body: JSON.stringify(promotion),
-  });
+  return put(`/admin/promotions/${encodeURIComponent(id)}`, promotion);
 };
 
 export const deletePromotion = async (id) => {
-  return adminRequest(`/admin/promotions/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
+  return del(`/admin/promotions/${encodeURIComponent(id)}`);
 };
 
 // ==================== BLOG ====================
 
 export const getBlogPosts = async () => {
-  return adminRequest("/admin/blog");
+  return get("/admin/blog");
 };
 
 export const getBlogPost = async (id) => {
-  return adminRequest(`/admin/blog/${encodeURIComponent(id)}`);
+  return get(`/admin/blog/${encodeURIComponent(id)}`);
 };
 
-export const createBlogPost = async (post) => {
-  return adminRequest("/admin/blog", {
-    method: "POST",
-    body: JSON.stringify(post),
-  });
+export const createBlogPost = async (payload) => {
+  return post("/admin/blog", payload);
 };
 
 export const updateBlogPost = async (id, post) => {
-  return adminRequest(`/admin/blog/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    body: JSON.stringify(post),
-  });
+  return put(`/admin/blog/${encodeURIComponent(id)}`, post);
 };
 
 export const deleteBlogPost = async (id) => {
-  return adminRequest(`/admin/blog/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  });
+  return del(`/admin/blog/${encodeURIComponent(id)}`);
 };
 
 // ==================== WEBSITE CONTENT ====================
 
 export const getWebsiteContent = async () => {
-  return adminRequest("/admin/website-content");
+  return get("/admin/website-content");
 };
 
 export const updateWebsiteContent = async (content) => {
-  return adminRequest("/admin/website-content", {
-    method: "PUT",
-    body: JSON.stringify(content),
-  });
+  return put("/admin/website-content", content);
 };
 
 export default {
