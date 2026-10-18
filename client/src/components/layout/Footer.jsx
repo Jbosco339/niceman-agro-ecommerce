@@ -5,7 +5,7 @@ const footerInfo = {
     "Quality agricultural inputs, practical farming knowledge and solutions for healthier crops and a greener future.",
   address: "145 Aka Obot Idim Road, Uyo Akwa Ibom State",
   phone: "+234 812 797 1171",
-  whatsapp: "+234 812 797 1171",
+  phone2: "+234 808 801 1217",
   email: "support@nicemanagro.com",
   socials: {
     facebook: "#",
@@ -16,7 +16,7 @@ const footerInfo = {
 };
 
 function Footer() {
-  const { description, address, phone, whatsapp, email, socials } = footerInfo;
+  const { description, address, phone, phone2, email, socials } = footerInfo;
 
   return (
     <footer className="bg-green-950 text-white">
@@ -192,7 +192,7 @@ function Footer() {
             <div>
               <p className="font-semibold text-white">Phone</p>
               <p className="mt-1 wrap-break-word">{phone}</p>
-              <p className="mt-1 wrap-break-word">{whatsapp}</p>
+              <p className="mt-1 wrap-break-word">{phone2}</p>
             </div>
 
             <div>
