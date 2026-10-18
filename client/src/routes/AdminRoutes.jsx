@@ -9,6 +9,7 @@ import CreateArticle from "../pages/admin/Blog/CreateArticle";
 import EditArticle from "../pages/admin/Blog/EditArticle";
 import Categories from "../pages/admin/Categories/Categories";
 import AddCategory from "../pages/admin/Categories/AddCategory";
+import EditCategory from "../pages/admin/Categories/EditCategory";
 import Products from "../pages/admin/Products/Products";
 import AddProduct from "../pages/admin/Products/AddProduct";
 import ProductDetails from "../pages/admin/Products/ProductDetails";
@@ -67,6 +68,8 @@ function AdminRoutes() {
           <Route path="Categories" element={<Categories />} />
           <Route path="categories/add" element={<AddCategory />} />
           <Route path="AddCategory" element={<AddCategory />} />
+          <Route path="categories/edit/:id" element={<EditCategory />} />
+          <Route path="EditCategory" element={<EditCategory />} />
           <Route path="products" element={<Products />} />
           <Route path="Products" element={<Products />} />
           <Route path="products/add" element={<AddProduct />} />

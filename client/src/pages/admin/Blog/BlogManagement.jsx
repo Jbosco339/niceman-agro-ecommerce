@@ -29,6 +29,7 @@ const BlogManagement = () => {
     content: "",
     image: "",
     status: "Draft",
+    featuredOnHomepage: false,
   });
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -104,6 +105,7 @@ const BlogManagement = () => {
       author: "",
       content: "",
       status: "Draft",
+      featuredOnHomepage: false,
     });
 
     setEditingPost(null);
@@ -120,6 +122,7 @@ const BlogManagement = () => {
       content: post.content ?? "",
       image: post.image ?? "",
       status: post.status,
+      featuredOnHomepage: !!post.featuredOnHomepage,
       date: post.date ?? "",
     });
 
@@ -147,6 +150,36 @@ const BlogManagement = () => {
       setPosts((current) =>
         current.map((item) => (item.id === id ? data : item)),
       );
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  const toggleFeatured = async (post) => {
+    setError("");
+    const enabling = !post.featuredOnHomepage;
+    // quick client-side check: count published featured posts (excluding current)
+    const publishedFeaturedCount = posts.filter(
+      (p) =>
+        p.status === "Published" && p.featuredOnHomepage && p.id !== post.id,
+    ).length;
+
+    if (
+      enabling &&
+      post.status === "Published" &&
+      publishedFeaturedCount >= 3
+    ) {
+      setError(
+        "Homepage can display only three published featured articles. Deselect another first.",
+      );
+      return;
+    }
+
+    try {
+      const { data } = await updateBlogPost(post.id, {
+        featuredOnHomepage: enabling,
+      });
+      setPosts((current) => current.map((p) => (p.id === post.id ? data : p)));
     } catch (requestError) {
       setError(requestError.message);
     }
@@ -249,6 +282,9 @@ const BlogManagement = () => {
                 <th className="text-left px-6 py-4 text-sm font-semibold">
                   Status
                 </th>
+                <th className="text-left px-6 py-4 text-sm font-semibold">
+                  Homepage
+                </th>
                 <th className="text-right px-6 py-4 text-sm font-semibold">
                   Actions
                 </th>
@@ -282,6 +318,18 @@ const BlogManagement = () => {
                       </button>
                     </td>
 
+                    <td className="px-6 py-4 text-gray-600">
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={!!post.featuredOnHomepage}
+                          onChange={() => toggleFeatured(post)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">Featured</span>
+                      </label>
+                    </td>
+
                     <td className="px-6 py-4">
                       <div className="flex justify-end gap-2">
                         <button
@@ -303,7 +351,7 @@ const BlogManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center py-10 text-gray-500">
+                  <td colSpan="7" className="text-center py-10 text-gray-500">
                     No blog posts found.
                   </td>
                 </tr>
@@ -444,6 +492,29 @@ const BlogManagement = () => {
                   <option value="Draft">Draft</option>
                   <option value="Published">Published</option>
                 </select>
+              </div>
+
+              <div className="mt-3">
+                <label className="inline-flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.featuredOnHomepage}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        featuredOnHomepage: e.target.checked,
+                      }))
+                    }
+                    disabled={formData.status !== "Published"}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Feature on homepage</span>
+                </label>
+                {formData.status !== "Published" && (
+                  <p className="mt-2 text-xs text-gray-500">
+                    Articles must be published to appear on the homepage.
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-3">

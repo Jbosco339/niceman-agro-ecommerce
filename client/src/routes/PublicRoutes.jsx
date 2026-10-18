@@ -36,6 +36,7 @@ import AccountDashboard from "../pages/account/AccountDashboard";
 import Profile from "../pages/account/Profile";
 import OrderDetails from "../pages/account/OrderDetails";
 import ResetPassword from "../pages/account/ResetPassword";
+import Favorites from "../pages/public/Favorites/Favorites";
 
 function PublicRoutes() {
   return (
@@ -48,6 +49,8 @@ function PublicRoutes() {
       <Route path="/ProductDetails" element={<ProductDetails />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/Cart" element={<Cart />} />
+      <Route path="/favorites" element={<Favorites />} />
+      <Route path="/Favorites" element={<Favorites />} />
       <Route path="/about" element={<About />} />
       <Route path="/About" element={<About />} />
       <Route path="/company" element={<OurCompany />} />
@@ -61,6 +64,7 @@ function PublicRoutes() {
       <Route path="/ManagementTeam" element={<ManagementTeam />} />
       <Route path="/blog" element={<Blog />} />
       <Route path="/Blog" element={<Blog />} />
+      <Route path="/blog/:slug" element={<BlogArticle />} />
       <Route path="/blog/article/:id" element={<BlogArticle />} />
       <Route path="/BlogArticle" element={<BlogArticle />} />
       <Route path="/blog/category/:slug" element={<BlogCategory />} />

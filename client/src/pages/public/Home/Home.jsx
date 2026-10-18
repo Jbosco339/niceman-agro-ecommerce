@@ -7,23 +7,7 @@ import useReviews from "../../../hooks/useReviews";
 import useAuth from "../../../hooks/useAuth";
 import AnimateOnScroll from "../../../components/AnimateOnScroll";
 
-const blogPosts = [
-  {
-    title: "How to Choose the Right Fertilizer for Your Crops",
-    image: "/images/blog/6.jpg",
-    category: "Crop Management",
-  },
-  {
-    title: "Best Practices for Protecting Your Farm From Pests",
-    image: "/images/blog/7.jpg",
-    category: "Pest Management",
-  },
-  {
-    title: "Important Tips for Better Farm Productivity",
-    image: "/images/blog/9.jpg",
-    category: "Agriculture",
-  },
-];
+import { getFeaturedPosts } from "../../../services/blogService";
 
 const faqs = [
   {
@@ -129,6 +113,48 @@ function Home() {
 
   const activeProducts = (products || []).filter((p) => p.status === "Active");
   const productsToShow = activeProducts.slice(0, 4);
+
+  // Blog articles for Learn & Grow (show latest 3 published)
+  const [articles, setArticles] = useState(null); // null = loading, [] = empty
+  const [articlesError, setArticlesError] = useState(null);
+
+  const normalizeFeaturedArticle = (post = {}) => {
+    const slug =
+      post.slug ||
+      (post.title || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") ||
+      String(post.id || "");
+
+    return {
+      ...post,
+      slug,
+    };
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    // keep existing state until fetch resolves
+
+    getFeaturedPosts()
+      .then((res) => {
+        if (!mounted) return;
+        const data = Array.isArray(res && res.data ? res.data : [])
+          ? (res.data || []).map(normalizeFeaturedArticle)
+          : [];
+        setArticles(data.slice(0, 3));
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        setArticlesError(err?.message || "Failed to load articles");
+        setArticles([]);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <main className="overflow-hidden bg-white text-slate-800">
@@ -236,17 +262,17 @@ function Home() {
               </h2>
 
               <p className="mb-5 text-base leading-8 text-gray-600 sm:text-lg">
-                Our purpose is to empower farmers in Nigeria and Africa at large and improve
-                agricultural productivity by providing access to quality agro
-                inputs, reliable farming equipment, and practical agricultural
-                knowledge. Through innovation, trusted partnerships, and
-                customer-focused service, we aim to make farming more efficient,
-                productive, and sustainable.
+                Our purpose is to empower farmers in Nigeria and Africa at large
+                and improve agricultural productivity by providing access to
+                quality agro inputs, reliable farming equipment, and practical
+                agricultural knowledge. Through innovation, trusted
+                partnerships, and customer-focused service, we aim to make
+                farming more efficient, productive, and sustainable.
               </p>
 
               <p className="mb-8 text-base leading-8 text-gray-600 sm:text-lg">
-                At Niceman Agro and Farm, we believe that stronger farmers
-                build stronger communities. We are committed to helping farmers
+                At Niceman Agro and Farm, we believe that stronger farmers build
+                stronger communities. We are committed to helping farmers
                 protect their crops, improve yields, adopt better farming
                 practices, and contribute to Nigeria's food security and
                 agricultural development.
@@ -503,39 +529,92 @@ function Home() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {blogPosts.map((post, idx) => (
-              <AnimateOnScroll
-                as="article"
-                key={post.title}
-                delay={idx * 80}
-                className="overflow-hidden rounded-lg border border-slate-200 bg-white"
-              >
-                <Link to="/blog" className="block aspect-video overflow-hidden">
-                  <img
-                    src={post.image}
-                    alt={post.title}
-                    className="h-full w-full object-cover transition duration-300 hover:scale-105"
-                  />
-                </Link>
+            {articles === null ? (
+              // loading placeholders
+              [0, 1, 2].map((i) => (
+                <AnimateOnScroll
+                  as="article"
+                  key={i}
+                  delay={i * 80}
+                  className="overflow-hidden rounded-lg border border-slate-200 bg-white"
+                >
+                  <div className="block aspect-video overflow-hidden bg-slate-100 animate-pulse" />
 
-                <div className="p-5">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-green-700">
-                    {post.category}
-                  </span>
-
-                  <h3 className="mt-3 text-lg font-bold leading-7 text-green-950">
-                    {post.title}
-                  </h3>
-
+                  <div className="p-5">
+                    <div className="h-3 w-1/3 rounded bg-slate-200 animate-pulse" />
+                    <div className="mt-3 h-5 w-full max-w-[260px] rounded bg-slate-200 animate-pulse" />
+                    <div className="mt-5 h-4 w-20 rounded bg-slate-200 animate-pulse" />
+                  </div>
+                </AnimateOnScroll>
+              ))
+            ) : articlesError ? (
+              <div className="rounded-lg border border-dashed border-green-200 bg-green-50 p-6 text-sm text-green-900 sm:col-span-3">
+                <p className="font-semibold">Unable to load articles.</p>
+                <p className="mt-2 text-green-800/80">{articlesError}</p>
+              </div>
+            ) : articles.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-green-200 bg-green-50 p-6 text-sm text-green-900 sm:col-span-3">
+                <p className="font-semibold">No articles yet.</p>
+                <p className="mt-2 text-green-800/80">
+                  Check back later for new articles.
+                </p>
+              </div>
+            ) : (
+              (articles || []).map((post, idx) => (
+                <AnimateOnScroll
+                  as="article"
+                  key={post.id || post.slug || idx}
+                  delay={idx * 80}
+                  className="overflow-hidden rounded-lg border border-slate-200 bg-white"
+                >
                   <Link
                     to="/blog"
-                    className="mt-5 inline-block text-sm font-bold text-green-700 hover:underline"
+                    className="block aspect-video overflow-hidden"
                   >
-                    Read Article →
+                    {post.image ? (
+                      <img
+                        src={post.image}
+                        alt={post.title}
+                        className="h-full w-full object-cover transition duration-300 hover:scale-105"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-green-50 flex items-center justify-center text-green-700 font-semibold">
+                        Niceman Agro & Farms
+                      </div>
+                    )}
                   </Link>
-                </div>
-              </AnimateOnScroll>
-            ))}
+
+                  <div className="p-5">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-green-700">
+                      {post.category}
+                    </span>
+
+                    <h3 className="mt-3 text-lg font-bold leading-7 text-green-950">
+                      {post.title}
+                    </h3>
+
+                    {post.excerpt && (
+                      <p className="mt-2 text-sm text-slate-600 line-clamp-3">
+                        {post.excerpt}
+                      </p>
+                    )}
+
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-xs text-slate-500">
+                        {post.date}
+                      </span>
+
+                      <Link
+                        to={`/blog/${post.slug}`}
+                        className="text-sm font-bold text-green-700 hover:underline"
+                      >
+                        Read Article →
+                      </Link>
+                    </div>
+                  </div>
+                </AnimateOnScroll>
+              ))
+            )}
           </div>
         </div>
       </section>

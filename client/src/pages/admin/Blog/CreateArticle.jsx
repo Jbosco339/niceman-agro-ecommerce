@@ -14,6 +14,7 @@ const CreateArticle = () => {
     content: "",
     image: "",
     status: "Draft",
+    featuredOnHomepage: false,
   });
 
   const [saving, setSaving] = useState(false);
@@ -28,11 +29,10 @@ const CreateArticle = () => {
   ];
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -225,6 +225,25 @@ const CreateArticle = () => {
                 <option value="Draft">Save as Draft</option>
                 <option value="Published">Publish Article</option>
               </select>
+            </div>
+
+            <div className="mt-3">
+              <label className="inline-flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  name="featuredOnHomepage"
+                  checked={!!formData.featuredOnHomepage}
+                  onChange={handleChange}
+                  disabled={formData.status !== "Published"}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">Feature on homepage</span>
+              </label>
+              {formData.status !== "Published" && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Articles must be published to appear on the homepage.
+                </p>
+              )}
             </div>
 
             {/* Preview */}

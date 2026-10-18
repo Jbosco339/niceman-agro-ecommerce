@@ -1,8 +1,6 @@
 import React, { createContext, useEffect, useMemo, useState } from "react";
 import { getPublishedPosts } from "../services/blogService";
 
-export const initialBlogPosts = [];
-
 export const BlogContext = createContext(null);
 
 export function BlogProvider({ children }) {
@@ -14,7 +12,17 @@ export function BlogProvider({ children }) {
     getPublishedPosts()
       .then(({ data }) => {
         if (!active) return;
-        setPosts(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data) ? data : [];
+        const normalized = list.map((post) => ({
+          ...post,
+          slug:
+            post.slug ||
+            (post.title || "")
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, ""),
+        }));
+        setPosts(normalized);
       })
       .catch(() => {
         if (active) setPosts([]);

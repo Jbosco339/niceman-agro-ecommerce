@@ -1,10 +1,10 @@
 import { useContext, useState, useMemo } from "react";
-import { BlogContext, initialBlogPosts } from "../context/BlogContext";
+import { BlogContext } from "../context/BlogContext";
 
 export default function useBlogPosts() {
   const ctx = useContext(BlogContext);
 
-  const [posts, setPosts] = useState(initialBlogPosts);
+  const [posts, setPosts] = useState([]);
 
   const addPost = (p) => {
     const next = {

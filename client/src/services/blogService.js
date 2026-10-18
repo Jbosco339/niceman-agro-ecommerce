@@ -7,6 +7,10 @@ export const getPublishedPosts = async () => {
   return get("/blog?status=Published");
 };
 
+export const getFeaturedPosts = async () => {
+  return get("/blog?status=Published&featured=true");
+};
+
 export const getBlogPost = async (id) => {
   return get(`/blog/${id}`);
 };

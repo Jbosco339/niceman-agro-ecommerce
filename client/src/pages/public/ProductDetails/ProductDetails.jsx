@@ -17,7 +17,7 @@ function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { addToCart, cartItems } = useCart();
+  const { addToCart, cartItems, updateQuantity, removeFromCart } = useCart();
 
   useEffect(() => {
     if (!id) return;
@@ -33,11 +33,15 @@ function ProductDetails() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [addFeedback, setAddFeedback] = useState("");
 
   const formatPrice = (price) => `₦${price.toLocaleString("en-NG")}`;
+
+  const existingCartItem = product
+    ? cartItems.find((item) => String(item.id) === String(product.id))
+    : null;
+  const quantity = existingCartItem ? existingCartItem.quantity : 1;
 
   if (loading) {
     return (
@@ -74,22 +78,39 @@ function ProductDetails() {
   }
 
   const increaseQuantity = () => {
-    if (quantity < (product.stock || 0)) {
-      setQuantity((current) => current + 1);
+    if (existingCartItem) {
+      const next = existingCartItem.quantity + 1;
+      updateQuantity(product.id, next);
+      return;
     }
+
+    addToCart(product, 1);
   };
 
   const decreaseQuantity = () => {
-    setQuantity((current) => Math.max(1, current - 1));
+    if (!existingCartItem) {
+      return;
+    }
+
+    const currentQty = existingCartItem.quantity;
+
+    if (currentQty > 1) {
+      updateQuantity(product.id, currentQty - 1);
+      return;
+    }
+
+    removeFromCart(product.id);
   };
 
-  const isProductInCart = cartItems.find((item) => item.id === product.id);
-
   const handleAddToCart = () => {
-    addToCart(product, quantity);
-    const existingQty = isProductInCart ? isProductInCart.quantity : 0;
-    const nextQty = existingQty + quantity;
-    setAddFeedback(`${product.name} added to cart (${nextQty} in cart)`);
+    if (existingCartItem) {
+      const nextQty = existingCartItem.quantity + 1;
+      updateQuantity(product.id, nextQty);
+      setAddFeedback(`${product.name} quantity increased (${nextQty} in cart)`);
+    } else {
+      addToCart(product, 1);
+      setAddFeedback(`${product.name} added to cart (1 in cart)`);
+    }
 
     window.setTimeout(() => setAddFeedback(""), 1200);
   };

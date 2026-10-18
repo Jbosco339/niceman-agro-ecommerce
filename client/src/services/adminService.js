@@ -79,7 +79,9 @@ export const updateOrderStatus = async (id, status) => {
 };
 
 export const confirmPayment = async (id, transactionReference) => {
-  return post(`/orders/${encodeURIComponent(id)}/confirm-payment`, { transactionReference });
+  return post(`/orders/${encodeURIComponent(id)}/confirm-payment`, {
+    transactionReference,
+  });
 };
 
 // ==================== CUSTOMERS ====================
@@ -142,8 +144,8 @@ export const getBlogPost = async (id) => {
   return get(`/admin/blog/${encodeURIComponent(id)}`);
 };
 
-export const createBlogPost = async (post) => {
-  return post("/admin/blog", post);
+export const createBlogPost = async (payload) => {
+  return post("/admin/blog", payload);
 };
 
 export const updateBlogPost = async (id, post) => {

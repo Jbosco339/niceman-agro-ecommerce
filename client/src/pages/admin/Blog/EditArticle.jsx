@@ -28,11 +28,10 @@ const EditArticle = () => {
   ];
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -233,6 +232,19 @@ const EditArticle = () => {
                 <option value="Draft">Draft</option>
                 <option value="Published">Published</option>
               </select>
+            </div>
+
+            <div className="mt-3">
+              <label className="inline-flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  name="featuredOnHomepage"
+                  checked={!!formData.featuredOnHomepage}
+                  onChange={handleChange}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">Feature on homepage</span>
+              </label>
             </div>
 
             {formData.image && (

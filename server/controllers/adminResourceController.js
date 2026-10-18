@@ -49,6 +49,7 @@ const fields = {
     "content",
     "image",
     "status",
+    "featuredOnHomepage",
     "date",
   ],
 };
@@ -96,19 +97,14 @@ export const hasUnuploadedAdminImage = (
         !(
           allowWebsiteDefaults &&
           previousValue == null &&
-          ["hero-bg.jpg", "about.jpg"].some((name) =>
-            typeof child === "string" &&
-            child === `/images/${name}`,
+          ["hero-bg.jpg", "about.jpg"].some(
+            (name) => typeof child === "string" && child === `/images/${name}`,
           )
         )
       );
     }
     return child && typeof child === "object"
-      ? hasUnuploadedAdminImage(
-          child,
-          previousChild,
-          allowWebsiteDefaults,
-        )
+      ? hasUnuploadedAdminImage(child, previousChild, allowWebsiteDefaults)
       : false;
   });
 };
@@ -398,7 +394,8 @@ export const createAdminRecord = (resource) => async (req, res) => {
     if (hasUnuploadedAdminImage(req.body)) {
       return res.status(400).json({
         status: "failed",
-        message: "Upload images through the admin image uploader before saving.",
+        message:
+          "Upload images through the admin image uploader before saving.",
       });
     }
     return res
@@ -412,6 +409,24 @@ export const createAdminRecord = (resource) => async (req, res) => {
         status: "failed",
         message: "A category with this name or slug already exists.",
       });
+    }
+  }
+  // Enforce max 3 featured published articles
+  if (resource === "article" && payload.featuredOnHomepage === true) {
+    // only count already-published featured articles
+    if (payload.status === "Published") {
+      const count = await AdminRecord.countDocuments({
+        resource: "article",
+        "payload.status": "Published",
+        "payload.featuredOnHomepage": true,
+      });
+      if (count >= 3) {
+        return res.status(409).json({
+          status: "failed",
+          message:
+            "Homepage can display a maximum of three published articles. Deselect another article before featuring this one.",
+        });
+      }
     }
   }
   const record = await AdminRecord.create({
@@ -438,7 +453,8 @@ export const updateAdminRecord = (resource) => async (req, res) => {
     if (hasUnuploadedAdminImage(req.body, existing.payload)) {
       return res.status(400).json({
         status: "failed",
-        message: "Upload images through the admin image uploader before saving.",
+        message:
+          "Upload images through the admin image uploader before saving.",
       });
     }
     return res
@@ -474,6 +490,52 @@ export const updateAdminRecord = (resource) => async (req, res) => {
       message: "Reserved order items cannot be edited",
     });
   }
+  // Enforce featured-on-homepage constraints for articles on update
+  if (resource === "article") {
+    // If attempting to set featuredOnHomepage = true on an article that is (or will be) published,
+    // ensure there are fewer than 3 other published featured articles.
+    const wantsFeatured = payload.featuredOnHomepage === true;
+    const willBePublished =
+      payload.status === "Published" ||
+      (existing.payload.status === "Published" && payload.status === undefined);
+
+    if (wantsFeatured && willBePublished) {
+      const count = await AdminRecord.countDocuments({
+        resource: "article",
+        "payload.status": "Published",
+        "payload.featuredOnHomepage": true,
+        _id: { $ne: existing._id },
+      });
+      if (count >= 3) {
+        return res.status(409).json({
+          status: "failed",
+          message:
+            "Homepage can display a maximum of three published articles. Deselect another article before featuring this one.",
+        });
+      }
+    }
+
+    // If attempting to publish an article that is featured, ensure limit is preserved
+    if (
+      payload.status === "Published" &&
+      (existing.payload.featuredOnHomepage === true ||
+        payload.featuredOnHomepage === true)
+    ) {
+      const count = await AdminRecord.countDocuments({
+        resource: "article",
+        "payload.status": "Published",
+        "payload.featuredOnHomepage": true,
+        _id: { $ne: existing._id },
+      });
+      if (count >= 3) {
+        return res.status(409).json({
+          status: "failed",
+          message:
+            "Publishing this article would exceed the homepage limit of three featured articles. Deselect another featured article first.",
+        });
+      }
+    }
+  }
   const updatedPayload = { ...existing.payload, ...payload };
   if (
     resource === "category" &&
@@ -495,7 +557,7 @@ export const updateAdminRecord = (resource) => async (req, res) => {
   const record = await AdminRecord.findOneAndUpdate(
     filter,
     { $set: { payload: updatedPayload } },
-    { returnDocument: 'after', runValidators: true },
+    { returnDocument: "after", runValidators: true },
   );
   if (!record)
     return res.status(409).json({
@@ -676,7 +738,7 @@ export const updateCustomer = async (req, res) => {
   const user = await User.findOneAndUpdate(
     { _id: req.params.id, role: "user" },
     { $set: update },
-    { returnDocument: 'after', runValidators: true },
+    { returnDocument: "after", runValidators: true },
   ).select("userName email image isVerified isActive createdAt");
   if (!user)
     return res
