@@ -1,9 +1,17 @@
-const rawApiBase = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const rawApiBase =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_CLIENT_URL ||
+  (typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "");
 
 const normalizeApiBase = (value) => {
-  const trimmed = (value || "http://localhost:5000").trim().replace(/\/+$/, "");
+  const trimmed = (value || "").trim().replace(/\/+$/, "");
 
-  if (!trimmed) return "http://localhost:5000/api/v1";
+  if (!trimmed) {
+    return "http://localhost:5000/api/v1";
+  }
+
   if (/\/api\/v1$/i.test(trimmed)) return trimmed;
   if (/\/api$/i.test(trimmed)) return `${trimmed}/v1`;
   return `${trimmed}/api/v1`;
