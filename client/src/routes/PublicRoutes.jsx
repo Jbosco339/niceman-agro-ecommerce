@@ -37,12 +37,15 @@ import Profile from "../pages/account/Profile";
 import OrderDetails from "../pages/account/OrderDetails";
 import ResetPassword from "../pages/account/ResetPassword";
 import Favorites from "../pages/public/Favorites/Favorites";
+import WriteReview from "../pages/public/WriteReview";
 
 function PublicRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/Home" element={<Home />} />
+      <Route path="/write-review" element={<WriteReview />} />
+      <Route path="/WriteReview" element={<WriteReview />} />
       <Route path="/shop" element={<Shop />} />
       <Route path="/Shop" element={<Shop />} />
       <Route path="/product/:id" element={<ProductDetails />} />

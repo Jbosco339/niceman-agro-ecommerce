@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   adminLogin,
   adminLogout,
@@ -10,8 +10,12 @@ export function AdminProvider({ children }) {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState("");
+  const hasCheckedSession = useRef(false);
 
   useEffect(() => {
+    if (hasCheckedSession.current) return undefined;
+    hasCheckedSession.current = true;
+
     let active = true;
     getCurrentAdmin()
       .then(({ data }) => {
@@ -35,6 +39,21 @@ export function AdminProvider({ children }) {
 
     return () => {
       active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const handleSessionExpired = () => {
+      setAdmin(null);
+      setAuthError("");
+      setLoading(false);
+    };
+
+    window.addEventListener("auth:session-expired", handleSessionExpired);
+    return () => {
+      window.removeEventListener("auth:session-expired", handleSessionExpired);
     };
   }, []);
 

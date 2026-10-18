@@ -12,7 +12,7 @@ export default function useReviews() {
     deleteReview: () => {},
     approveReview: () => {},
     rejectReview: () => {},
-    getReviews: () => initialReviews,
+    getReviews: async () => initialReviews,
     getGeneralReviews: () =>
       initialReviews.filter((review) => review.type === "general"),
     getProductReviews: (productId) =>

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getProducts } from "../../../services/productService";
@@ -10,7 +9,6 @@ const categoryNames = {
   tubers: "Fertilizers",
   livestock: "Farm Tools & Equipment",
   poultry: "Seeds & Seedlings",
-
 };
 
 const CategoryByProduct = () => {
@@ -120,7 +118,8 @@ const CategoryByProduct = () => {
           </div>
 
           <p className="text-sm text-gray-500">
-            {products.length} {products.length === 1 ? "product" : "products"} available
+            {products.length} {products.length === 1 ? "product" : "products"}{" "}
+            available
           </p>
         </div>
 
@@ -137,7 +136,7 @@ const CategoryByProduct = () => {
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      className="h-full w-full object-contain object-center p-2 transition duration-500 group-hover:scale-105 sm:p-4"
                     />
 
                     <span className="absolute left-3 top-3 rounded-full bg-green-700 px-3 py-1 text-xs font-bold text-white">
@@ -162,7 +161,8 @@ const CategoryByProduct = () => {
 
                   <div className="mt-5 flex items-center justify-between">
                     <span className="text-xl font-extrabold text-green-800">
-                                             {'\u20A6'}{Number(product.price).toLocaleString("en-NG")}
+                      {"\u20A6"}
+                      {Number(product.price).toLocaleString("en-NG")}
                     </span>
 
                     <Link
@@ -209,8 +209,8 @@ const CategoryByProduct = () => {
         </h2>
 
         <p className="mx-auto mt-3 max-w-xl text-white/75">
-          Browse our other agricultural product categories and find exactly
-          what you need.
+          Browse our other agricultural product categories and find exactly what
+          you need.
         </p>
 
         <Link

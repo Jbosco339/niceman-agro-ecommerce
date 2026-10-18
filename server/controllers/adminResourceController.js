@@ -20,11 +20,13 @@ const fields = {
     "address",
   ],
   review: [
+    "type",
     "product",
     "customer",
     "email",
     "rating",
     "comment",
+    "review",
     "status",
     "date",
   ],

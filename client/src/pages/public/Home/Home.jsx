@@ -32,6 +32,129 @@ const faqs = [
   },
 ];
 
+const fallbackHeroSlides = [
+  {
+    title: ["Growing Better Crops.", "Building a Better Future."],
+    description:
+      "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farm.",
+    buttonText: "Shop Products",
+    buttonLink: "/shop",
+  },
+  {
+    title: ["Trusted Inputs.", "Sustainable Practices."],
+    description:
+      "Reliable products and expert guidance to support sustainable farming and increase yields.",
+    buttonText: "Explore Products",
+    buttonLink: "/shop",
+  },
+];
+
+const homepageHeroButtons = [
+  {
+    text: "Shop Products",
+    link: "/shop",
+    secondaryText: "Explore Products",
+    secondaryLink: "/shop",
+  },
+  {
+    text: "Explore Products",
+    link: "/shop",
+    secondaryText: "Browse Categories",
+    secondaryLink: "/categories",
+  },
+];
+
+const normalizeSlide = (slide, fallbackSlide = {}, index = 0) => {
+  const title = Array.isArray(slide?.title)
+    ? slide.title
+    : typeof slide?.title === "string" && slide.title.trim()
+      ? [slide.title]
+      : Array.isArray(fallbackSlide?.title)
+        ? fallbackSlide.title
+        : typeof fallbackSlide?.title === "string"
+          ? [fallbackSlide.title]
+          : [""];
+
+  const image =
+    typeof slide?.image === "string" && slide.image.trim() ? slide.image : "";
+
+  const buttonConfig = homepageHeroButtons[index] || homepageHeroButtons[0];
+
+  return {
+    image,
+    title,
+    description:
+      typeof slide?.subtitle === "string" && slide.subtitle.trim()
+        ? slide.subtitle
+        : typeof slide?.description === "string" && slide.description.trim()
+          ? slide.description
+          : typeof fallbackSlide?.subtitle === "string" &&
+              fallbackSlide.subtitle.trim()
+            ? fallbackSlide.subtitle
+            : typeof fallbackSlide?.description === "string" &&
+                fallbackSlide.description.trim()
+              ? fallbackSlide.description
+              : fallbackHeroSlides[0].description,
+    buttonText: buttonConfig.text,
+    buttonLink: buttonConfig.link,
+    secondaryButtonText: buttonConfig.secondaryText,
+    secondaryButtonLink: buttonConfig.secondaryLink,
+  };
+};
+
+const getHeroSlides = (siteContent) => {
+  const hero =
+    siteContent && typeof siteContent === "object" ? siteContent.hero : null;
+  const savedSlides = Array.isArray(hero?.slides)
+    ? hero.slides.filter((slide) => slide && typeof slide === "object")
+    : [];
+
+  const legacySlide =
+    hero && typeof hero === "object" && !savedSlides.length
+      ? {
+          title: hero.title,
+          subtitle: hero.subtitle,
+          image: hero.image,
+        }
+      : null;
+
+  const normalizedSlides = [];
+
+  if (savedSlides.length) {
+    const limitedSlides = savedSlides.slice(0, 2);
+    limitedSlides.forEach((slide, index) => {
+      normalizedSlides.push(
+        normalizeSlide(
+          slide,
+          fallbackHeroSlides[index] || fallbackHeroSlides[0],
+          index,
+        ),
+      );
+    });
+    while (normalizedSlides.length < 2) {
+      normalizedSlides.push(
+        normalizeSlide(
+          {},
+          fallbackHeroSlides[normalizedSlides.length] || fallbackHeroSlides[0],
+          normalizedSlides.length,
+        ),
+      );
+    }
+    return normalizedSlides.slice(0, 2);
+  }
+
+  if (legacySlide) {
+    return [
+      normalizeSlide(legacySlide, fallbackHeroSlides[0], 0),
+      normalizeSlide({}, fallbackHeroSlides[1], 1),
+    ];
+  }
+
+  return fallbackHeroSlides.map((slide, index) =>
+    normalizeSlide(slide, slide, index),
+  );
+};
+
 function Home() {
   const { products } = useProducts();
   const { activeCategories } = useCategoryContext();
@@ -49,53 +172,7 @@ function Home() {
     });
   const reviews = approvedGeneralReviews.slice(0, 6);
 
-  const slides =
-    siteContent && siteContent.hero && siteContent.hero.slides
-      ? siteContent.hero.slides.map((s) => ({
-          image: s.image || (siteContent.hero && siteContent.hero.image),
-          // allow title to be stored as string or array
-          title: Array.isArray(s.title)
-            ? s.title
-            : [s.title || (siteContent.hero && siteContent.hero.title) || ""],
-          description:
-            s.subtitle || (siteContent.hero && siteContent.hero.subtitle),
-          buttonText:
-            s.buttonText || (siteContent.hero && siteContent.hero.buttonText),
-          buttonLink:
-            s.buttonLink || (siteContent.hero && siteContent.hero.buttonLink),
-        }))
-      : siteContent && siteContent.hero
-        ? [
-            {
-              image: siteContent.hero.image,
-              title: Array.isArray(siteContent.hero.title)
-                ? siteContent.hero.title
-                : [siteContent.hero.title],
-              description: siteContent.hero.subtitle,
-              buttonText: siteContent.hero.buttonText,
-              buttonLink: siteContent.hero.buttonLink,
-            },
-          ]
-        : [
-            {
-              image: "/images/hero/agro12.jpg",
-              title: ["Growing Better Crops.", "Building a Better Future."],
-              description:
-                "Quality agricultural inputs and practical farming knowledge helping farmers grow healthier crops and build more productive farm.",
-            },
-            {
-              image: "/images/hero/6.jpg",
-              title: ["Trusted Inputs.", "Sustainable Practices."],
-              description:
-                "Reliable products and expert guidance to support sustainable farming and increase yields.",
-            },
-            {
-              image: "/images/hero/5.jpg",
-              title: ["From Seed to Harvest.", "We Grow With You."],
-              description:
-                "Comprehensive farm inputs and resources designed to deliver consistent results across each growing season.",
-            },
-          ];
+  const slides = getHeroSlides(siteContent);
 
   const [active, setActive] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -166,23 +243,36 @@ function Home() {
       >
         {/* Slides (backgrounds) */}
         <div className="absolute inset-0">
-          {slides.map((slide, i) => (
-            <div
-              key={i}
-              className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out z-0 ${
-                i === active ? "opacity-100" : "opacity-0"
-              }`}
-              style={{
-                backgroundImage: `linear-gradient(90deg, rgba(3, 54, 31, 0.88), rgba(3, 54, 31, 0.30)), url('${slide.image}')`,
-              }}
-            />
-          ))}
+          {slides.map((slide, i) => {
+            const missingImage = !slide.image;
+            const backgroundStyle = missingImage
+              ? {
+                  backgroundImage:
+                    "linear-gradient(90deg, rgba(3, 54, 31, 0.88), rgba(3, 54, 31, 0.30))",
+                  backgroundColor: "#e2e8f0",
+                }
+              : {
+                  backgroundImage: `linear-gradient(90deg, rgba(3, 54, 31, 0.88), rgba(3, 54, 31, 0.30)), url("${slide.image}")`,
+                  backgroundColor: "#0f172a",
+                };
+
+            return (
+              <div
+                key={i}
+                data-missing-image={missingImage ? "true" : undefined}
+                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out z-0 ${
+                  i === active ? "opacity-100" : "opacity-0"
+                }`}
+                style={backgroundStyle}
+              />
+            );
+          })}
         </div>
 
         <div className="relative flex h-full w-full items-center justify-center">
           {slides.map((slide, i) => (
             <div
-              key={slide.image + i}
+              key={`${slide.image}-${i}`}
               className={`absolute inset-0 flex items-center justify-center transition-opacity duration-1000 ease-in-out z-10 ${
                 i === active ? "opacity-100" : "opacity-0 pointer-events-none"
               }`}
@@ -220,10 +310,12 @@ function Home() {
                     </Link>
 
                     <Link
-                      to={slide.buttonLink || "/shop"}
+                      to={
+                        slide.secondaryButtonLink || slide.buttonLink || "/shop"
+                      }
                       className="inline-flex min-h-12 items-center justify-center rounded-md border border-white px-7 font-semibold text-white transition hover:bg-white hover:text-green-800"
                     >
-                      Explore Products
+                      {slide.secondaryButtonText || "Explore Products"}
                     </Link>
                   </div>
                 </div>
@@ -354,7 +446,7 @@ function Home() {
                   <img
                     src={category.image}
                     alt={category.name}
-                    className="block h-full w-full object-contain object-center p-2 transition duration-300 group-hover:scale-105 sm:object-cover sm:p-0"
+                    className="block h-full w-full object-contain object-center p-1.5 transition duration-300 group-hover:scale-105 sm:object-cover sm:p-0"
                   />
                 </div>
 
@@ -542,7 +634,7 @@ function Home() {
 
                   <div className="p-5">
                     <div className="h-3 w-1/3 rounded bg-slate-200 animate-pulse" />
-                    <div className="mt-3 h-5 w-full max-w-[260px] rounded bg-slate-200 animate-pulse" />
+                    <div className="mt-3 h-5 w-full max-w-65 rounded bg-slate-200 animate-pulse" />
                     <div className="mt-5 h-4 w-20 rounded bg-slate-200 animate-pulse" />
                   </div>
                 </AnimateOnScroll>

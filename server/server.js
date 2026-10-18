@@ -14,12 +14,12 @@ import morgan from "morgan";
 import connect from "./utils/db.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import rateLimit from "express-rate-limit";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import helmet from "helmet";
 import { releaseExpiredReservations } from "./services/paystack.js";
 
 const app = express();
+app.set("trust proxy", 1);
 const validateRequiredConfiguration = () => {
   const required = ["MONGODB_URL", "JWT_SECRET"];
   if (process.env.NODE_ENV === "production") {
@@ -97,12 +97,6 @@ app.options(
     credentials: true,
   }),
 );
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 100,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-});
 
 app.use(
   express.json({
@@ -123,7 +117,6 @@ app.use(
   }),
 );
 app.use(cookieParser());
-app.use(limiter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1", productsRouter);
 app.use("/api/v1", clientContentRouter);

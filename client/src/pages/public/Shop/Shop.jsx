@@ -279,7 +279,7 @@ function Shop() {
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                            className="h-full w-full object-contain object-center p-1.5 transition duration-500 group-hover:scale-105 sm:object-cover sm:p-0"
                           />
                         </Link>
 

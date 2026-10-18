@@ -11,30 +11,80 @@ const normalizeApiBase = (value) => {
 
 export const API_URL = normalizeApiBase(rawApiBase);
 
+let refreshInFlight = null;
+
+const isAuthEndpoint = (endpoint) =>
+  /\/(login|register|refresh-token)$/.test(endpoint);
+
+const clearSessionOnRefreshFailure = () => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("auth:session-expired"));
+  }
+};
+
+const refreshAccessToken = async () => {
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = fetch(`${API_URL}/user/refresh-token`, {
+    method: "POST",
+    credentials: "include",
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        const responseText = await response.text();
+        let message = "Session expired. Please log in again.";
+
+        if (responseText) {
+          try {
+            const parsed = JSON.parse(responseText);
+            message = parsed.message || parsed.error || message;
+          } catch {
+            message = responseText || message;
+          }
+        }
+
+        clearSessionOnRefreshFailure();
+        const error = new Error(message);
+        error.status = response.status;
+        throw error;
+      }
+
+      return response;
+    })
+    .finally(() => {
+      refreshInFlight = null;
+    });
+
+  return refreshInFlight;
+};
+
 const api = async (endpoint, options = {}) => {
-  const isFormData = options.body instanceof FormData;
   const requestOptions = {
     credentials: "include",
     ...options,
+    __retriedAfterRefresh: Boolean(options.__retriedAfterRefresh),
     headers: {
-      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...(options.body instanceof FormData
+        ? {}
+        : { "Content-Type": "application/json" }),
       Accept: "application/json",
       ...options.headers,
     },
   };
 
-  const sendRequest = () => fetch(`${API_URL}${endpoint}`, requestOptions);
+  const sendRequest = async () =>
+    fetch(`${API_URL}${endpoint}`, requestOptions);
+
   let response = await sendRequest();
 
   if (
     response.status === 401 &&
-    !/\/(login|register|refresh-token)$/.test(endpoint)
+    !isAuthEndpoint(endpoint) &&
+    !requestOptions.__retriedAfterRefresh
   ) {
-    const refreshResponse = await fetch(`${API_URL}/user/refresh-token`, {
-      method: "POST",
-      credentials: "include",
-    });
-    if (refreshResponse.ok) response = await sendRequest();
+    requestOptions.__retriedAfterRefresh = true;
+    await refreshAccessToken();
+    response = await sendRequest();
   }
 
   const responseText = await response.text();
@@ -53,13 +103,10 @@ const api = async (endpoint, options = {}) => {
       data.error ||
       (Array.isArray(data.errors) ? data.errors.join(", ") : data.errors);
     const message =
-      typeof responseMessage === "string" &&
-      !/^\s*</.test(responseMessage)
+      typeof responseMessage === "string" && !/^\s*</.test(responseMessage)
         ? responseMessage
         : response.statusText || "The request could not be completed.";
-    const error = new Error(
-      message,
-    );
+    const error = new Error(message);
     error.status = response.status;
     throw error;
   }

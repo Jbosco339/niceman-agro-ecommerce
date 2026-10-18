@@ -59,11 +59,11 @@ const Categories = () => {
                 className="group overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 {/* Image */}
-                <div className="relative h-64 overflow-hidden">
+                <div className="relative h-56 overflow-hidden bg-gray-50 sm:h-64">
                   <img
                     src={category.image}
                     alt={category.name}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    className="h-full w-full object-contain object-center p-2 transition duration-500 group-hover:scale-105 sm:object-cover sm:p-0"
                   />
 
                   <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />

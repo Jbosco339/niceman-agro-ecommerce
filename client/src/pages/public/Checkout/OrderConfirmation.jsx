@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 
 const OrderConfirmation = () => {
@@ -9,17 +8,36 @@ const OrderConfirmation = () => {
   if (!order) {
     return (
       <main className="min-h-screen bg-gray-50 px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">No order to display</h1>
-        <Link to="/checkout" className="mt-6 inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white">Return to checkout</Link>
+        <h1 className="text-2xl font-bold text-gray-900">
+          No order to display
+        </h1>
+        <Link
+          to="/checkout"
+          className="mt-6 inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white"
+        >
+          Return to checkout
+        </Link>
       </main>
     );
   }
 
-  const customerName = order.customerName || (typeof order.customer === "object" ? order.customer?.name : order.customer) || "Customer";
+  const customerName =
+    order.customerName ||
+    (typeof order.customer === "object"
+      ? order.customer?.name
+      : order.customer) ||
+    "Customer";
   const customerEmail = order.email || order.customer?.email || "";
-  const deliveryAddress = typeof order.deliveryAddress === "string"
-    ? order.deliveryAddress
-    : [order.deliveryAddress?.address, order.deliveryAddress?.city, order.deliveryAddress?.state].filter(Boolean).join(", ");
+  const deliveryAddress =
+    typeof order.deliveryAddress === "string"
+      ? order.deliveryAddress
+      : [
+          order.deliveryAddress?.address,
+          order.deliveryAddress?.city,
+          order.deliveryAddress?.state,
+        ]
+          .filter(Boolean)
+          .join(", ");
   const isBankTransfer = order.paymentMethod === "Bank Transfer";
   const paid = order.paymentStatus === "Paid";
   const pendingVerification = !paid && isBankTransfer;
@@ -41,17 +59,21 @@ const OrderConfirmation = () => {
             ✓
           </div>
 
-           <h1 className="mt-5 text-3xl font-extrabold text-gray-900 sm:text-4xl">
-             {paid ? "Order Confirmed!" : pendingVerification ? "Payment Pending Verification" : "Order Received"}
-           </h1>
+          <h1 className="mt-5 text-3xl font-extrabold text-gray-900 sm:text-4xl">
+            {paid
+              ? "Order Confirmed!"
+              : pendingVerification
+                ? "Payment Pending Verification"
+                : "Order Received"}
+          </h1>
 
-           <p className="mx-auto mt-3 max-w-xl text-gray-500">
-             {paid
-               ? "Thank you for your order. Your payment has been received and we will begin processing it shortly."
-               : pendingVerification
-                 ? "Thank you for your order. Your order has been received and is awaiting payment verification."
-                 : "Thank you for your order. Payment is still pending; we will process it after payment is confirmed."}
-           </p>
+          <p className="mx-auto mt-3 max-w-xl text-gray-500">
+            {paid
+              ? "Thank you for your order. Your payment has been received and we will begin processing it shortly."
+              : pendingVerification
+                ? "Thank you for your order. Your order has been received and is awaiting payment verification."
+                : "Thank you for your order. Payment is still pending; we will process it after payment is confirmed."}
+          </p>
         </div>
 
         {/* Confirmation Card */}
@@ -93,9 +115,7 @@ const OrderConfirmation = () => {
 
             {/* Items */}
             <div className="border-b border-gray-100 py-6">
-              <h3 className="text-lg font-bold text-gray-900">
-                Ordered Items
-              </h3>
+              <h3 className="text-lg font-bold text-gray-900">Ordered Items</h3>
 
               <div className="mt-4 space-y-4">
                 {order.items.map((item) => (
@@ -103,7 +123,13 @@ const OrderConfirmation = () => {
                     key={item.id || item.product || item.name}
                     className="flex items-center gap-4"
                   >
-                    {item.image && <img src={item.image} alt={item.name} className="h-16 w-16 rounded-lg object-cover" />}
+                    {item.image && (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-16 w-16 rounded-lg object-contain object-center bg-gray-50 p-1.5"
+                      />
+                    )}
 
                     <div className="min-w-0 flex-1">
                       <h4 className="truncate font-semibold text-gray-900">
@@ -137,9 +163,7 @@ const OrderConfirmation = () => {
             {/* Payment & Total */}
             <div className="py-6">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">
-                  Payment Method
-                </span>
+                <span className="text-sm text-gray-500">Payment Method</span>
 
                 <span className="font-semibold text-gray-800">
                   {order.paymentMethod}
@@ -154,24 +178,34 @@ const OrderConfirmation = () => {
 
                   <p className="mt-2 text-sm text-gray-600">
                     Transfer the exact amount of{" "}
-                    <span className="font-bold text-gray-900">{formatPrice(order.total)}</span>
-                    {" "}to the account below and keep your payment reference{" "}
-                    <span className="font-bold text-gray-900">{order.paymentReference}</span>
-                    {" "}for tracking.
+                    <span className="font-bold text-gray-900">
+                      {formatPrice(order.total)}
+                    </span>{" "}
+                    to the account below and keep your payment reference{" "}
+                    <span className="font-bold text-gray-900">
+                      {order.paymentReference}
+                    </span>{" "}
+                    for tracking.
                   </p>
 
                   <div className="mt-3 space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-500">Account Name</span>
-                      <span className="font-semibold text-gray-900">{bankDetails.accountName}</span>
+                      <span className="font-semibold text-gray-900">
+                        {bankDetails.accountName}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Bank Name</span>
-                      <span className="font-semibold text-gray-900">{bankDetails.bankName}</span>
+                      <span className="font-semibold text-gray-900">
+                        {bankDetails.bankName}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Account Number</span>
-                      <span className="font-bold text-gray-900">{bankDetails.accountNumber}</span>
+                      <span className="font-bold text-gray-900">
+                        {bankDetails.accountNumber}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -196,8 +230,10 @@ const OrderConfirmation = () => {
                 </p>
 
                 <p className="mt-1 text-sm text-green-700">
-                  {order.receiptNumber && `Receipt #${order.receiptNumber} has been sent to your email.`}
-                  {!order.receiptNumber && "Your receipt has been sent to your email."}
+                  {order.receiptNumber &&
+                    `Receipt #${order.receiptNumber} has been sent to your email.`}
+                  {!order.receiptNumber &&
+                    "Your receipt has been sent to your email."}
                 </p>
                 <Link
                   to={`/account/orders/${order.id}/receipt`}
@@ -215,7 +251,8 @@ const OrderConfirmation = () => {
                 </p>
 
                 <p className="mt-1 text-sm text-yellow-700">
-                  Your order will be confirmed once your bank transfer is verified. This usually takes up to 24 hours.
+                  Your order will be confirmed once your bank transfer is
+                  verified. This usually takes up to 24 hours.
                 </p>
               </div>
             )}

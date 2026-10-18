@@ -99,11 +99,11 @@ function Cart() {
                 className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm"
               >
                 {/* Image box */}
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
+                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-50 sm:h-24 sm:w-24">
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="max-h-full max-w-full object-contain"
+                    className="h-full w-full object-contain object-center p-1.5 sm:p-2"
                   />
                 </div>
 
