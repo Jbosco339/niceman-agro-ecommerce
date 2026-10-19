@@ -26,3 +26,5 @@ In the Paystack Dashboard, configure the webhook URL as `https://<your-api-host>
 The frontend and API must be deployed over HTTPS for production payments and Paystack webhooks. A webhook URL on localhost is not reachable by Paystack.
 
 Admin APIs are mounted at `/api/v1/admin`; catalog reads remain public at `/api/v1/products`, while writes require an administrator session. Admin and customer sessions use `HttpOnly` cookies and require email verification. MongoDB/Mongoose is used here: PostgreSQL row-level security and SQL parameterization do not apply. Enforce least-privilege MongoDB credentials, network restrictions, encrypted transport, and backups in the database deployment.
+
+For the production frontend on `www.nicemanagro.com`, serve browser API calls through the frontend origin at `/api/v1` and proxy that path to the Render API. This keeps authentication cookies first-party and avoids browsers blocking cross-site cookies. Set `CLIENT_URL` to the exact frontend origin, including `https://` and `www` when used.
