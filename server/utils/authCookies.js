@@ -1,9 +1,21 @@
-const getAuthCookieOptions = () => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-  path: "/api/v1",
-});
+const isProductionCookieContext = () => {
+  const clientUrl = (process.env.CLIENT_URL || "").trim().toLowerCase();
+  return (
+    process.env.NODE_ENV === "production" ||
+    (clientUrl.startsWith("https://") && !clientUrl.includes("localhost"))
+  );
+};
+
+const getAuthCookieOptions = () => {
+  const isProduction = isProductionCookieContext();
+
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+  };
+};
 
 export const setAuthCookies = (res, accessToken, refreshToken) => {
   const cookieOptions = getAuthCookieOptions();
