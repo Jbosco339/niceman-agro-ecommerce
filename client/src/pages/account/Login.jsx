@@ -6,7 +6,7 @@ import { useAuth } from "../../context/useAuth";
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, loading: sessionLoading } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -31,6 +31,7 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (sessionLoading) return;
 
     setError("");
 
@@ -273,10 +274,12 @@ function Login() {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || sessionLoading}
                 className="w-full h-12 rounded-xl bg-green-700 text-white font-semibold transition hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-600/20 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {loading ? (
+                {sessionLoading ? (
+                  "Checking session…"
+                ) : loading ? (
                   <>
                     <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Signing in...

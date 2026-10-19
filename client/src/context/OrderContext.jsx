@@ -1,11 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { getOrders } from "../services/adminService";
+import { createContext, useContext, useMemo, useState } from "react";
 
 export const initialOrders = [];
 
@@ -13,28 +6,6 @@ export const OrderContext = createContext(null);
 
 export function OrderProvider({ children }) {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    setLoading(true);
-    getOrders()
-      .then(({ data }) => {
-        if (!active) return;
-        setOrders(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (active) setOrders([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const updateOrder = (id, changes) => {
     setOrders((current) =>
@@ -50,11 +21,11 @@ export function OrderProvider({ children }) {
     () => ({
       orders,
       setOrders,
-      loading,
+      loading: false,
       updateOrder,
       getOrder,
     }),
-    [orders, loading],
+    [orders],
   );
 
   return (

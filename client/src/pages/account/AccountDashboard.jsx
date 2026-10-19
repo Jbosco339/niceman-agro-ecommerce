@@ -122,14 +122,22 @@ const AccountDashboard = () => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [logoutError, setLogoutError] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = async () => {
+    setLogoutError("");
+    setLoggingOut(true);
     try {
       await logout();
-    } catch {
-      // Ignore backend logout failures and continue redirecting.
+      navigate("/account/login", { replace: true });
+    } catch (logoutFailure) {
+      setLogoutError(
+        logoutFailure.message || "Unable to log out. Please try again.",
+      );
+    } finally {
+      setLoggingOut(false);
     }
-    navigate("/account/login", { replace: true });
   };
 
   const fetchDashboard = useCallback(async () => {
@@ -625,13 +633,19 @@ const AccountDashboard = () => {
             </section>
 
             <div className="pt-2">
+              {logoutError && (
+                <p role="alert" className="mb-3 text-sm text-red-700">
+                  {logoutError}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={handleLogout}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 hover:text-red-800"
+                disabled={loggingOut}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition hover:bg-red-100 hover:text-red-800 disabled:cursor-wait disabled:opacity-60"
               >
                 <LogOut size={17} />
-                Logout
+                {loggingOut ? "Logging out…" : "Logout"}
               </button>
             </div>
           </div>

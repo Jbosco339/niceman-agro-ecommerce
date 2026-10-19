@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { useAdmin } from "../../context/useAdmin";
@@ -63,14 +64,20 @@ const AdminSidebar = ({
 }) => {
   const navigate = useNavigate();
   const { logout: logoutAdmin } = useAdmin();
+  const [logoutError, setLogoutError] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = async () => {
+    setLogoutError("");
+    setLoggingOut(true);
     try {
       await logoutAdmin();
-    } catch {
-      // Ignore backend logout failures and continue redirecting.
+      navigate("/admin/login", { replace: true });
+    } catch (error) {
+      setLogoutError(error.message || "Unable to log out. Please try again.");
+    } finally {
+      setLoggingOut(false);
     }
-    navigate("/admin/login", { replace: true });
   };
 
   const handleNavClick = () => {
@@ -156,14 +163,21 @@ const AdminSidebar = ({
         </nav>
 
         <div className="border-t border-green-700 p-4">
+          {logoutError && (
+            <p role="alert" className="mb-3 text-xs text-red-200">
+              {logoutError}
+            </p>
+          )}
           <button
+            type="button"
             onClick={handleLogout}
+            disabled={loggingOut}
             className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-green-100 transition hover:bg-red-600 hover:text-white ${
               isCollapsed ? "justify-center px-2" : ""
-            }`}
+            } disabled:cursor-wait disabled:opacity-60`}
           >
             <span className="text-lg">🚪</span>
-            {!isCollapsed && <span>Logout</span>}
+            {!isCollapsed && <span>{loggingOut ? "Logging out…" : "Logout"}</span>}
           </button>
         </div>
       </aside>

@@ -7,11 +7,13 @@ const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const { login } = useAdmin();
+  const { login, loading: sessionLoading } = useAdmin();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (sessionLoading) return;
+
     setError("");
     setSubmitting(true);
     const formData = new FormData(e.currentTarget);
@@ -139,10 +141,14 @@ const AdminLogin = () => {
             {/* Login Button */}
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || sessionLoading}
               className="w-full rounded-lg bg-green-700 py-3.5 text-sm font-bold text-white shadow-lg shadow-green-700/20 transition hover:bg-green-800 hover:-translate-y-0.5"
             >
-              {submitting ? "Signing in…" : "Login to Dashboard"}
+              {sessionLoading
+                ? "Checking session…"
+                : submitting
+                  ? "Signing in…"
+                  : "Login to Dashboard"}
             </button>
           </form>
 

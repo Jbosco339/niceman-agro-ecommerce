@@ -6,7 +6,6 @@ import {
   getCurrentAdmin,
   loginAdmin,
   logoutAdmin,
-  registerAdminWithInvitation,
 } from "../controllers/adminController.js";
 import {
   createAdminRecord,
@@ -41,7 +40,7 @@ const adminLoginLimiter = rateLimit({
     res.status(429).json({
       status: "failed",
       message:
-        "Too many admin login or signup attempts. Please wait 15 minutes before trying again.",
+        "Too many admin login attempts. Please wait 15 minutes before trying again.",
     }),
 });
 const adminWriteLimiter = rateLimit({
@@ -57,7 +56,6 @@ const adminWriteLimiter = rateLimit({
     }),
 });
 
-router.post("/signup", adminLoginLimiter, registerAdminWithInvitation);
 router.post("/login", adminLoginLimiter, loginAdmin);
 router.post("/logout", logoutAdmin);
 router.get("/me", auth, admin, getCurrentAdmin);

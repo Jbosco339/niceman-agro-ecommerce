@@ -51,17 +51,17 @@ export default function WebsiteContent() {
     hero: {
       title: "Fresh From Our Farm to Your Table",
       subtitle: "Quality farm produce delivered fresh to your doorstep.",
-      image: "/images/hero-bg.jpg",
+      image: "/images/1.png",
       slides: [
         {
           title: "Fresh From Our Farm to Your Table",
           subtitle: "Quality farm produce delivered fresh to your doorstep.",
-          image: "/images/hero-bg.jpg",
+          image: "/images/1.png",
         },
         {
           title: "Discover Our Farm Products",
           subtitle: "Naturally grown and carefully selected produce.",
-          image: "/images/hero-2.jpg",
+          image: "/images/2.png",
         },
       ],
     },
@@ -70,7 +70,7 @@ export default function WebsiteContent() {
       title: "About Niceman Agro & Farms",
       description:
         "We provide fresh, quality agricultural products sourced from trusted farms and delivered to customers with care.",
-      image: "/images/about.jpg",
+      image: "/images/1.png",
     },
 
     contact: {

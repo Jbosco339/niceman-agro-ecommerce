@@ -50,6 +50,7 @@ router.get("/categories/slug/:slug", publicReadLimiter, async (req, res) => {
   });
   const record = records.find(
     (item) =>
+      item.payload.slug?.toLowerCase() === slug ||
       item.payload.name
         ?.toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")

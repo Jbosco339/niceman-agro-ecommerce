@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import { randomBytes, createHash } from "node:crypto";
 import { User } from "../models/userSchema.js";
 import { AdminRecord } from "../models/AdminRecord.js";
 import { Product } from "../models/Product.js";
@@ -13,76 +12,6 @@ const safeAdmin = (user) => ({
   email: user.email,
   role: user.role,
 });
-
-export const registerAdminWithInvitation = async (req, res) => {
-  try {
-    const { fullName, email, password } = req.body ?? {};
-
-    if (
-      typeof fullName !== "string" ||
-      typeof email !== "string" ||
-      typeof password !== "string"
-    ) {
-      return res.status(400).json({
-        status: "failed",
-        message: "Full name, email and password are required.",
-      });
-    }
-
-    if (password.length < 8) {
-      return res.status(400).json({
-        status: "failed",
-        message: "Password must contain at least 8 characters.",
-      });
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const existingUser = await User.findOne({ email: normalizedEmail });
-    if (existingUser) {
-      return res.status(409).json({
-        status: "failed",
-        message: "An account already exists for this administrator email.",
-      });
-    }
-
-    const administrator = await User.create({
-      userName: fullName.trim(),
-      email: normalizedEmail,
-      password,
-      role: "admin",
-      isVerified: !emailVerificationEnabled(),
-    });
-
-    return res.status(201).json({
-      status: "success",
-      message: "Admin account created successfully.",
-      data: {
-        id: administrator._id,
-        userName: administrator.userName,
-        email: administrator.email,
-        role: administrator.role,
-      },
-    });
-  } catch (error) {
-    if (error.code === 11000) {
-      return res.status(409).json({
-        status: "failed",
-        message: "An account already exists for this administrator email.",
-      });
-    }
-
-    const message = error.message || "Unable to create administrator account.";
-    return res
-      .status(error.name === "ValidationError" ? 400 : 500)
-      .json({
-        status: "failed",
-        message:
-          error.name === "ValidationError"
-            ? message
-            : "Unable to create the administrator account right now. Please try again later.",
-      });
-  }
-};
 
 export const loginAdmin = async (req, res) => {
   const { email, password } = req.body ?? {};
@@ -205,7 +134,10 @@ export const getAdminDashboard = async (_req, res) => {
       resource: "order",
       "payload.status": "Cancelled",
     }),
-    AdminRecord.countDocuments({ resource: "article" }),
+    AdminRecord.countDocuments({
+      resource: "article",
+      "payload.status": "Published",
+    }),
     AdminRecord.find({ resource: "order" })
       .sort({ createdAt: -1 })
       .limit(5)

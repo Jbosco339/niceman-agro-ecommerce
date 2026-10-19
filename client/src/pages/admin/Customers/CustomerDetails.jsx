@@ -1,18 +1,45 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getCustomer } from "../../../services/adminService";
+import { getCustomer, updateCustomer } from "../../../services/adminService";
 
 const CustomerDetails = () => {
   const { id } = useParams();
   const [customer, setCustomer] = useState(null);
   const [error, setError] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     if (!id) return;
+
+    let active = true;
     getCustomer(id)
-      .then(({ data }) => setCustomer(data))
-      .catch((requestError) => setError(requestError.message));
+      .then(({ data }) => {
+        if (active) setCustomer(data);
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [id]);
+
+  const toggleCustomerStatus = async () => {
+    if (!customer || !id || updatingStatus) return;
+
+    setUpdatingStatus(true);
+    setError("");
+    try {
+      const status = customer.status === "Active" ? "Inactive" : "Active";
+      const { data } = await updateCustomer(id, { status });
+      setCustomer((current) => ({ ...current, ...data }));
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   if (!customer) {
     const message = error || (id ? "Loading customer…" : "Select a customer from the customers list to view details.");
@@ -85,7 +112,7 @@ const CustomerDetails = () => {
             <div>
               <p className="text-sm text-gray-500">Address</p>
               <p className="font-medium text-gray-900 mt-1">
-                {customer.address}
+                {customer.address || "—"}
               </p>
             </div>
 
@@ -205,14 +232,31 @@ const CustomerDetails = () => {
 
           {/* Actions */}
           <div className="flex flex-wrap gap-3">
-            <button className="px-5 py-3 bg-green-700 hover:bg-green-800 text-white rounded-lg font-semibold">
+            <a
+              href={`mailto:${customer.email}`}
+              className="rounded-lg bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-800"
+            >
               Contact Customer
-            </button>
+            </a>
 
-            <button className="px-5 py-3 border border-red-300 text-red-600 hover:bg-red-50 rounded-lg font-semibold">
-              Deactivate Customer
+            <button
+              type="button"
+              onClick={toggleCustomerStatus}
+              disabled={updatingStatus}
+              className="rounded-lg border border-red-300 px-5 py-3 font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {updatingStatus
+                ? "Updating…"
+                : customer.status === "Active"
+                  ? "Deactivate Customer"
+                  : "Activate Customer"}
             </button>
           </div>
+          {error && (
+            <p role="alert" className="text-sm text-red-700">
+              {error}
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -99,7 +99,7 @@ export const hasUnuploadedAdminImage = (
         !(
           allowWebsiteDefaults &&
           previousValue == null &&
-          ["hero-bg.jpg", "about.jpg"].some(
+          ["hero-bg.jpg", "about.jpg", "1.png", "2.png"].some(
             (name) => typeof child === "string" && child === `/images/${name}`,
           )
         )
@@ -319,6 +319,22 @@ const present = (record) => ({
 
 export const listAdminRecords = (resource) => async (_req, res) => {
   const records = await AdminRecord.find({ resource }).sort({ createdAt: -1 });
+
+  if (resource === "category") {
+    const productCounts = await Product.aggregate([
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+    ]);
+    const countByCategory = new Map(
+      productCounts.map(({ _id, count }) => [_id, count]),
+    );
+    return res.status(200).json({
+      status: "success",
+      data: records.map((record) => ({
+        ...present(record),
+        products: countByCategory.get(record.payload.name) ?? 0,
+      })),
+    });
+  }
 
   if (resource === "review") {
     // Resolve product names for review payloads to make admin UI friendlier
@@ -663,7 +679,7 @@ export const getCustomer = async (req, res) => {
       .json({ status: "failed", message: "Invalid customer id" });
   }
   const user = await User.findOne({ _id: req.params.id, role: "user" }).select(
-    "userName email phone image isVerified isActive createdAt",
+    "userName email phone image addresses isVerified isActive createdAt",
   );
   if (!user)
     return res
@@ -684,6 +700,20 @@ export const getCustomer = async (req, res) => {
       name: user.userName,
       email: user.email,
       phone: user.phone ?? "",
+      address: (user.addresses ?? [])
+        .map((entry) =>
+          [
+            entry.address,
+            entry.city,
+            entry.state,
+            entry.postalCode,
+            entry.country,
+          ]
+            .filter(Boolean)
+            .join(", "),
+        )
+        .filter(Boolean)
+        .join("; "),
       image: user.image,
       status: user.isActive ? "Active" : "Inactive",
       createdAt: user.createdAt,

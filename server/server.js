@@ -60,47 +60,37 @@ const allowedOrigins = clientOrigins.map((origin) => {
   }
 });
 
+const isAllowedOrigin = (origin) => {
+  let parsedOrigin;
+  try {
+    parsedOrigin = new URL(origin);
+  } catch {
+    return false;
+  }
+
+  if (allowedOrigins.includes(parsedOrigin.origin)) return true;
+
+  return (
+    process.env.NODE_ENV !== "production" &&
+    parsedOrigin.protocol === "http:" &&
+    ["localhost", "127.0.0.1", "[::1]"].includes(parsedOrigin.hostname)
+  );
+};
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || isAllowedOrigin(origin)) return callback(null, true);
+    console.warn(`CORS rejected origin: ${origin}`);
+    return callback(new Error("Origin not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+};
+
 app.use(helmet());
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      const normalizedOrigin = (() => {
-        try {
-          return new URL(origin).origin;
-        } catch {
-          return origin;
-        }
-      })();
-      const allowed = allowedOrigins.includes(normalizedOrigin);
-      if (allowed) return callback(null, true);
-      console.warn(`CORS rejected origin: ${origin}`);
-      return callback(new Error("Origin not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  }),
-);
-app.options(
-  /^(.*)$/,
-  cors({
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      const normalizedOrigin = (() => {
-        try {
-          return new URL(origin).origin;
-        } catch {
-          return origin;
-        }
-      })();
-      if (allowedOrigins.includes(normalizedOrigin))
-        return callback(null, true);
-      callback(new Error("Origin not allowed by CORS"));
-    },
-    credentials: true,
-  }),
-);
+app.use(cors(corsOptions));
+app.options(/^(.*)$/, cors(corsOptions));
 
 app.use(
   express.json({

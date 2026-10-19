@@ -13,6 +13,8 @@ Remove-Item Env:ADMIN_PASSWORD
 
 Run the command from the `server` directory. It refuses to change an existing account and does not enable login before the administrator verifies their email. Keep the administrator password out of shell history, logs, source control, and client code.
 
+Administrator accounts cannot be created through a public signup page or API. Use this trusted provisioning command for each administrator account.
+
 Set `MONGODB_URL`, a high-entropy `JWT_SECRET` (at least 32 characters), `JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`, `CLIENT_URL`, and `API_URL`. Configure SMTP variables to deliver verification, reset, and Paystack receipt messages. Set `CLIENT_URL` to the exact production frontend origin and `API_URL` to the externally reachable API origin. Configure `DELIVERY_FEE` before enabling checkout; checkout fails closed when delivery pricing is missing or invalid.
 
 ## Paystack payments

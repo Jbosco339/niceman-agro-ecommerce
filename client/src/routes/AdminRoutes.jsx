@@ -2,7 +2,6 @@ import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { useAdmin } from "../context/useAdmin";
 import AdminLayout from "../components/admin/AdminLayout";
 import AdminLogin from "../pages/admin/Login/AdminLogin";
-import AdminSignup from "../pages/admin/Signup/Signup";
 import Admindashboard from "../pages/admin/Dashboard/Admindashboard";
 import BlogManagement from "../pages/admin/Blog/BlogManagement";
 import CreateArticle from "../pages/admin/Blog/CreateArticle";
@@ -52,7 +51,6 @@ function AdminRoutes() {
     <Routes>
       <Route path="login" element={<AdminLogin />} />
       <Route path="AdminLogin" element={<AdminLogin />} />
-      <Route path="register-k8v3x9p2m7q4" element={<AdminSignup />} />
       <Route element={<RequireAdmin />}>
         <Route element={<AdminLayout />}>
           <Route index element={<Admindashboard />} />

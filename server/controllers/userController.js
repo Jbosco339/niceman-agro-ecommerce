@@ -195,6 +195,13 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    if (!user.isActive) {
+      return res.status(403).json({
+        status: "failed",
+        message: "This account is inactive. Please contact support.",
+      });
+    }
+
     // generate a login token for authorization
     // const logToken = token({ id: user._id })
 

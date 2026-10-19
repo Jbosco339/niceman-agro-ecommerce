@@ -12,7 +12,7 @@ export const getCategory = async (id) => {
 };
 
 export const getCategoryBySlug = async (slug) => {
-  return get(`/categories/slug/${slug}`);
+  return get(`/categories/slug/${encodeURIComponent(slug)}`);
 };
 
 // ==================== ADMIN CATEGORIES ====================

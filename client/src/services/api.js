@@ -1,19 +1,35 @@
+const getDefaultApiBase = () => {
+  if (typeof window === "undefined") return "http://localhost:5000/api/v1";
+
+  const hostname = window.location.hostname.toLowerCase();
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "http://localhost:5000/api/v1";
+  }
+  if (hostname === "nicemanagro.com" || hostname === "www.nicemanagro.com") {
+    return "https://niceman-agro-ecommerce.onrender.com/api/v1";
+  }
+
+  return window.location.origin;
+};
+
+const configuredApiBase = import.meta.env.VITE_API_URL?.trim();
+const isLocalBrowser =
+  typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1"].includes(window.location.hostname.toLowerCase());
+const isLocalConfiguredApi =
+  configuredApiBase &&
+  /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/|$)/i.test(
+    configuredApiBase,
+  );
 const rawApiBase =
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== "undefined" &&
-  window.location.hostname === "www.nicemanagro.com"
-    ? "https://niceman-agro-ecommerce.onrender.com/api/v1"
-    : import.meta.env.VITE_CLIENT_URL ||
-      (typeof window !== "undefined" && window.location.hostname === "localhost"
-        ? "http://localhost:5000"
-        : ""));
+  isLocalConfiguredApi && !isLocalBrowser
+    ? getDefaultApiBase()
+    : configuredApiBase || getDefaultApiBase();
 
 const normalizeApiBase = (value) => {
   const trimmed = (value || "").trim().replace(/\/+$/, "");
 
-  if (!trimmed) {
-    return "http://localhost:5000/api/v1";
-  }
+  if (!trimmed) return getDefaultApiBase();
 
   if (/\/api\/v1$/i.test(trimmed)) return trimmed;
   if (/\/api$/i.test(trimmed)) return `${trimmed}/v1`;

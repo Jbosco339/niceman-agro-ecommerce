@@ -1,11 +1,9 @@
-import React, {
+import {
   createContext,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
-import { getCustomers } from "../services/adminService";
 
 export const initialCustomers = [];
 
@@ -13,28 +11,6 @@ export const CustomerContext = createContext(null);
 
 export function CustomerProvider({ children }) {
   const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    setLoading(true);
-    getCustomers()
-      .then(({ data }) => {
-        if (!active) return;
-        setCustomers(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (active) setCustomers([]);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   const addCustomer = (customer) => {
     const next = {
@@ -78,7 +54,7 @@ export function CustomerProvider({ children }) {
     () => ({
       customers,
       setCustomers,
-      loading,
+      loading: false,
       addCustomer,
       updateCustomer,
       deleteCustomer,
@@ -86,7 +62,7 @@ export function CustomerProvider({ children }) {
       activeCustomers,
       inactiveCustomers,
     }),
-    [customers, loading, activeCustomers, inactiveCustomers],
+    [customers, activeCustomers, inactiveCustomers],
   );
 
   return (

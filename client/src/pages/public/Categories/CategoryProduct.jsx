@@ -1,45 +1,58 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getProducts } from "../../../services/productService";
-
-const categoryNames = {
-  vegetables: "Herbicides",
-  fruits: "Fungicides",
-  grains: "Pesticides",
-  tubers: "Fertilizers",
-  livestock: "Farm Tools & Equipment",
-  poultry: "Seeds & Seedlings",
-};
+import { getCategoryBySlug } from "../../../services/categoryService";
 
 const CategoryByProduct = () => {
   const { category } = useParams();
+  const [categoryName, setCategoryName] = useState("");
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadedCategory, setLoadedCategory] = useState(null);
   const [error, setError] = useState("");
-
-  const currentCategory = category?.toLowerCase();
-  const categoryName = categoryNames[currentCategory] || "Products";
+  const loading = Boolean(category) && loadedCategory !== category;
 
   useEffect(() => {
-    if (!currentCategory) return;
-    setLoading(true);
-    getProducts({ category: currentCategory })
-      .then((response) => {
-        setProducts(response.data || []);
+    if (!category) return undefined;
+
+    let active = true;
+
+    const loadCategory = async () => {
+      try {
+        const { data: selectedCategory } = await getCategoryBySlug(category);
+        if (!selectedCategory?.name) {
+          throw new Error("Category not found.");
+        }
+        const { data } = await getProducts({
+          category: selectedCategory.name,
+        });
+        if (!active) return;
+        setCategoryName(selectedCategory.name);
+        setProducts(Array.isArray(data) ? data : []);
         setError("");
-      })
-      .catch(() => {
-        setError("Failed to load products.");
-      })
-      .finally(() => setLoading(false));
-  }, [currentCategory]);
+        setLoadedCategory(category);
+      } catch (requestError) {
+        if (active) {
+          setProducts([]);
+          setError(requestError.message || "Failed to load this category.");
+          setLoadedCategory(category);
+        }
+      }
+    };
+
+    void loadCategory();
+    return () => {
+      active = false;
+    };
+  }, [category]);
 
   if (loading) {
     return (
       <main className="min-h-screen bg-gray-50">
         <section className="bg-green-950 px-4 py-12 text-white">
           <div className="mx-auto max-w-7xl">
-            <h1 className="text-3xl font-bold md:text-4xl">{categoryName}</h1>
+            <h1 className="text-3xl font-bold md:text-4xl">
+              {categoryName || "Products"}
+            </h1>
           </div>
         </section>
 
@@ -57,7 +70,9 @@ const CategoryByProduct = () => {
       <main className="min-h-screen bg-gray-50">
         <section className="bg-green-950 px-4 py-12 text-white">
           <div className="mx-auto max-w-7xl">
-            <h1 className="text-3xl font-bold md:text-4xl">{categoryName}</h1>
+            <h1 className="text-3xl font-bold md:text-4xl">
+              {categoryName || "Products"}
+            </h1>
           </div>
         </section>
 
@@ -94,11 +109,12 @@ const CategoryByProduct = () => {
           </span>
 
           <h1 className="mt-3 text-4xl font-extrabold text-white sm:text-5xl">
-            {categoryName}
+            {categoryName || "Products"}
           </h1>
 
           <p className="mt-4 max-w-2xl text-white/75">
-            Explore our selection of quality {categoryName.toLowerCase()}{" "}
+            Explore our selection of quality{" "}
+            {categoryName.toLowerCase() || "products"}{" "}
             sourced from trusted farms and suppliers.
           </p>
         </div>
@@ -113,7 +129,7 @@ const CategoryByProduct = () => {
             </span>
 
             <h2 className="mt-1 text-3xl font-extrabold text-gray-900">
-              {categoryName}
+              {categoryName || "Products"}
             </h2>
           </div>
 
