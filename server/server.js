@@ -37,7 +37,11 @@ const validateRequiredConfiguration = () => {
 validateRequiredConfiguration();
 const normalizeOrigin = (value) => {
   if (!value) return "";
-  return value.replace(/\/+$/, "");
+  try {
+    return value.trim().replace(/\/+$/, "");
+  } catch {
+    return value;
+  }
 };
 
 const clientOrigins = [
