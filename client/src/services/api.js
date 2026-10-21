@@ -2,39 +2,37 @@ const getDefaultApiBase = () => {
   if (typeof window === "undefined") return "http://localhost:5000/api/v1";
 
   const hostname = window.location.hostname.toLowerCase();
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
+  if (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]"
+  ) {
     return "http://localhost:5000/api/v1";
   }
 
-  return window.location.origin;
+  if (window.location.pathname.startsWith("/admin")) {
+    return `${window.location.origin}/api/v1`;
+  }
+
+  return `${window.location.origin}/api/v1`;
 };
 
-const configuredApiBase = import.meta.env.VITE_API_URL?.trim();
-const usesFirstPartyApi =
+const configuredApiBase = (import.meta.env.VITE_API_URL || "").trim();
+const isLocalHostname =
   typeof window !== "undefined" &&
-  ["nicemanagro.com", "www.nicemanagro.com"].includes(
+  ["localhost", "127.0.0.1", "[::1]"].includes(
     window.location.hostname.toLowerCase(),
   );
-const isLocalBrowser =
-  typeof window !== "undefined" &&
-  ["localhost", "127.0.0.1"].includes(window.location.hostname.toLowerCase());
-const isLocalConfiguredApi =
-  configuredApiBase &&
-  /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/|$)/i.test(
-    configuredApiBase,
-  );
+
 const rawApiBase =
-  usesFirstPartyApi
-    ? `${window.location.origin}/api/v1`
-    : isLocalConfiguredApi && !isLocalBrowser
-      ? getDefaultApiBase()
-      : configuredApiBase || getDefaultApiBase();
+  isLocalHostname && !configuredApiBase
+    ? getDefaultApiBase()
+    : configuredApiBase || getDefaultApiBase();
 
 const normalizeApiBase = (value) => {
   const trimmed = (value || "").trim().replace(/\/+$/, "");
 
   if (!trimmed) return getDefaultApiBase();
-
   if (/\/api\/v1$/i.test(trimmed)) return trimmed;
   if (/\/api$/i.test(trimmed)) return `${trimmed}/v1`;
   return `${trimmed}/api/v1`;

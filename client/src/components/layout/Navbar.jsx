@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Heart } from "lucide-react";
+import { Menu, X, Heart, UserRound } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useFavorites } from "../../context/FavoritesContext";
 
@@ -63,14 +63,16 @@ function Navbar() {
 
           <Link
             to="/account/dashboard"
-            className="inline-flex shrink-0 items-center justify-center rounded-md bg-green-700 px-2.5 py-2 text-[11px] font-semibold text-white transition hover:bg-green-800 sm:px-3"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-green transition hover:bg-green-300"
+            aria-label="My Account"
+            title="My Account"
           >
-            My Account
+            <UserRound size={23} />
           </Link>
 
           <button
             type="button"
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 text-green-800"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 text-green-800 cursor-pointer"
             aria-label={
               menuOpen ? "Close navigation menu" : "Open navigation menu"
             }
@@ -312,9 +314,11 @@ function Navbar() {
           {/* Customer Account */}
           <Link
             to="/account/dashboard"
-            className="rounded-md bg-green-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-green-800"
+            className="inline-flex h-9 w-8 shrink-0 items-center justify-center rounded-md text-green transition hover:bg-green-300"
+            aria-label="My Account"
+            title="My Account"
           >
-            My Account
+            <UserRound size={25} />
           </Link>
         </div>
       </div>

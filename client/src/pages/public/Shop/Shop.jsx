@@ -267,19 +267,22 @@ function Shop() {
                   {productsError}
                 </p>
               ) : filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-2 gap-4 sm:gap-5 xl:grid-cols-3">
                   {filteredProducts.map((product) => (
                     <article
                       key={product.id}
-                      className="group overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
+                      className="group flex h-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
                     >
                       {/* Product Image */}
-                      <div className="relative aspect-square overflow-hidden bg-slate-50">
-                        <Link to={`/product/${product.id}`}>
+                      <div className="relative h-40 w-full overflow-hidden bg-slate-50 sm:h-52">
+                        <Link
+                          to={`/product/${product.id}`}
+                          className="block h-full w-full"
+                        >
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="h-full w-full object-contain object-center p-1.5 transition duration-500 group-hover:scale-105 sm:object-cover sm:p-0"
+                            className="h-full w-full object-contain object-center p-2 transition duration-500 group-hover:scale-105"
                           />
                         </Link>
 
@@ -303,12 +306,12 @@ function Shop() {
                         </button>
                       </div>
 
-                      <div className="p-4">
+                      <div className="flex flex-1 flex-col p-3 sm:p-4">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wide text-green-700">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-green-700 sm:text-xs">
                             {product.category}
                           </span>
-                          <span className="text-xs text-slate-500">
+                          <span className="text-[10px] text-slate-500 sm:text-xs">
                             {product.stock > 0
                               ? `${product.stock} in stock`
                               : "Out of stock"}
@@ -319,24 +322,24 @@ function Shop() {
                           to={`/product/${product.id}`}
                           className="mt-3 block"
                         >
-                          <h3 className="text-lg font-bold text-slate-900 transition hover:text-green-700">
+                          <h3 className="text-base font-bold leading-snug text-slate-900 transition hover:text-green-700 sm:text-lg">
                             {product.name}
                           </h3>
                         </Link>
 
-                        <p className="mt-2 line-clamp-2 text-sm text-slate-600">
+                        <p className="mt-2 line-clamp-2 flex-1 text-xs leading-5 text-slate-600 sm:text-sm">
                           {product.description}
                         </p>
 
-                        <div className="mt-4 flex items-center justify-between gap-3">
-                          <span className="text-xl font-extrabold text-green-800">
+                        <div className="mt-4 flex items-end justify-between gap-3">
+                          <span className="text-lg font-extrabold text-green-800 sm:text-xl">
                             {formatPrice(product.price)}
                           </span>
 
                           <button
                             type="button"
                             onClick={() => handleAddToCart(product)}
-                            className="inline-flex items-center gap-2 rounded-md bg-green-700 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-green-800"
+                            className="inline-flex items-center gap-2 rounded-md bg-green-700 px-2.5 py-2 text-[11px] font-semibold text-white transition hover:bg-green-800 sm:px-3.5 sm:text-sm"
                           >
                             <ShoppingCart size={16} />
                             {addedProductId === product.id
@@ -346,7 +349,7 @@ function Shop() {
                         </div>
 
                         {addedProductId === product.id && (
-                          <div className="mt-3 flex items-center gap-2 text-sm font-medium text-green-700">
+                          <div className="mt-3 flex items-center gap-2 text-xs font-medium text-green-700 sm:text-sm">
                             <Check size={15} />
                             Added to cart
                           </div>
