@@ -54,6 +54,9 @@ export default function Reviews() {
       String(review.email || "")
         .toLowerCase()
         .includes(q) ||
+      String(review.location || "")
+        .toLowerCase()
+        .includes(q) ||
       String(review.product || "")
         .toLowerCase()
         .includes(q) ||
@@ -199,6 +202,9 @@ export default function Reviews() {
                     <h3 className="font-semibold text-gray-900">
                       {review.customer}
                     </h3>
+                    {review.location && (
+                      <p className="text-xs text-gray-500">{review.location}</p>
+                    )}
                     <p className="text-xs text-gray-500">{review.email}</p>
                   </div>
 

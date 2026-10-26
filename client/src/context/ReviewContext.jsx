@@ -34,10 +34,14 @@ const normalizeReview = (review, fallbackId = Date.now()) => {
       ? review.product
       : null);
 
+  const safeLocation =
+    typeof review.location === "string" ? review.location.trim() : "";
+
   return {
     id: review.id || `review-${fallbackId}`,
     type: safeType,
     customer: review.customer || review.name || "Anonymous",
+    location: safeLocation,
     email: safeEmail,
     product: safeProduct,
     productName: safeProductName,

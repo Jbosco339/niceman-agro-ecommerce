@@ -8,10 +8,10 @@ const footerInfo = {
   phone2: "+234 808 801 1217",
   email: "support@nicemanagro.com",
   socials: {
-    facebook: "#",
-    x: "#",
-    instagram: "#",
-    youtube: "#",
+    facebook: "https://www.facebook.com/profile.php?id=100080001343733&mibextid=ZbWKwL",
+    x: "https://x.com/nicemanagro",
+    instagram: " https://www.instagram.com/invites/contact/?utm_source=ig_contact_invite&utm_medium=copy_link&utm_content=x5ckfms",
+    youtube: "https://www.youtube.com/@nicemanagro",
   },
 };
 

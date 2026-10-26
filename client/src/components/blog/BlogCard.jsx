@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
+import { formatArticleDate } from "../../utils/formatDate";
 
 function BlogCard({ article }) {
   return (
     <article className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-lg transition">
-
       {/* Image */}
       <div className="h-56 bg-green-100 overflow-hidden">
         {article.image ? (
@@ -21,29 +21,23 @@ function BlogCard({ article }) {
 
       {/* Content */}
       <div className="p-6">
-
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-semibold text-green-700">
             {article.category}
           </span>
 
-          <span className="text-xs text-slate-500">
-            {article.readTime}
-          </span>
+          <span className="text-xs text-slate-500">{article.readTime}</span>
         </div>
 
         <h2 className="text-xl font-bold text-slate-900 mb-3">
           {article.title}
         </h2>
 
-        <p className="text-slate-600 leading-6 mb-5">
-          {article.excerpt}
-        </p>
+        <p className="text-slate-600 leading-6 mb-5">{article.excerpt}</p>
 
         <div className="flex items-center justify-between">
-
           <span className="text-sm text-slate-500">
-            {article.date}
+            {formatArticleDate(article.date)}
           </span>
 
           <Link
@@ -52,7 +46,6 @@ function BlogCard({ article }) {
           >
             Read Article →
           </Link>
-
         </div>
       </div>
     </article>

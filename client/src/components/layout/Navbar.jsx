@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, Heart } from "lucide-react";
+import { Menu, X, Heart, UserRound } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useFavorites } from "../../context/FavoritesContext";
 
@@ -63,14 +63,16 @@ function Navbar() {
 
           <Link
             to="/account/dashboard"
-            className="inline-flex shrink-0 items-center justify-center rounded-md bg-green-700 px-2.5 py-2 text-[11px] font-semibold text-white transition hover:bg-green-800 sm:px-3"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-green transition hover:bg-green-300"
+            aria-label="My Account"
+            title="My Account"
           >
-            My Account
+            <UserRound size={23} />
           </Link>
 
           <button
             type="button"
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 text-green-800"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 text-green-800 cursor-pointer"
             aria-label={
               menuOpen ? "Close navigation menu" : "Open navigation menu"
             }
@@ -262,13 +264,13 @@ function Navbar() {
         {/* Right Side */}
         <div className="hidden items-center gap-3 lg:flex">
           {/* Search */}
-          <button
+          {/* <button
             type="button"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-green-600 hover:text-green-700"
             aria-label="Search"
           >
             <span className="text-lg">⌕</span>
-          </button>
+          </button> */}
 
           <Link
             to="/favorites"
@@ -312,9 +314,11 @@ function Navbar() {
           {/* Customer Account */}
           <Link
             to="/account/dashboard"
-            className="rounded-md bg-green-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-green-800"
+            className="inline-flex h-9 w-8 shrink-0 items-center justify-center rounded-md text-green transition hover:bg-green-300"
+            aria-label="My Account"
+            title="My Account"
           >
-            My Account
+            <UserRound size={25} />
           </Link>
         </div>
       </div>
@@ -344,13 +348,13 @@ function Navbar() {
               Shop
             </Link>
 
-            <Link
+            {/* <Link
               to="/categories"
               onClick={closeMobileMenu}
               className="block rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
             >
               Categories
-            </Link>
+            </Link> */}
 
             <div>
               <button

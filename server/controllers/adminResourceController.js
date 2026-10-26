@@ -23,6 +23,7 @@ const fields = {
     "type",
     "product",
     "customer",
+    "location",
     "email",
     "rating",
     "comment",
