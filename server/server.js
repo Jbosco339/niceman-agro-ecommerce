@@ -38,6 +38,7 @@ const validateRequiredConfiguration = () => {
       "RESEND_API_KEY",
       "RESEND_FROM_EMAIL",
       "ADMIN_EMAIL",
+      "PAYSTACK_SECRET_KEY",
     );
   }
   const missing = required.filter((key) => !process.env[key]);

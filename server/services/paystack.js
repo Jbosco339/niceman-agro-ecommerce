@@ -72,7 +72,11 @@ export const reserveInventory = async (items) => {
   const reserved = [];
   for (const item of items) {
     const result = await Product.updateOne(
-      { _id: item.product, status: "Active" },
+      {
+        _id: item.product,
+        status: "Active",
+        stock: { $gte: item.quantity },
+      },
       { $inc: { stock: -item.quantity } },
     );
     if (result.modifiedCount !== 1) {
