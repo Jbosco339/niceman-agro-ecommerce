@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import useProducts from "../../../hooks/useProducts";
 import { useCategoryContext } from "../../../context/CategoryContext";
@@ -8,6 +8,7 @@ import useAuth from "../../../hooks/useAuth";
 import AnimateOnScroll from "../../../components/AnimateOnScroll";
 
 import { getFeaturedPosts } from "../../../services/blogService";
+import { formatArticleDate } from "../../../utils/formatDate";
 
 const faqs = [
   {
@@ -44,8 +45,8 @@ const fallbackHeroSlides = [
     title: ["Trusted Inputs.", "Sustainable Practices."],
     description:
       "Reliable products and expert guidance to support sustainable farming and increase yields.",
-    buttonText: "Explore Products",
-    buttonLink: "/shop",
+    buttonText: "Read Articles",
+    buttonLink: "/blog",
   },
 ];
 
@@ -53,8 +54,8 @@ const homepageHeroButtons = [
   {
     text: "Shop Products",
     link: "/shop",
-    secondaryText: "Explore Products",
-    secondaryLink: "/shop",
+    secondaryText: "Learn & Grow",
+    secondaryLink: "#learn-and-grow",
   },
   {
     text: "Explore Products",
@@ -156,6 +157,7 @@ const getHeroSlides = (siteContent) => {
 };
 
 function Home() {
+  const location = useLocation();
   const { products } = useProducts();
   const { activeCategories } = useCategoryContext();
   const { content: siteContent } = useWebsiteContent();
@@ -232,6 +234,30 @@ function Home() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!location.hash) return undefined;
+
+    const targetId = location.hash.replace("#", "");
+    if (!targetId) return undefined;
+
+    const timer = window.setTimeout(() => {
+      const element = document.getElementById(targetId);
+      if (!element) return;
+
+      const header = document.querySelector("header");
+      const headerOffset = header ? header.offsetHeight + 12 : 72;
+      const top =
+        element.getBoundingClientRect().top + window.scrollY - headerOffset;
+
+      window.scrollTo({
+        top,
+        behavior: "smooth",
+      });
+    }, 60);
+
+    return () => window.clearTimeout(timer);
+  }, [location.hash, location.pathname]);
 
   return (
     <main className="overflow-hidden bg-white text-slate-800">
@@ -599,7 +625,7 @@ function Home() {
       </section>
 
       {/* AGRICULTURAL KNOWLEDGE */}
-      <section className="bg-white py-16 sm:py-20">
+      <section id="learn-and-grow" className="bg-white py-16 sm:py-20">
         <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
           <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
@@ -693,7 +719,7 @@ function Home() {
 
                     <div className="mt-4 flex items-center justify-between">
                       <span className="text-xs text-slate-500">
-                        {post.date}
+                        {formatArticleDate(post.date)}
                       </span>
 
                       <Link
@@ -781,6 +807,11 @@ function Home() {
                           <p className="font-semibold text-green-950">
                             {r.customer || r.name || "Anonymous"}
                           </p>
+                          {r.location && (
+                            <p className="mt-1 text-xs font-medium text-slate-500">
+                              {r.location}
+                            </p>
+                          )}
                           <div className="mt-1 flex items-center gap-1 text-yellow-500">
                             {Array.from({ length: 5 }).map((_, idx) => (
                               <svg
@@ -858,7 +889,7 @@ function Home() {
             {/* Statistic 4 */}
             <div className="text-center px-2">
               <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-green-300 mb-3">
-                250+
+                87,500+
               </h3>
               <p className="text-white text-sm sm:text-base font-semibold">
                 Satisfied Farmers

@@ -20,6 +20,7 @@ import {
 const emptyReview = {
   rating: 5,
   review: "",
+  location: "",
 };
 
 function ProductDetails() {
@@ -133,6 +134,7 @@ function ProductDetails() {
         type: "product",
         product: String(product.id),
         customer: "",
+        location: reviewForm.location.trim(),
         email: "",
         rating: Number(reviewForm.rating),
         review: trimmedReview,
@@ -142,7 +144,7 @@ function ProductDetails() {
       };
 
       const { data } = await createReview(payload);
-      setReviewSuccess("Thanks for your review. It is awaiting approval.");
+      setReviewSuccess("Thanks for your review");
       setReviewForm(emptyReview);
       setProductReviews((current) => {
         const next = current.filter((item) => item.id !== data?.id);
@@ -401,10 +403,10 @@ function ProductDetails() {
                 Quality agricultural products
               </p>
 
-              <p className="mt-1 text-sm leading-6 text-green-800">
+              {/* <p className="mt-1 text-sm leading-6 text-green-800">
                 Product availability, delivery options, and other order details
                 will be connected to the store system later.
-              </p>
+              </p> */}
             </div>
           </div>
         </div>
@@ -430,7 +432,7 @@ function ProductDetails() {
             </div>
           ) : productReviews.length === 0 ? (
             <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-sm text-gray-600">
-              No approved product reviews yet.
+              No review available for this product yet.
             </div>
           ) : (
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -464,6 +466,11 @@ function ProductDetails() {
                   <p className="mt-4 text-sm leading-6 text-gray-700">
                     “{review.comment || review.review || "Great product."}”
                   </p>
+                  {review.location && (
+                    <p className="mt-3 text-xs font-medium text-gray-500">
+                      {review.location}
+                    </p>
+                  )}
                 </article>
               ))}
             </div>
@@ -473,7 +480,7 @@ function ProductDetails() {
           <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="mb-5">
               <h3 className="text-xl font-bold text-green-950">
-                Leave a product review
+                Leave a review for this product
               </h3>
               <p className="mt-2 text-sm text-gray-600">
                 {isAuthenticated
@@ -530,10 +537,7 @@ function ProductDetails() {
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="product-review"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label className="block text-sm font-medium text-gray-700">
                     Your review
                   </label>
                   <textarea
@@ -543,6 +547,24 @@ function ProductDetails() {
                     value={reviewForm.review}
                     onChange={handleReviewChange}
                     placeholder="Tell other customers about your experience with this product."
+                    className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-green-600"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="product-location"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Location
+                  </label>
+                  <input
+                    id="product-location"
+                    name="location"
+                    type="text"
+                    value={reviewForm.location}
+                    onChange={handleReviewChange}
+                    placeholder="Lagos, Abuja, Ogun, Kaduna..."
                     className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-green-600"
                   />
                 </div>

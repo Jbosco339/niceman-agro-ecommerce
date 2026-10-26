@@ -2,26 +2,26 @@
 
 const ManagementTeam = () => {
   const team = [
+    // {
+    //   name: "",
+    //   role: "Head of Training/Workshop",
+    //   image: "/images/team/ben.jpg",
+    // },
     {
-      name: "Emem Akpan",
-      role: "Managing Director",
-      image: "/images/team/16.jpg",
-    },
-    {
-      name: "Rosemary Akanimo",
-      role: "Operations Manager",
-      image: "/images/team/8.jpg",
-    },
-    {
-      name: "Nnwaeka Idoreyin",
-      role: "Farm Manager",
-      image: "/images/team/11.jpg",
-    },
-    {
-      name: "Habib Shola",
-      role: "Business Development Manager",
+      name: "Nsisong B. Udofia",
+      role: "Founder and CEO",
       image: "/images/team/13.jpg",
     },
+    {
+      name: "Fortune Nkine",
+      role: "Cofounder and COO",
+      image: "/images/team/11.jpg",
+    },
+    // {
+    //   name: "Ben G",
+    //   role: "Head of Training/Workshop",
+    //   image: "/images/team/ben.jpg",
+    // },
   ];
 
   return (

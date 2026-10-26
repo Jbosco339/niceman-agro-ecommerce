@@ -189,9 +189,12 @@ router.get("/reviews/my-reviews", auth, publicReadLimiter, async (req, res) => {
 router.post("/reviews", auth, reviewWriteLimiter, async (req, res) => {
   const body = req.body ?? {};
   const type = body.type === "product" ? "product" : "general";
+  const cleanedLocation =
+    typeof body.location === "string" ? body.location.trim() : "";
   const payload = validateAdminPayload("review", {
     ...body,
     type,
+    location: cleanedLocation,
     comment: body.comment ?? body.review ?? "",
     customer: body.customer ?? req.user.userName,
     email: body.email ?? req.user.email,
@@ -260,6 +263,7 @@ router.post("/reviews", auth, reviewWriteLimiter, async (req, res) => {
       type,
       customer: payload.customer || req.user.userName,
       email: payload.email || req.user.email,
+      location: cleanedLocation || payload.location || "",
       status: "Pending",
       date: payload.date || new Date().toISOString(),
       comment: payload.comment || payload.review || "",
@@ -314,6 +318,10 @@ router.put("/reviews/:id", auth, reviewWriteLimiter, async (req, res) => {
   const nextPayload = validateAdminPayload("review", {
     ...review.payload,
     ...body,
+    location:
+      typeof body.location === "string"
+        ? body.location.trim()
+        : review.payload.location || "",
     comment:
       body.comment ??
       body.review ??

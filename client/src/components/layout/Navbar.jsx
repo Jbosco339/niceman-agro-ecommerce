@@ -264,13 +264,13 @@ function Navbar() {
         {/* Right Side */}
         <div className="hidden items-center gap-3 lg:flex">
           {/* Search */}
-          <button
+          {/* <button
             type="button"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-green-600 hover:text-green-700"
             aria-label="Search"
           >
             <span className="text-lg">⌕</span>
-          </button>
+          </button> */}
 
           <Link
             to="/favorites"
@@ -348,13 +348,13 @@ function Navbar() {
               Shop
             </Link>
 
-            <Link
+            {/* <Link
               to="/categories"
               onClick={closeMobileMenu}
               className="block rounded px-2 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-[#1A4329] hover:text-white"
             >
               Categories
-            </Link>
+            </Link> */}
 
             <div>
               <button

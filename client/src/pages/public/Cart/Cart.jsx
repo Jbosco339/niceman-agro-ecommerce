@@ -98,75 +98,101 @@ function Cart() {
             {cartItems.map((item) => (
               <div
                 key={item.id}
-                className="flex min-w-0 gap-3 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm sm:gap-4 sm:p-3.5"
+                className="flex min-w-0 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm sm:flex-row sm:gap-4 sm:p-3.5 md:flex-row md:items-center md:justify-between md:gap-4"
               >
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 sm:h-24 sm:w-24">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="h-full w-full object-contain object-center p-1.5"
-                  />
+                <div className="flex min-w-0 gap-3 sm:gap-4 md:w-full md:flex-1 md:items-center md:gap-4">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 sm:h-24 sm:w-24 md:h-24 md:w-24">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="h-full w-full object-contain object-center p-1.5"
+                    />
+                  </div>
+
+                  <div className="min-w-0 flex-1 md:flex md:items-center md:justify-between md:gap-5">
+                    <div className="min-w-0 md:max-w-[18rem]">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-green-700 sm:text-[11px]">
+                        {item.category}
+                      </p>
+                      <h2 className="mt-1 wrap-break-word text-sm font-bold leading-5 text-slate-900 sm:text-base">
+                        {item.name}
+                      </h2>
+                    </div>
+
+                    <div className="mt-3 flex items-start justify-between gap-2 sm:gap-3 md:mt-0 md:items-center md:gap-4">
+                      <div className="grid min-w-0 flex-1 grid-cols-2 gap-2 sm:gap-3 md:grid-cols-2 md:gap-4">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-medium text-slate-500 sm:text-[11px]">
+                            Unit price
+                          </p>
+                          <p className="mt-1 text-xs font-bold text-green-800 sm:text-sm">
+                            {formatCurrency(item.price)}
+                          </p>
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="whitespace-nowrap text-[10px] font-medium text-slate-500 sm:text-[11px]">
+                            Item total:
+                          </p>
+                          <p className="mt-1 text-xs font-bold text-slate-900 sm:text-sm">
+                            {formatCurrency(item.price * item.quantity)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="hidden shrink-0 items-center gap-2 md:flex">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity - 1)
+                          }
+                          className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-green-600 hover:text-green-700 sm:h-9 sm:w-9"
+                          aria-label={`Decrease quantity for ${item.name}`}
+                        >
+                          <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        </button>
+
+                        <span className="flex h-8 min-w-[2.1rem] items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-1 text-sm font-semibold text-slate-800 sm:h-9 sm:min-w-[2.3rem]">
+                          {item.quantity}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity + 1)
+                          }
+                          className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-green-600 hover:text-green-700 sm:h-9 sm:w-9"
+                          aria-label={`Increase quantity for ${item.name}`}
+                        >
+                          <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-green-700 sm:text-[11px]">
-                      {item.category}
-                    </p>
-                    <h2 className="mt-1 wrap-break-word text-sm font-bold leading-5 text-slate-900 sm:text-base">
-                      {item.name}
-                    </h2>
-                  </div>
+                <div className="ml-21 flex items-center justify-start gap-2 sm:hidden">
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-green-600 hover:text-green-700"
+                    aria-label={`Decrease quantity for ${item.name}`}
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </button>
 
-                  <div className="mt-3 flex items-start justify-between gap-2 sm:gap-3">
-                    <div className="grid min-w-0 flex-1 grid-cols-2 gap-2 sm:gap-3">
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-medium text-slate-500 sm:text-[11px]">
-                          Unit price
-                        </p>
-                        <p className="mt-1 text-xs font-bold text-green-800 sm:text-sm">
-                          {formatCurrency(item.price)}
-                        </p>
-                      </div>
+                  <span className="flex h-8 min-w-[2.1rem] items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-1 text-sm font-semibold text-slate-800">
+                    {item.quantity}
+                  </span>
 
-                      <div className="min-w-0">
-                        <p className="whitespace-nowrap text-[10px] font-medium text-slate-500 sm:text-[11px]">
-                          Item total:
-                        </p>
-                        <p className="mt-1 text-xs font-bold text-slate-900 sm:text-sm">
-                          {formatCurrency(item.price * item.quantity)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateQuantity(item.id, item.quantity - 1)
-                        }
-                        className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-green-600 hover:text-green-700 sm:h-9 sm:w-9"
-                        aria-label={`Decrease quantity for ${item.name}`}
-                      >
-                        <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      </button>
-
-                      <span className="flex h-8 min-w-[2.1rem] items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-1 text-sm font-semibold text-slate-800 sm:h-9 sm:min-w-[2.3rem]">
-                        {item.quantity}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          updateQuantity(item.id, item.quantity + 1)
-                        }
-                        className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-green-600 hover:text-green-700 sm:h-9 sm:w-9"
-                        aria-label={`Increase quantity for ${item.name}`}
-                      >
-                        <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      </button>
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-green-600 hover:text-green-700"
+                    aria-label={`Increase quantity for ${item.name}`}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
             ))}

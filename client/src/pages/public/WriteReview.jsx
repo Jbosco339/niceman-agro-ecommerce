@@ -6,6 +6,7 @@ import { createReview } from "../../services/reviewService";
 
 const emptyForm = {
   customer: "",
+  location: "",
   rating: 5,
   review: "",
 };
@@ -93,6 +94,7 @@ export default function WriteReview() {
       const payload = {
         type: "general",
         customer: customerName,
+        location: form.location.trim(),
         email: "",
         rating: Number(form.rating),
         review: reviewText,
@@ -108,7 +110,7 @@ export default function WriteReview() {
         status: data.status || "Pending",
       });
 
-      setSuccess("Thank you for your review. It is awaiting approval.");
+      setSuccess("Thank you for your review.");
       setForm(emptyForm);
     } catch (requestError) {
       setError(
@@ -175,6 +177,24 @@ export default function WriteReview() {
               value={form.customer}
               onChange={handleChange}
               placeholder="Enter your display name"
+              className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-green-600"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="location"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Location
+            </label>
+            <input
+              id="location"
+              name="location"
+              type="text"
+              value={form.location}
+              onChange={handleChange}
+              placeholder="Lagos, Abuja, Ogun, Kaduna..."
               className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-green-600"
             />
           </div>

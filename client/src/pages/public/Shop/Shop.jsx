@@ -1,13 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import {
-  Search,
-  SlidersHorizontal,
-  ShoppingCart,
-  ChevronDown,
-  Heart,
-  Check,
-} from "lucide-react";
+import { Search, ShoppingCart, ChevronDown, Heart, Check } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
 import { useCategoryContext } from "../../../context/CategoryContext";
 import { useFavorites } from "../../../context/FavoritesContext";
@@ -30,8 +23,7 @@ const fallbackCategories = [
 function Shop() {
   const [selectedCategory, setSelectedCategory] = useState("All Products");
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortOption, setSortOption] = useState("featured");
-  const [showFilters, setShowFilters] = useState(false);
+  const [sortOption, setSortOption] = useState("name");
   const { addToCart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { activeCategories = [] } = useCategoryContext();
@@ -39,6 +31,28 @@ function Shop() {
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [productsError, setProductsError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false,
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const handleResize = () => setIsMobile(mediaQuery.matches);
+
+    handleResize();
+    mediaQuery.addEventListener?.("change", handleResize);
+
+    return () => {
+      mediaQuery.removeEventListener?.("change", handleResize);
+    };
+  }, []);
+
+  const productsPerPage = isMobile ? 10 : 24;
 
   const categories = [
     "All Products",
@@ -76,6 +90,21 @@ function Shop() {
     window.setTimeout(() => {
       setAddedProductId((current) => (current === product.id ? null : current));
     }, 1200);
+  };
+
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (value) => {
+    setSortOption(value);
+    setCurrentPage(1);
   };
 
   const filteredProducts = useMemo(() => {
@@ -121,6 +150,24 @@ function Shop() {
     return result;
   }, [products, selectedCategory, searchTerm, sortOption]);
 
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProducts.length / productsPerPage),
+  );
+
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(Math.min(Math.max(newPage, 1), totalPages));
+  };
+
+  const paginatedProducts = useMemo(() => {
+    const start = (safeCurrentPage - 1) * productsPerPage;
+    const end = start + productsPerPage;
+
+    return filteredProducts.slice(start, end);
+  }, [filteredProducts, safeCurrentPage, productsPerPage]);
+
   return (
     <main className="min-h-screen bg-slate-50">
       {/* Page Header */}
@@ -146,26 +193,45 @@ function Shop() {
       {/* Shop Content */}
       <section className="py-10 sm:py-14">
         <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
-          {/* Search + Sort */}
+          {/* Search + Sort + Category */}
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            {/* Search */}
-            <div className="relative w-full lg:max-w-xl">
-              <Search
-                size={20}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
+            <div className="flex w-full flex-col gap-4 sm:flex-row lg:max-w-[78%] lg:items-center">
+              <div className="relative w-full sm:max-w-90 lg:max-w-104">
+                <Search
+                  size={20}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                />
 
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search products..."
-                className="h-12 w-full rounded-md border border-slate-200 bg-white pl-12 pr-4 text-sm outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
-              />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => handleSearchChange(event.target.value)}
+                  placeholder="Search products..."
+                  className="h-12 w-full rounded-md border border-slate-200 bg-white pl-12 pr-4 text-sm outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
+                />
+              </div>
+
+              <div className="relative w-full sm:max-w-55">
+                <select
+                  value={selectedCategory}
+                  onChange={(event) => handleCategoryChange(event.target.value)}
+                  className="h-12 w-full appearance-none rounded-md border border-slate-200 bg-white pl-4 pr-10 text-sm font-medium text-slate-700 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
+                >
+                  {categoryOptions.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+
+                <ChevronDown
+                  size={17}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                />
+              </div>
             </div>
 
-            {/* Sort */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 self-start sm:self-auto">
               <span className="hidden text-sm font-medium text-slate-500 sm:block">
                 Sort by
               </span>
@@ -173,7 +239,7 @@ function Shop() {
               <div className="relative">
                 <select
                   value={sortOption}
-                  onChange={(event) => setSortOption(event.target.value)}
+                  onChange={(event) => handleSortChange(event.target.value)}
                   className="h-12 appearance-none rounded-md border border-slate-200 bg-white pl-4 pr-10 text-sm font-medium text-slate-700 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100"
                 >
                   <option value="featured">Featured</option>
@@ -190,50 +256,7 @@ function Shop() {
             </div>
           </div>
 
-          {/* Mobile Filter Button */}
-          <button
-            type="button"
-            onClick={() => setShowFilters((current) => !current)}
-            className="mt-5 flex h-11 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 lg:hidden"
-          >
-            <SlidersHorizontal size={17} />
-            {showFilters ? "Hide Categories" : "Show Categories"}
-          </button>
-
-          <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[220px_1fr]">
-            {/* Category Sidebar */}
-            <aside className={`${showFilters ? "block" : "hidden"} lg:block`}>
-              <div className="rounded-lg border border-slate-200 bg-white p-5">
-                <h2 className="text-base font-bold text-green-950">
-                  Categories
-                </h2>
-
-                <div className="mt-5 space-y-1">
-                  {categoryOptions.map((category) => {
-                    const active = selectedCategory === category;
-
-                    return (
-                      <button
-                        key={category}
-                        type="button"
-                        onClick={() => setSelectedCategory(category)}
-                        className={`flex w-full items-center justify-between rounded-md px-3 py-2.5 text-left text-sm transition ${
-                          active
-                            ? "bg-green-700 font-semibold text-white"
-                            : "text-slate-600 hover:bg-green-50 hover:text-green-800"
-                        }`}
-                      >
-                        <span>{category}</span>
-
-                        {active && <span className="text-xs">✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </aside>
-
-            {/* Products */}
+          <div className="mt-8">
             <div>
               {/* Result Header */}
               <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -251,7 +274,7 @@ function Shop() {
                 {searchTerm && (
                   <button
                     type="button"
-                    onClick={() => setSearchTerm("")}
+                    onClick={() => handleSearchChange("")}
                     className="self-start text-sm font-semibold text-green-700 hover:underline"
                   >
                     Clear search
@@ -267,97 +290,120 @@ function Shop() {
                   {productsError}
                 </p>
               ) : filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4 sm:gap-5 xl:grid-cols-3">
-                  {filteredProducts.map((product) => (
-                    <article
-                      key={product.id}
-                      className="group flex h-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
-                    >
-                      {/* Product Image */}
-                      <div className="relative h-40 w-full overflow-hidden bg-slate-50 sm:h-52">
-                        <Link
-                          to={`/product/${product.id}`}
-                          className="block h-full w-full"
-                        >
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="h-full w-full object-contain object-center p-2 transition duration-500 group-hover:scale-105"
-                          />
-                        </Link>
-
-                        <button
-                          type="button"
-                          onClick={() => toggleFavorite(product)}
-                          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-sm transition hover:bg-white"
-                          aria-label={`Save ${product.name} to favorites`}
-                        >
-                          <Heart
-                            size={16}
-                            fill={
-                              isFavorite(product.id) ? "currentColor" : "none"
-                            }
-                            className={
-                              isFavorite(product.id)
-                                ? "text-red-500"
-                                : "text-slate-700"
-                            }
-                          />
-                        </button>
-                      </div>
-
-                      <div className="flex flex-1 flex-col p-3 sm:p-4">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-green-700 sm:text-xs">
-                            {product.category}
-                          </span>
-                          <span className="text-[10px] text-slate-500 sm:text-xs">
-                            {product.stock > 0
-                              ? `${product.stock} in stock`
-                              : "Out of stock"}
-                          </span>
-                        </div>
-
-                        <Link
-                          to={`/product/${product.id}`}
-                          className="mt-3 block"
-                        >
-                          <h3 className="text-base font-bold leading-snug text-slate-900 transition hover:text-green-700 sm:text-lg">
-                            {product.name}
-                          </h3>
-                        </Link>
-
-                        <p className="mt-2 line-clamp-2 flex-1 text-xs leading-5 text-slate-600 sm:text-sm">
-                          {product.description}
-                        </p>
-
-                        <div className="mt-4 flex items-end justify-between gap-3">
-                          <span className="text-lg font-extrabold text-green-800 sm:text-xl">
-                            {formatPrice(product.price)}
-                          </span>
+                <>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 xl:gap-4">
+                    {paginatedProducts.map((product) => (
+                      <article
+                        key={product.id}
+                        className="group flex h-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
+                      >
+                        {/* Product Image */}
+                        <div className="relative h-28 w-full overflow-hidden bg-slate-50 sm:h-32 lg:h-28 xl:h-32">
+                          <Link
+                            to={`/product/${product.id}`}
+                            className="block h-full w-full"
+                          >
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="h-full w-full object-contain object-center p-2 transition duration-500 group-hover:scale-105"
+                            />
+                          </Link>
 
                           <button
                             type="button"
-                            onClick={() => handleAddToCart(product)}
-                            className="inline-flex items-center gap-2 rounded-md bg-green-700 px-2.5 py-2 text-[11px] font-semibold text-white transition hover:bg-green-800 sm:px-3.5 sm:text-sm"
+                            onClick={() => toggleFavorite(product)}
+                            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-sm transition hover:bg-white"
+                            aria-label={`Save ${product.name} to favorites`}
                           >
-                            <ShoppingCart size={16} />
-                            {addedProductId === product.id
-                              ? "Added"
-                              : "Add to Cart"}
+                            <Heart
+                              size={15}
+                              fill={
+                                isFavorite(product.id) ? "currentColor" : "none"
+                              }
+                              className={
+                                isFavorite(product.id)
+                                  ? "text-red-500"
+                                  : "text-slate-700"
+                              }
+                            />
                           </button>
                         </div>
 
-                        {addedProductId === product.id && (
-                          <div className="mt-3 flex items-center gap-2 text-xs font-medium text-green-700 sm:text-sm">
-                            <Check size={15} />
-                            Added to cart
+                        <div className="flex flex-1 flex-col p-2.5 sm:p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[9px] font-semibold uppercase tracking-wide text-green-700 sm:text-[10px]">
+                              {product.category}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    </article>
-                  ))}
-                </div>
+
+                          <Link
+                            to={`/product/${product.id}`}
+                            className="mt-2 block"
+                          >
+                            <h3 className="text-sm font-bold leading-snug text-slate-900 transition hover:text-green-700 sm:text-base">
+                              {product.name}
+                            </h3>
+                          </Link>
+
+                          <p className="mt-2 line-clamp-2 flex-1 text-[11px] leading-4 text-slate-600 sm:text-xs">
+                            {product.description}
+                          </p>
+
+                          <div className="mt-3 flex flex-col gap-2">
+                            <span className="text-base font-extrabold text-green-800 sm:text-lg">
+                              {formatPrice(product.price)}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() => handleAddToCart(product)}
+                              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-green-700 px-2 py-2 text-[10px] font-semibold text-white transition hover:bg-green-800 sm:text-xs"
+                            >
+                              <ShoppingCart size={14} />
+                              {addedProductId === product.id
+                                ? "Added"
+                                : "Add to Cart"}
+                            </button>
+                          </div>
+
+                          {addedProductId === product.id && (
+                            <div className="mt-2 flex items-center gap-2 text-[10px] font-medium text-green-700 sm:text-xs">
+                              <Check size={13} />
+                              Added to cart
+                            </div>
+                          )}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="mt-6 flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Previous
+                      </button>
+
+                      <span className="px-3 text-sm font-medium text-slate-600">
+                        Page {currentPage} of {totalPages}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
                   <p className="text-lg font-semibold text-slate-800">

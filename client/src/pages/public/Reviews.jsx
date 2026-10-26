@@ -64,6 +64,11 @@ export default function Reviews() {
                       <h2 className="font-semibold text-gray-900">
                         {review.customer}
                       </h2>
+                      {review.location && (
+                        <p className="mt-1 text-xs font-medium text-gray-500">
+                          {review.location}
+                        </p>
+                      )}
                       <p className="text-xs text-gray-500">{review.date}</p>
                     </div>
                   </div>
