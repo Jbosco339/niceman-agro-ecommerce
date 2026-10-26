@@ -356,8 +356,9 @@ DATABASE_URL=
 JWT_SECRET=
 PAYSTACK_SECRET_KEY=
 FLUTTERWAVE_SECRET_KEY=
-EMAIL_USER=
-EMAIL_PASSWORD=
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=
+ADMIN_EMAIL=
 
 Use .env / .env.local files locally and ensure they are included in .gitignore.
 

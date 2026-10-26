@@ -20,10 +20,17 @@ import { releaseExpiredReservations } from "./services/paystack.js";
 
 const app = express();
 app.set("trust proxy", 1);
+const productionFrontendOrigin = "https://www.nicemanagro.com";
 const validateRequiredConfiguration = () => {
   const required = ["MONGODB_URL", "JWT_SECRET"];
   if (process.env.NODE_ENV === "production") {
-    required.push("CLIENT_URL", "API_URL", "EMAIL_USER", "EMAIL_PASS");
+    required.push(
+      "CLIENT_URL",
+      "API_URL",
+      "RESEND_API_KEY",
+      "RESEND_FROM_EMAIL",
+      "ADMIN_EMAIL",
+    );
   }
   const missing = required.filter((key) => !process.env[key]);
   if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
@@ -33,6 +40,15 @@ const validateRequiredConfiguration = () => {
     throw new Error(
       `Missing required environment configuration: ${missing.join(", ")}`,
     );
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.CLIENT_URL?.trim().replace(/\/+$/, "") !==
+      productionFrontendOrigin
+  ) {
+    throw new Error(
+      `CLIENT_URL must be exactly ${productionFrontendOrigin} in production`,
+    );
+  }
 };
 validateRequiredConfiguration();
 const normalizeOrigin = (value) => {
@@ -44,13 +60,16 @@ const normalizeOrigin = (value) => {
   }
 };
 
-const clientOrigins = [
-  normalizeOrigin(process.env.CLIENT_URL),
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-].filter(Boolean);
+const clientOrigins =
+  process.env.NODE_ENV === "production"
+    ? [productionFrontendOrigin]
+    : [
+        normalizeOrigin(process.env.CLIENT_URL),
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+      ].filter(Boolean);
 
 const allowedOrigins = clientOrigins.map((origin) => {
   try {

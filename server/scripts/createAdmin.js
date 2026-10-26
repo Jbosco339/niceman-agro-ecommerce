@@ -45,7 +45,7 @@ try {
             );
         } catch {
             await User.deleteOne({ email });
-            throw new Error("Administrator created but verification email could not be sent; the unverified account was removed");
+            throw new Error("Administrator created but the Resend verification email could not be sent; the unverified account was removed");
         }
     }
     console.log("Administrator account created successfully.");

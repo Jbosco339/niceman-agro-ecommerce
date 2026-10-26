@@ -10,11 +10,10 @@ const getDefaultApiBase = () => {
 };
 
 const configuredApiBase = import.meta.env.VITE_API_URL?.trim();
-const usesFirstPartyApi =
+const usesCanonicalProductionFrontend =
   typeof window !== "undefined" &&
-  ["nicemanagro.com", "www.nicemanagro.com"].includes(
-    window.location.hostname.toLowerCase(),
-  );
+  window.location.hostname.toLowerCase() === "www.nicemanagro.com";
+const productionApiBase = "https://www.nicemanagro.com/api/v1";
 const isLocalBrowser =
   typeof window !== "undefined" &&
   ["localhost", "127.0.0.1"].includes(window.location.hostname.toLowerCase());
@@ -24,8 +23,8 @@ const isLocalConfiguredApi =
     configuredApiBase,
   );
 const rawApiBase =
-  usesFirstPartyApi
-    ? `${window.location.origin}/api/v1`
+  usesCanonicalProductionFrontend
+    ? productionApiBase
     : isLocalConfiguredApi && !isLocalBrowser
       ? getDefaultApiBase()
       : configuredApiBase || getDefaultApiBase();

@@ -10,7 +10,10 @@ import { Product } from "../models/Product.js";
 import { User } from "../models/userSchema.js";
 import { confirmBankTransferPayment, initializePaystackTransaction, isValidPaystackSignature, generateReceiptNumber, markOrderPaid, releaseInventory, reserveInventory, verifyPaystackTransaction } from "../services/paystack.js";
 
-import { sendOrderNotificationEmail } from "../config/email.js";
+import {
+    sendOrderConfirmationEmail,
+    sendOrderNotificationEmail,
+} from "../config/email.js";
 const router = express.Router();
 const checkoutLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -29,6 +32,18 @@ const presentOrder = (record) => ({
     ...record.payload,
     id: record._id.toString(),
 });
+
+const sendOrderEmails = async (order) => {
+    const results = await Promise.allSettled([
+        sendOrderConfirmationEmail(order),
+        sendOrderNotificationEmail(order),
+    ]);
+    for (const result of results) {
+        if (result.status === "rejected") {
+            console.error("Order email could not be sent:", result.reason.message);
+        }
+    }
+};
 
 const getCartData = async (user) => {
     const cart = [];
@@ -208,11 +223,7 @@ router.post("/checkout/order", auth, checkoutLimiter, async (req, res) => {
             status: "Pending",
             date: new Date().toISOString(),
     });
-    try {
-        await sendOrderNotificationEmail(order.payload);
-    } catch (error) {
-        console.error("Order notification email could not be sent:", error.message);
-    }
+    await sendOrderEmails(order.payload);
     return res.status(201).json({ status: "success", data: presentOrder(order) });
 });
 
@@ -247,11 +258,7 @@ router.post("/orders", auth, checkoutLimiter, async (req, res) => {
             status: "Pending",
             date: new Date().toISOString(),
     });
-    try {
-        await sendOrderNotificationEmail(order.payload);
-    } catch (error) {
-        console.error("Order notification email could not be sent:", error.message);
-    }
+    await sendOrderEmails(order.payload);
     return res.status(201).json({ status: "success", data: presentOrder(order) });
 });
 router.post("/orders/:id/cancel", auth, async (req, res) => {

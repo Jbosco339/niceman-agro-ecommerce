@@ -80,7 +80,8 @@ export const addUser = async (req, res) => {
 
       try {
         await sendVerificationEmail(user, verificationLink);
-      } catch {
+      } catch (error) {
+        console.error("Verification email could not be sent:", error.message);
         await User.deleteOne({ _id: user._id });
         return res.status(503).json({
           status: "failed",
@@ -263,7 +264,8 @@ export const forgotPassword = async (req, res) => {
     const resetLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/reset-password/${token}`;
     try {
       await sendPasswordResetEmail(user, resetLink);
-    } catch {
+    } catch (error) {
+      console.error("Password reset email could not be sent:", error.message);
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
       await user.save();
