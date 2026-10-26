@@ -3,6 +3,10 @@ dotenv.config({
   path: "./.env",
 });
 
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import errorMiddleware from "./middlewares/errorMiddleware.js";
 import express from "express";
 import userRouter from "./routes/userRoutes.js";
@@ -17,6 +21,10 @@ import cookieParser from "cookie-parser";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import helmet from "helmet";
 import { releaseExpiredReservations } from "./services/paystack.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientDistPath = path.resolve(__dirname, "../client/dist");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -65,6 +73,7 @@ const clientOrigins =
     ? [productionFrontendOrigin]
     : [
         normalizeOrigin(process.env.CLIENT_URL),
+        normalizeOrigin(process.env.VITE_CLIENT_URL),
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
@@ -130,6 +139,23 @@ app.use(
   }),
 );
 app.use(cookieParser());
+
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+
+  app.get(/^(?!\/api\/).*$/, (req, res, next) => {
+    if (req.method !== "GET") return next();
+    if (
+      /\.(?:css|js|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|json|map|txt)$/i.test(
+        req.path,
+      )
+    ) {
+      return next();
+    }
+    return res.sendFile(path.join(clientDistPath, "index.html"));
+  });
+}
+
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1", productsRouter);
 app.use("/api/v1", clientContentRouter);

@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import useBlog from "../../../hooks/useBlog";
+import { formatArticleDate } from "../../../utils/formatDate";
 
 function BlogArticle() {
   const { slug } = useParams();
@@ -32,7 +33,7 @@ function BlogArticle() {
 
         <div className="flex items-center justify-between text-sm text-slate-500 mb-8">
           <span>{article.author}</span>
-          <span>{article.date}</span>
+          <span>{formatArticleDate(article.date)}</span>
         </div>
 
         {article.image && (
