@@ -64,7 +64,7 @@ export const sendOrderConfirmationEmail = async (order) => {
 
     return sendEmail({
         to: email,
-        subject: `Order confirmation: ${escapeHtml(orderNumber(order))}`,
+        subject: `Order(s) confirmation: ${escapeHtml(orderNumber(order))}`,
         html: `<h2>Thank you for your order</h2>
             <p>Hello ${escapeHtml(name || "Customer")},</p>
             <p>We received your order <strong>${escapeHtml(orderNumber(order))}</strong>.</p>
