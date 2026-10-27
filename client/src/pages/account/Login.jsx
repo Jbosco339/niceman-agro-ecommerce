@@ -172,6 +172,13 @@ function Login() {
 
           {/* Login card */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 p-6 md:p-8">
+            {location.state?.message && (
+              <div className="mb-6 flex items-start gap-3 rounded-xl bg-green-50 border border-green-100 p-4 text-sm text-green-800" role="status">
+                <span className="text-lg">✓</span>
+                <p>{location.state.message}</p>
+              </div>
+            )}
+
             {/* Error */}
             {error && (
               <div className="mb-6 flex items-start gap-3 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700">

@@ -51,8 +51,11 @@ export const addUser = async (req, res) => {
 
     if (findUser) {
       return res
-        .status(400)
-        .json({ status: "fail", message: "User already exists" });
+        .status(409)
+        .json({
+          status: "fail",
+          message: "An account already exists for this email address.",
+        });
     }
 
     const user = await User.create({
@@ -92,7 +95,9 @@ export const addUser = async (req, res) => {
 
     res.status(201).json({
       status: "success",
-      message: "user registered successfully.",
+      message: user.isVerified
+        ? "Account created successfully. You can now sign in."
+        : "Account created successfully. Please verify your email before signing in.",
       data: {
         id: user._id,
         userName: user.userName,
@@ -109,12 +114,22 @@ export const addUser = async (req, res) => {
       });
     }
 
-    res.status(err.name === "ValidationError" ? 400 : 500).json({
+    if (err.name === "ValidationError") {
+      const messages = Object.values(err.errors ?? {})
+        .map((validationError) => validationError.message)
+        .filter(Boolean);
+      return res.status(400).json({
+        status: "failed",
+        message: messages.length
+          ? messages.join(". ")
+          : "Please check your account details and try again.",
+      });
+    }
+
+    console.error("Account creation failed:", err);
+    return res.status(500).json({
       status: "failed",
-      message:
-        err.name === "ValidationError"
-          ? err.message
-          : "Unable to create your account right now. Please try again later.",
+      message: "Unable to create your account right now. Please try again later.",
     });
   }
 };

@@ -48,8 +48,16 @@ function Register() {
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    if (
+      formData.password.length < 8 ||
+      !/[a-z]/.test(formData.password) ||
+      !/[A-Z]/.test(formData.password) ||
+      !/[0-9]/.test(formData.password) ||
+      !/[^A-Za-z0-9]/.test(formData.password)
+    ) {
+      setError(
+        "Password must be at least 8 characters and include uppercase and lowercase letters, a number, and a symbol.",
+      );
       return;
     }
 
@@ -66,7 +74,7 @@ function Register() {
     try {
       setLoading(true);
 
-      await registerUser({
+      const response = await registerUser({
         userName: `${formData.firstName} ${formData.lastName}`.trim(),
         email: formData.email,
         password: formData.password,
@@ -74,7 +82,13 @@ function Register() {
         phone: formData.phone,
       });
       navigate("/account/login", {
-        state: { message: "Registration complete. Verify your email before signing in." },
+        state: {
+          message:
+            response.message ||
+            (response.data?.isVerified
+              ? "Account created successfully. You can now sign in."
+              : "Account created successfully. Please verify your email before signing in."),
+        },
       });
     } catch (err) {
       setError(err.message || "Unable to create your account. Please try again.");
@@ -362,6 +376,10 @@ function Register() {
                     {showPassword ? "🙈" : "👁"}
                   </button>
                 </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  Use at least 8 characters, including uppercase and lowercase
+                  letters, a number, and a symbol.
+                </p>
               </div>
 
               {/* Confirm Password */}
