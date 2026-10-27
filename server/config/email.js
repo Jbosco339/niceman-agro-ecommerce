@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import { Resend } from "resend";
+import EmailDelivery from "../models/EmailDelivery.js";
 
 dotenv.config({ path: "./.env" });
 
@@ -17,11 +18,35 @@ const sendEmail = async (message) => {
         throw new Error("email service is not configured");
     }
 
-    const { error } = await new Resend(RESEND_API_KEY).emails.send({
+    const { data, error } = await new Resend(RESEND_API_KEY).emails.send({
         from: RESEND_FROM_EMAIL,
         ...message,
     });
     if (error) throw new Error(`email delivery failed: ${error.message}`);
+
+    if (data?.id) {
+        try {
+            await EmailDelivery.updateOne(
+                { resendEmailId: data.id },
+                {
+                    $setOnInsert: {
+                        resendEmailId: data.id,
+                        status: "email.sent",
+                        lastEventType: "email.sent",
+                        lastEventAt: new Date(0),
+                    },
+                },
+                { upsert: true },
+            );
+        } catch (trackingError) {
+            console.error(
+                "Email was sent, but its delivery status could not be recorded:",
+                trackingError.message,
+            );
+        }
+    } else {
+        console.error("Resend accepted an email without returning an email ID.");
+    }
 };
 
 const orderRows = (order) => (order.items ?? []).map((item) => `

@@ -19,6 +19,7 @@ import connect from "./utils/db.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import webhookRoutes from "./routes/webhookRoutes.js";
 import helmet from "helmet";
 import { releaseExpiredReservations } from "./services/paystack.js";
 
@@ -37,6 +38,7 @@ const validateRequiredConfiguration = () => {
       "API_URL",
       "RESEND_API_KEY",
       "RESEND_FROM_EMAIL",
+      "RESEND_WEBHOOK_SECRET",
       "ADMIN_EMAIL",
     );
   }
@@ -162,6 +164,7 @@ app.use("/api/v1", clientContentRouter);
 app.use("/api/v1", customerCommerceRouter);
 app.use("/api/v1/files", uploadRoutes);
 app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/webhooks", webhookRoutes);
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;
