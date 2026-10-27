@@ -22,6 +22,7 @@ const verificationTokenFor = (payload) =>
   });
 
 export const addUser = async (req, res) => {
+  let stage = "validating request";
   try {
     const { userName, email, password, confirmPassword, phone } =
       req.body ?? {};
@@ -47,6 +48,7 @@ export const addUser = async (req, res) => {
         .json({ status: "fail", message: "Passwords do not match" });
     }
 
+    stage = "checking for an existing account";
     const findUser = await User.findOne({ email: email.trim().toLowerCase() });
 
     if (findUser) {
@@ -58,6 +60,7 @@ export const addUser = async (req, res) => {
         });
     }
 
+    stage = "creating the account";
     const user = await User.create({
       image,
       userName,
@@ -69,12 +72,14 @@ export const addUser = async (req, res) => {
     });
 
     if (emailVerificationEnabled()) {
+      stage = "creating the verification token";
       const verificationToken = verificationTokenFor({
         id: user._id,
         email: user.email,
       });
       const verificationLink = `${process.env.API_URL || "http://localhost:5000/api/v1"}/user/verify-email/${verificationToken}`;
 
+      stage = "saving the verification token";
       await User.findByIdAndUpdate(user._id, {
         verificationToken: createHash("sha256")
           .update(verificationToken)
@@ -82,9 +87,15 @@ export const addUser = async (req, res) => {
       });
 
       try {
+        stage = "sending the verification email";
         await sendVerificationEmail(user, verificationLink);
       } catch (error) {
-        console.error("Verification email could not be sent:", error.message);
+        console.error("[registration] verification email failed", {
+          name: error.name,
+          code: error.code,
+          message: error.message,
+        });
+        stage = "cleaning up after verification email failure";
         await User.deleteOne({ _id: user._id });
         return res.status(503).json({
           status: "failed",
@@ -126,7 +137,11 @@ export const addUser = async (req, res) => {
       });
     }
 
-    console.error("Account creation failed:", err);
+    console.error(`[registration] failed while ${stage}`, {
+      name: err.name,
+      code: err.code,
+      message: err.message,
+    });
     return res.status(500).json({
       status: "failed",
       message: "Unable to create your account right now. Please try again later.",

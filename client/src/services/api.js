@@ -111,10 +111,20 @@ const api = async (endpoint, options = {}) => {
     },
   };
 
-  const sendRequest = async () =>
-    fetch(`${API_URL}${endpoint}`, requestOptions);
+  const requestUrl = `${API_URL}${endpoint}`;
+  const sendRequest = async () => fetch(requestUrl, requestOptions);
 
-  let response = await sendRequest();
+  let response;
+  try {
+    response = await sendRequest();
+  } catch (cause) {
+    const error = new Error(
+      "Unable to reach the service. Check your internet connection and try again.",
+      { cause },
+    );
+    error.endpoint = endpoint;
+    throw error;
+  }
 
   if (
     response.status === 401 &&
@@ -142,11 +152,17 @@ const api = async (endpoint, options = {}) => {
       data.error ||
       (Array.isArray(data.errors) ? data.errors.join(", ") : data.errors);
     const message =
-      typeof responseMessage === "string" && !/^\s*</.test(responseMessage)
+      typeof responseMessage === "string" &&
+      responseMessage.trim() &&
+      !/^\s*</.test(responseMessage)
         ? responseMessage
-        : response.statusText || "The request could not be completed.";
+        : response.status >= 500
+          ? `The service is temporarily unavailable (HTTP ${response.status}). Please try again in a few minutes.`
+          : `The request could not be processed (HTTP ${response.status}). Please check your details and try again.`;
     const error = new Error(message);
     error.status = response.status;
+    error.endpoint = endpoint;
+    error.requestId = response.headers.get("x-request-id") || undefined;
     throw error;
   }
 
