@@ -15,6 +15,7 @@ import {
   generateReceiptNumber,
   markOrderPaid,
   releaseInventory,
+  restoreLoyaltyRedemption,
   reserveInventory,
   verifyPaystackTransaction,
 } from "../services/paystack.js";
@@ -22,8 +23,10 @@ import {
 import {
     sendOrderConfirmationEmail,
     sendOrderNotificationEmail,
+    sendPaymentReceiptEmail,
 } from "../config/email.js";
 const router = express.Router();
+const MINIMUM_LOYALTY_REDEMPTION_KOBO = 500000;
 const checkoutLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,
@@ -54,6 +57,28 @@ const sendOrderEmails = async (order) => {
     }
 };
 
+const priceCheckout = (items, subtotalKobo, loyaltyBalanceKobo, redeemLoyalty) => {
+  const balanceKobo = Number.isSafeInteger(loyaltyBalanceKobo)
+    ? Math.max(0, loyaltyBalanceKobo)
+    : 0;
+  const loyaltyPointsRedeemedKobo =
+    redeemLoyalty && balanceKobo >= MINIMUM_LOYALTY_REDEMPTION_KOBO
+      ? Math.min(balanceKobo, subtotalKobo)
+      : 0;
+
+  return {
+    items,
+    subtotal: subtotalKobo / 100,
+    deliveryFee: 0,
+    loyaltyBalance: balanceKobo / 100,
+    loyaltyBalanceKobo: balanceKobo,
+    loyaltyEligible: balanceKobo >= MINIMUM_LOYALTY_REDEMPTION_KOBO,
+    loyaltyDiscount: loyaltyPointsRedeemedKobo / 100,
+    loyaltyPointsRedeemedKobo,
+    total: (subtotalKobo - loyaltyPointsRedeemedKobo) / 100,
+  };
+};
+
 const getCartData = async (user) => {
   const cart = [];
   for (const entry of user.cart ?? []) {
@@ -70,23 +95,32 @@ const getCartData = async (user) => {
   return { cart, subtotal };
 };
 
-const getCheckout = async (user) => {
-  const { cart, subtotal } = await getCartData(user);
-  return {
-    items: cart.map(({ product, quantity }) => ({
+const getCheckout = async (user, redeemLoyalty = false) => {
+  const { cart } = await getCartData(user);
+  const items = cart.map(({ product, quantity }) => ({
       product: product._id.toString(),
       name: product.name,
       image: product.image,
       price: product.price,
       quantity,
-    })),
-    subtotal,
-    deliveryFee: 0,
-    total: subtotal,
-  };
+    }));
+  const subtotalKobo = items.reduce(
+    (sum, item) => sum + Math.round(Number(item.price) * 100) * item.quantity,
+    0,
+  );
+  return priceCheckout(
+    items,
+    subtotalKobo,
+    user.loyaltyBalanceKobo,
+    redeemLoyalty,
+  );
 };
 
-const getCheckoutFromItems = async (items) => {
+const getCheckoutFromItems = async (
+  items,
+  loyaltyBalanceKobo = 0,
+  redeemLoyalty = false,
+) => {
   if (!Array.isArray(items) || !items.length || items.length > 100) {
     const error = new Error("Your cart is empty or invalid");
     error.statusCode = 400;
@@ -122,23 +156,24 @@ const getCheckoutFromItems = async (items) => {
     }
     cart.push({ product, quantity });
   }
-  const deliveryFee = 0;
-  const subtotal = cart.reduce(
-    (sum, entry) => sum + entry.product.price * entry.quantity,
+  const checkoutItems = cart.map(({ product, quantity }) => ({
+    product: product._id.toString(),
+    name: product.name,
+    image: product.image,
+    price: product.price,
+    quantity,
+  }));
+  const subtotalKobo = checkoutItems.reduce(
+    (sum, item) =>
+      sum + Math.round(Number(item.price) * 100) * item.quantity,
     0,
   );
-  return {
-    items: cart.map(({ product, quantity }) => ({
-      product: product._id.toString(),
-      name: product.name,
-      image: product.image,
-      price: product.price,
-      quantity,
-    })),
-    subtotal,
-    deliveryFee,
-    total: subtotal + deliveryFee,
-  };
+  return priceCheckout(
+    checkoutItems,
+    subtotalKobo,
+    loyaltyBalanceKobo,
+    redeemLoyalty,
+  );
 };
 
 const createReservedOrder = async (user, checkout, payload) => {
@@ -149,19 +184,53 @@ const createReservedOrder = async (user, checkout, payload) => {
     error.statusCode = 409;
     throw error;
   }
+  const loyaltyPointsRedeemedKobo =
+    checkout.loyaltyPointsRedeemedKobo ?? 0;
+  let loyaltyReserved = false;
   try {
+    if (loyaltyPointsRedeemedKobo > 0) {
+      const result = await User.updateOne(
+        {
+          _id: user._id,
+          loyaltyBalanceKobo: { $gte: loyaltyPointsRedeemedKobo },
+        },
+        { $inc: { loyaltyBalanceKobo: -loyaltyPointsRedeemedKobo } },
+      );
+      if (result.modifiedCount !== 1) {
+        const error = new Error(
+          "Your loyalty balance changed. Refresh checkout and try again.",
+        );
+        error.statusCode = 409;
+        throw error;
+      }
+      loyaltyReserved = true;
+    }
+
+    const paidWithLoyalty = payload.paymentStatus === "Paid";
     return await AdminRecord.create({
       resource: "order",
       createdBy: user._id,
       payload: {
         ...payload,
         items: checkout.items,
-        inventoryReserved: true,
-        reservationExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
+        loyaltyBalanceAtCheckoutKobo: checkout.loyaltyBalanceKobo,
+        loyaltyDiscount: checkout.loyaltyDiscount,
+        loyaltyPointsRedeemedKobo,
+        loyaltyPointsEarnedKobo: 0,
+        inventoryReserved: !paidWithLoyalty,
+        ...(!paidWithLoyalty && {
+          reservationExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
+        }),
       },
     });
   } catch (error) {
     await releaseInventory(checkout.items);
+    if (loyaltyReserved) {
+      await User.updateOne(
+        { _id: user._id },
+        { $inc: { loyaltyBalanceKobo: loyaltyPointsRedeemedKobo } },
+      );
+    }
     throw error;
   }
 };
@@ -237,9 +306,14 @@ router.delete("/cart", auth, async (req, res) => {
 });
 
 router.post("/checkout/calculate", auth, checkoutLimiter, async (req, res) => {
+  const redeemLoyalty = req.body?.redeemLoyalty === true;
   const checkout = Array.isArray(req.body?.items)
-    ? await getCheckoutFromItems(req.body.items)
-    : await getCheckout(req.user);
+    ? await getCheckoutFromItems(
+        req.body.items,
+        req.user.loyaltyBalanceKobo,
+        redeemLoyalty,
+      )
+    : await getCheckout(req.user, redeemLoyalty);
   return res.status(200).json({ status: "success", data: checkout });
 });
 router.get("/checkout/summary", auth, async (req, res) => {
@@ -259,7 +333,11 @@ router.post("/checkout/order", auth, checkoutLimiter, async (req, res) => {
     return res
       .status(401)
       .json({ status: "failed", message: "Please sign in to check out" });
-  const checkout = await getCheckoutFromItems(req.body?.items);
+  const checkout = await getCheckoutFromItems(
+    req.body?.items,
+    user.loyaltyBalanceKobo,
+    req.body?.redeemLoyalty === true,
+  );
   const details = req.body?.customer ?? {};
   const customerName =
     [details.firstName, details.lastName]
@@ -283,6 +361,8 @@ router.post("/checkout/order", auth, checkoutLimiter, async (req, res) => {
         message: "Enter valid delivery contact details and address",
       });
   }
+  const paidWithLoyalty =
+    checkout.total === 0 && checkout.loyaltyPointsRedeemedKobo > 0;
   const order = await createReservedOrder(user, checkout, {
     customer: { name: customerName, email, phone: details.phone || "" },
     email,
@@ -297,12 +377,31 @@ router.post("/checkout/order", auth, checkoutLimiter, async (req, res) => {
     subtotal: checkout.subtotal,
     total: checkout.total,
     deliveryFee: checkout.deliveryFee,
-    payment: "Pending",
-    paymentStatus: "Pending",
-    status: "Pending",
+    payment: paidWithLoyalty ? "Paid" : "Pending",
+    paymentStatus: paidWithLoyalty ? "Paid" : "Pending",
+    paymentMethod: paidWithLoyalty ? "Loyalty Points" : undefined,
+    paidAt: paidWithLoyalty ? new Date().toISOString() : undefined,
+    receiptNumber: paidWithLoyalty ? generateReceiptNumber() : undefined,
+    status: paidWithLoyalty ? "Processing" : "Pending",
     date: new Date().toISOString(),
   });
   await sendOrderEmails(order.payload);
+  if (paidWithLoyalty) {
+    try {
+      await sendPaymentReceiptEmail({
+        ...order.payload,
+        id: order.id,
+      });
+      order.payload = {
+        ...order.payload,
+        receiptSentAt: new Date().toISOString(),
+      };
+      await order.save();
+    } catch (error) {
+      console.error("Payment receipt email could not be sent:", error.message);
+    }
+    await User.updateOne({ _id: user._id }, { $set: { cart: [] } });
+  }
   return res.status(201).json({ status: "success", data: presentOrder(order) });
 });
 
@@ -337,7 +436,10 @@ router.post("/orders", auth, checkoutLimiter, async (req, res) => {
       .status(400)
       .json({ status: "failed", message: "Your cart is empty" });
   }
-  const checkout = await getCheckout(user);
+  const checkout = await getCheckout(
+    user,
+    req.body?.redeemLoyalty === true,
+  );
   if (checkout.items.length !== user.cart.length) {
     return res
       .status(409)
@@ -346,6 +448,8 @@ router.post("/orders", auth, checkoutLimiter, async (req, res) => {
         message: "One or more cart products are unavailable",
       });
   }
+  const paidWithLoyalty =
+    checkout.total === 0 && checkout.loyaltyPointsRedeemedKobo > 0;
   const order = await createReservedOrder(user, checkout, {
     customer: user.userName,
     email: user.email,
@@ -353,12 +457,31 @@ router.post("/orders", auth, checkoutLimiter, async (req, res) => {
     subtotal: checkout.subtotal,
     total: checkout.total,
     deliveryFee: checkout.deliveryFee,
-    payment: "Pending",
-    paymentStatus: "Pending",
-    status: "Pending",
+    payment: paidWithLoyalty ? "Paid" : "Pending",
+    paymentStatus: paidWithLoyalty ? "Paid" : "Pending",
+    paymentMethod: paidWithLoyalty ? "Loyalty Points" : undefined,
+    paidAt: paidWithLoyalty ? new Date().toISOString() : undefined,
+    receiptNumber: paidWithLoyalty ? generateReceiptNumber() : undefined,
+    status: paidWithLoyalty ? "Processing" : "Pending",
     date: new Date().toISOString(),
   });
   await sendOrderEmails(order.payload);
+  if (paidWithLoyalty) {
+    try {
+      await sendPaymentReceiptEmail({
+        ...order.payload,
+        id: order.id,
+      });
+      order.payload = {
+        ...order.payload,
+        receiptSentAt: new Date().toISOString(),
+      };
+      await order.save();
+    } catch (error) {
+      console.error("Payment receipt email could not be sent:", error.message);
+    }
+    await User.updateOne({ _id: user._id }, { $set: { cart: [] } });
+  }
   return res.status(201).json({ status: "success", data: presentOrder(order) });
 });
 router.post("/orders/:id/cancel", auth, async (req, res) => {
@@ -411,6 +534,7 @@ router.post("/orders/:id/cancel", auth, async (req, res) => {
       });
   if (order.payload.inventoryReserved)
     await releaseInventory(order.payload.items);
+  await restoreLoyaltyRedemption(cancelled);
   order.payload = cancelled.payload;
   return res.status(200).json({ status: "success", data: presentOrder(order) });
 });
@@ -512,6 +636,8 @@ router.post("/orders/:id/status", auth, admin, async (req, res) => {
       .json({ status: "failed", message: "Order could not be updated" });
   if (req.body.status === "Cancelled" && current.payload.inventoryReserved)
     await releaseInventory(current.payload.items);
+  if (req.body.status === "Cancelled")
+    await restoreLoyaltyRedemption(order);
   return res.status(200).json({ status: "success", data: presentOrder(order) });
 });
 

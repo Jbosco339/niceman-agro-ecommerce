@@ -32,7 +32,7 @@ app.set("trust proxy", 1);
 const productionFrontendOrigin = "https://www.nicemanagro.com";
 const allowedProductionOrigins = [
   productionFrontendOrigin,
-  "https://a1raters-com-1.onrender.com",
+  "https://niceman-agro-ecommerce.onrender.com",
 ];
 const validateRequiredConfiguration = () => {
   const required = ["MONGODB_URL", "JWT_SECRET"];

@@ -11,6 +11,7 @@ import {
   LockKeyhole,
   MapPin,
   Wallet,
+  Coins,
   Truck,
   XCircle,
   AlertCircle,
@@ -22,7 +23,10 @@ import {
 import { useAuth } from "../../context/useAuth";
 import { getMyOrders } from "../../services/orderService";
 import { getCartSummary } from "../../services/cartService";
-import { getCustomerAddresses } from "../../services/customerService";
+import {
+  getCustomerAddresses,
+  getCustomerProfile,
+} from "../../services/customerService";
 import { formatCurrency } from "../../utils/formatCurrency";
 import { formatDate } from "../../utils/formatDate";
 
@@ -89,9 +93,17 @@ const initials = (name = "") =>
 
 const firstName = (name = "") => name.trim().split(/\s+/)[0] || "Customer";
 
-const StatCard = ({ title, value, description, icon: Icon, link }) => (
+const StatCard = ({
+  title,
+  value,
+  description,
+  icon: Icon,
+  link,
+  state,
+}) => (
   <Link
     to={link}
+    state={state}
     className="group rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
   >
     <div className="flex items-start justify-between">
@@ -141,11 +153,12 @@ const AccountDashboard = () => {
   };
 
   const fetchDashboard = useCallback(async () => {
-    const [ordersResult, cartResult, addressesResult] =
+    const [ordersResult, cartResult, addressesResult, profileResult] =
       await Promise.allSettled([
         getMyOrders(),
         getCartSummary(),
         getCustomerAddresses(),
+        getCustomerProfile(),
       ]);
 
     return {
@@ -161,7 +174,13 @@ const AccountDashboard = () => {
         addressesResult.status === "fulfilled"
           ? (addressesResult.value.data ?? [])
           : [],
-      failed: ordersResult.status === "rejected",
+      loyaltyBalanceKobo:
+        profileResult.status === "fulfilled"
+          ? Number(profileResult.value.data?.loyaltyBalanceKobo) || 0
+          : 0,
+      failed:
+        ordersResult.status === "rejected" ||
+        profileResult.status === "rejected",
     };
   }, []);
 
@@ -229,6 +248,14 @@ const AccountDashboard = () => {
         link: "/account/orders",
       },
       {
+        title: "Loyalty Balance",
+        value: formatCurrency((data?.loyaltyBalanceKobo ?? 0) / 100),
+        description: "Tap to apply at checkout (from ₦5,000)",
+        icon: Coins,
+        link: "/checkout",
+        state: { redeemLoyalty: true },
+      },
+      {
         title: "Pending Orders",
         value: String(pending),
         description: "Awaiting fulfilment",
@@ -276,7 +303,7 @@ const AccountDashboard = () => {
             <Skeleton className="h-32 rounded-2xl" />
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, index) => (
+              {Array.from({ length: 7 }).map((_, index) => (
                 <Skeleton key={index} className="h-36" />
               ))}
             </div>

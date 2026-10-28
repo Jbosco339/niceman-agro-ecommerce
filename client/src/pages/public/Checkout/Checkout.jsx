@@ -15,6 +15,9 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems: cartContextItems, cartTotal } = useCart();
   const { isAuthenticated, user } = useAuth();
+  const [useLoyalty, setUseLoyalty] = useState(
+    location.state?.redeemLoyalty === true,
+  );
 
   const cartItems = useMemo(
     () => location.state?.cartItems ?? cartContextItems ?? [],
@@ -24,6 +27,7 @@ const Checkout = () => {
     [
       user?._id ?? user?.id ?? "",
       cartItems.map((item) => [item.id, item.quantity]),
+      useLoyalty,
     ],
   );
   const [quoteResult, setQuoteResult] = useState(null);
@@ -75,6 +79,7 @@ const Checkout = () => {
         productId: item.id,
         quantity: item.quantity,
       })),
+      redeemLoyalty: useLoyalty,
     })
       .then(({ data }) => {
         if (active) {
@@ -94,7 +99,7 @@ const Checkout = () => {
     return () => {
       active = false;
     };
-  }, [isAuthenticated, cartItems, cartSignature]);
+  }, [isAuthenticated, cartItems, cartSignature, useLoyalty]);
 
   const formatPrice = (price) => `₦${price.toLocaleString()}`;
 
@@ -139,7 +144,19 @@ const Checkout = () => {
           quantity: item.quantity,
         })),
         customer: formData,
+        redeemLoyalty: useLoyalty,
       });
+      if (order.paymentStatus === "Paid") {
+        navigate("/checkout/order-confirmation", {
+          state: {
+            order: {
+              ...order,
+              customerName: order.customer?.name,
+            },
+          },
+        });
+        return;
+      }
       if (paymentMethod === "paystack") {
         const { data: payment } = await initializePayment({
           orderId: order.id,
@@ -638,7 +655,46 @@ const Checkout = () => {
                       {formatPrice(subtotal)}
                     </span>
                   </div>
-
+                  {serverQuote && (
+                    <div className="rounded-xl border border-green-100 bg-green-50 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-800">
+                            Loyalty balance
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {formatPrice(serverQuote.loyaltyBalance || 0)}
+                            {serverQuote.loyaltyEligible
+                              ? " available to use"
+                              : " · redeem from ₦5,000"}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={
+                            !serverQuote.loyaltyEligible ||
+                            quoteLoading ||
+                            submitting
+                          }
+                          aria-pressed={useLoyalty}
+                          onClick={() => setUseLoyalty((enabled) => !enabled)}
+                          className="rounded-lg border border-green-700 px-3 py-2 text-sm font-semibold text-green-800 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {useLoyalty ? "Remove" : "Apply"}
+                        </button>
+                      </div>
+                      {serverQuote.loyaltyDiscount > 0 && (
+                        <div className="mt-3 flex justify-between border-t border-green-100 pt-3 text-sm">
+                          <span className="text-green-800">
+                            Loyalty discount
+                          </span>
+                          <span className="font-semibold text-green-800">
+                            −{formatPrice(serverQuote.loyaltyDiscount)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="my-5 border-t border-gray-200" />

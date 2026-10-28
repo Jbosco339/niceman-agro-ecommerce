@@ -50,6 +50,12 @@ const userSchema = new mongoose.Schema({
         }],
         default: [],
     },
+    loyaltyBalanceKobo: {
+        type: Number,
+        min: 0,
+        validate: Number.isInteger,
+        default: 0,
+    },
       role:{
         type: String,
         enum: ["admin", "user"],

@@ -121,9 +121,108 @@ export const releaseExpiredReservations = async () => {
     );
     if (!order) break;
     await releaseInventory(order.payload.items);
+    await restoreLoyaltyRedemption(order);
     released += 1;
   }
   return released;
+};
+
+export const restoreLoyaltyRedemption = async (order) => {
+  const amountKobo = Number(order?.payload?.loyaltyPointsRedeemedKobo) || 0;
+  if (
+    !order ||
+    amountKobo <= 0 ||
+    order.payload.loyaltyPointsRestoredAt
+  ) {
+    return;
+  }
+
+  const claimed = await AdminRecord.findOneAndUpdate(
+    {
+      _id: order._id,
+      resource: "order",
+      "payload.status": "Cancelled",
+      "payload.loyaltyPointsRedeemedKobo": amountKobo,
+      "payload.loyaltyPointsRestoredAt": { $exists: false },
+    },
+    {
+      $set: { "payload.loyaltyPointsRestoredAt": new Date().toISOString() },
+    },
+    { returnDocument: "after" },
+  );
+  if (!claimed) return;
+
+  try {
+    const result = await User.updateOne(
+      { _id: claimed.createdBy },
+      { $inc: { loyaltyBalanceKobo: amountKobo } },
+    );
+    if (result.matchedCount !== 1) {
+      throw new Error("Customer account for loyalty refund was not found");
+    }
+  } catch (error) {
+    await AdminRecord.updateOne(
+      { _id: claimed._id },
+      { $unset: { "payload.loyaltyPointsRestoredAt": "" } },
+    );
+    throw error;
+  }
+};
+
+const awardLoyaltyForPaidOrder = async (order) => {
+  const claimingOrder = await AdminRecord.findOneAndUpdate(
+    {
+      _id: order._id,
+      resource: "order",
+      "payload.paymentStatus": "Paid",
+      "payload.loyaltyAwardStatus": "Pending",
+    },
+    {
+      $set: { "payload.loyaltyAwardStatus": "Processing" },
+    },
+    { returnDocument: "after" },
+  );
+  if (!claimingOrder) return order;
+
+  const pointsKobo = Math.round(
+    (Number(claimingOrder.payload.total) || 0) * 100 * 0.01,
+  );
+  try {
+    if (pointsKobo > 0) {
+      const result = await User.updateOne(
+        { _id: claimingOrder.createdBy },
+        { $inc: { loyaltyBalanceKobo: pointsKobo } },
+      );
+      if (result.matchedCount !== 1) {
+        throw new Error("Customer account for loyalty award was not found");
+      }
+    }
+    const awardedOrder = await AdminRecord.findOneAndUpdate(
+      {
+        _id: claimingOrder._id,
+        resource: "order",
+        "payload.loyaltyAwardStatus": "Processing",
+      },
+      {
+        $set: {
+          "payload.loyaltyPointsEarnedKobo": pointsKobo,
+          "payload.loyaltyAwardedAt": new Date().toISOString(),
+          "payload.loyaltyAwardStatus": "Awarded",
+        },
+      },
+      { returnDocument: "after" },
+    );
+    return awardedOrder || claimingOrder;
+  } catch (error) {
+    await AdminRecord.updateOne(
+      {
+        _id: claimingOrder._id,
+        "payload.loyaltyAwardStatus": "Processing",
+      },
+      { $set: { "payload.loyaltyAwardStatus": "Pending" } },
+    );
+    throw error;
+  }
 };
 
 export const generateReceiptNumber = (orderDate) => {
@@ -173,12 +272,17 @@ export const markOrderPaid = async (transaction) => {
           "payload.paystackTransactionId": String(transaction.id),
           "payload.receiptNumber": generateReceiptNumber(),
           "payload.inventoryReserved": false,
+          "payload.loyaltyAwardStatus": "Pending",
         },
       },
       { returnDocument: "after" },
     );
     if (!order) return null;
     await User.updateOne({ _id: order.createdBy }, { $set: { cart: [] } });
+  }
+
+  if (order.payload.loyaltyAwardStatus === "Pending") {
+    order = await awardLoyaltyForPaidOrder(order);
   }
 
   if (!order.payload.receiptSentAt) {
@@ -206,10 +310,15 @@ export const confirmBankTransferPayment = async (
 ) => {
   if (
     !order ||
-    order.resource !== "order" ||
-    order.payload.paymentStatus === "Paid"
+    order.resource !== "order"
   )
     return null;
+
+  if (order.payload.paymentStatus === "Paid") {
+    return order.payload.loyaltyAwardStatus === "Pending"
+      ? awardLoyaltyForPaidOrder(order)
+      : order;
+  }
 
   const confirmedOrder = await AdminRecord.findOneAndUpdate(
     {
@@ -237,6 +346,7 @@ export const confirmBankTransferPayment = async (
         "payload.paymentConfirmationDate": new Date().toISOString(),
         "payload.receiptNumber": generateReceiptNumber(),
         "payload.inventoryReserved": false,
+        "payload.loyaltyAwardStatus": "Pending",
       },
     },
     { returnDocument: "after" },
@@ -248,22 +358,23 @@ export const confirmBankTransferPayment = async (
     { _id: confirmedOrder.createdBy },
     { $set: { cart: [] } },
   );
+  const orderWithLoyalty = await awardLoyaltyForPaidOrder(confirmedOrder);
 
-  if (!confirmedOrder.payload.receiptSentAt) {
+  if (!orderWithLoyalty.payload.receiptSentAt) {
     try {
       await sendPaymentReceiptEmail({
-        ...confirmedOrder.payload,
-        id: confirmedOrder.id,
+        ...orderWithLoyalty.payload,
+        id: orderWithLoyalty.id,
       });
-      confirmedOrder.payload = {
-        ...confirmedOrder.payload,
+      orderWithLoyalty.payload = {
+        ...orderWithLoyalty.payload,
         receiptSentAt: new Date().toISOString(),
       };
-      await confirmedOrder.save();
+      await orderWithLoyalty.save();
     } catch (error) {
       console.error("Payment receipt email could not be sent:", error.message);
     }
   }
 
-  return confirmedOrder;
+  return orderWithLoyalty;
 };

@@ -25,6 +25,10 @@ In the Paystack Dashboard, configure the webhook URL as `https://<your-api-host>
 
 The frontend and API must be deployed over HTTPS for production payments and Paystack webhooks. A webhook URL on localhost is not reachable by Paystack.
 
+## Customer loyalty
+
+Customers earn loyalty credit worth 1% of the amount actually paid, rounded to the nearest kobo. Credit is added only after Paystack verifies payment or an administrator approves a reported bank transfer. Once the balance reaches NGN 5,000, it can be applied to checkout; the server caps the discount at the order subtotal. Redemption is reserved when the order is created and restored if the unpaid order is cancelled or its reservation expires. A loyalty balance that covers the entire order completes payment immediately without another payment step.
+
 Admin APIs are mounted at `/api/v1/admin`; catalog reads remain public at `/api/v1/products`, while writes require an administrator session. Admin and customer sessions use `HttpOnly` cookies and require email verification. MongoDB/Mongoose is used here: PostgreSQL row-level security and SQL parameterization do not apply. Enforce least-privilege MongoDB credentials, network restrictions, encrypted transport, and backups in the database deployment.
 
 Production uses only `https://www.nicemanagro.com` as its frontend origin. The apex host redirects to `www`; browser API calls go through the frontend origin at `/api/v1`, which Vercel proxies to the Render API. This keeps authentication cookies first-party and avoids browsers blocking cross-site cookies. Set the Render `CLIENT_URL` environment variable to exactly `https://www.nicemanagro.com`; the server refuses to start in production if it is set to another origin.

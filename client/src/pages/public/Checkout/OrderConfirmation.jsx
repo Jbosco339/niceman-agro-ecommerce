@@ -196,6 +196,17 @@ const OrderConfirmation = () => {
                 </span>
               </div>
 
+              {Number(order.loyaltyDiscount) > 0 && (
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-sm text-gray-500">
+                    Loyalty points applied
+                  </span>
+                  <span className="font-semibold text-green-700">
+                    −{formatPrice(Number(order.loyaltyDiscount))}
+                  </span>
+                </div>
+              )}
+
               {!paid && isBankTransfer && (
                 <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4">
                   <p className="text-xs font-bold uppercase tracking-widest text-green-700">

@@ -126,7 +126,9 @@ export const sendPaymentReceiptEmail = async (order) => {
             <p>Payment confirmation date: ${escapeHtml(order.paymentConfirmationDate || order.paidAt || new Date().toISOString())}</p>
             <table cellpadding="8" cellspacing="0" border="1"><thead><tr><th>Item</th><th>Qty</th><th>Unit price</th><th>Total</th></tr></thead><tbody>${orderRows(order)}</tbody></table>
             ${Number(order.deliveryFee) > 0 ? `<p>Delivery fee: NGN ${Number(order.deliveryFee).toLocaleString()}</p>` : ""}
+            ${Number(order.loyaltyDiscount) > 0 ? `<p>Loyalty discount: NGN ${Number(order.loyaltyDiscount).toLocaleString()}</p>` : ""}
             <p><strong>Total paid: NGN ${(Number(order.total) || 0).toLocaleString()}</strong></p>
+            ${Number(order.loyaltyPointsEarnedKobo) > 0 ? `<p>Loyalty points earned: NGN ${(Number(order.loyaltyPointsEarnedKobo) / 100).toLocaleString()}</p>` : ""}
             <p>Payment status: Paid</p>
             <p>You can download this receipt at any time from your <a href="${escapeHtml(process.env.CLIENT_URL || "")}/account/orders/${escapeHtml(orderId)}">order page</a>.</p>`,
     });
