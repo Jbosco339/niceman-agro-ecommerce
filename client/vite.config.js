@@ -17,31 +17,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: "prompt",
-        includeAssets: ["pwa-192.png", "pwa-512.png"],
-        manifest: {
-          name: "Niceman Agro & Farms",
-          short_name: "Niceman Agro",
-          description: "Shop agricultural products from Niceman Agro & Farms.",
-          theme_color: "#166534",
-          background_color: "#f8fafc",
-          display: "standalone",
-          start_url: "/",
-          scope: "/",
-          icons: [
-            {
-              src: "/pwa-192.png",
-              sizes: "192x192",
-              type: "image/png",
-              purpose: "any",
-            },
-            {
-              src: "/pwa-512.png",
-              sizes: "512x512",
-              type: "image/png",
-              purpose: "any maskable",
-            },
-          ],
-        },
+        manifest: false,
         workbox: {
           navigateFallbackDenylist: [/^\/api\//],
         },

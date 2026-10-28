@@ -3,10 +3,7 @@ import { Link } from "react-router-dom";
 import {
   Check,
   Cookie,
-  Download,
   RefreshCw,
-  Smartphone,
-  X,
 } from "lucide-react";
 import { registerSW } from "virtual:pwa-register";
 
@@ -22,44 +19,12 @@ const readCookieConsent = () => {
 };
 
 function PwaExperience() {
-  const isAppleMobile = /iPhone|iPad|iPod/i.test(window.navigator.userAgent);
   const [cookieConsent, setCookieConsent] = useState(readCookieConsent);
-  const [installPrompt, setInstallPrompt] = useState(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [showInstallHelp, setShowInstallHelp] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState("");
   const updateApp = useRef(null);
-
-  useEffect(() => {
-    const standaloneQuery = window.matchMedia("(display-mode: standalone)");
-    const syncInstalledState = () => {
-      setIsInstalled(
-        standaloneQuery.matches || window.navigator.standalone === true,
-      );
-    };
-    const handleInstallAvailable = (event) => {
-      event.preventDefault();
-      setInstallPrompt(event);
-    };
-    const handleInstalled = () => {
-      setInstallPrompt(null);
-      setIsInstalled(true);
-    };
-
-    syncInstalledState();
-    window.addEventListener("beforeinstallprompt", handleInstallAvailable);
-    window.addEventListener("appinstalled", handleInstalled);
-    standaloneQuery.addEventListener?.("change", syncInstalledState);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleInstallAvailable);
-      window.removeEventListener("appinstalled", handleInstalled);
-      standaloneQuery.removeEventListener?.("change", syncInstalledState);
-    };
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -110,24 +75,6 @@ function PwaExperience() {
     setCookieConsent(choice);
   };
 
-  const installApp = async () => {
-    if (!installPrompt) {
-      setShowInstallHelp(true);
-      return;
-    }
-
-    try {
-      await installPrompt.prompt();
-      const choice = await installPrompt.userChoice;
-      if (choice.outcome === "accepted") setIsInstalled(true);
-    } catch (error) {
-      console.error("Unable to start app installation:", error);
-      setShowInstallHelp(true);
-    } finally {
-      setInstallPrompt(null);
-    }
-  };
-
   const applyUpdate = async () => {
     if (!updateApp.current) return;
     setUpdating(true);
@@ -143,17 +90,6 @@ function PwaExperience() {
 
   return (
     <>
-      {!isInstalled && (
-        <button
-          type="button"
-          onClick={installApp}
-          className="fixed bottom-4 left-4 z-40 inline-flex items-center gap-2 rounded-full bg-green-800 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-green-900 focus:outline-none focus:ring-4 focus:ring-green-700/30"
-        >
-          <Download size={17} />
-          Install app
-        </button>
-      )}
-
       {cookieConsent === null && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4">
           <section
@@ -205,61 +141,6 @@ function PwaExperience() {
                 Accept & continue
               </button>
             </div>
-          </section>
-        </div>
-      )}
-
-      {showInstallHelp && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4">
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="install-help-title"
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <Smartphone className="mb-3 text-green-800" size={28} />
-                <h2
-                  id="install-help-title"
-                  className="text-xl font-bold text-slate-900"
-                >
-                  Install Niceman Agro
-                </h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowInstallHelp(false)}
-                aria-label="Close install instructions"
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              {isAppleMobile ? (
-                <>
-                  Open the Share menu in Safari and choose{" "}
-                  <strong>Add to Home Screen</strong>. Installation is
-                  available when this site is open over HTTPS.
-                </>
-              ) : (
-                <>
-                  Open your browser menu and choose{" "}
-                  <strong>Install app</strong> or{" "}
-                  <strong>Add to Home Screen</strong>. Installation is
-                  available when this site is open over HTTPS in a supported
-                  browser.
-                </>
-              )}
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowInstallHelp(false)}
-              className="mt-6 w-full rounded-lg bg-green-800 px-4 py-3 font-semibold text-white hover:bg-green-900"
-            >
-              Got it
-            </button>
           </section>
         </div>
       )}
