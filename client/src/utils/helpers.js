@@ -62,15 +62,8 @@ export const calculateSubtotal = (items = []) => {
   }, 0);
 };
 
-export const calculateDeliveryFee = (subtotal) => {
-  return Number(subtotal) >= 50000 ? 0 : 3000;
-};
-
 export const calculateOrderTotal = (items = []) => {
-  const subtotal = calculateSubtotal(items);
-  const deliveryFee = calculateDeliveryFee(subtotal);
-
-  return subtotal + deliveryFee;
+  return calculateSubtotal(items);
 };
 
 export const getStockStatus = (stock) => {

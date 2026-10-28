@@ -126,7 +126,6 @@ export const ordersSeed = [
     status: "Processing",
     paymentMethod: "Paystack",
     paymentStatus: "Paid",
-    deliveryFee: 3000,
     items: [
       { id: 1, name: "Fresh Tomatoes", quantity: 2, price: 3500 },
       { id: 2, name: "Premium Rice", quantity: 1, price: 45000 },
@@ -144,7 +143,6 @@ export const ordersSeed = [
     status: "Delivered",
     paymentMethod: "Paystack",
     paymentStatus: "Paid",
-    deliveryFee: 2500,
     items: [
       { id: 2, name: "Premium Rice", quantity: 1, price: 45000 },
       { id: 5, name: "Fresh Mangoes", quantity: 2, price: 5000 },
@@ -162,7 +160,6 @@ export const ordersSeed = [
     status: "Pending",
     paymentMethod: "Cash on Delivery",
     paymentStatus: "Pending",
-    deliveryFee: 2000,
     items: [{ id: 4, name: "Fresh Chicken", quantity: 1, price: 32000 }],
   },
   {
@@ -177,7 +174,6 @@ export const ordersSeed = [
     status: "Delivered",
     paymentMethod: "Paystack",
     paymentStatus: "Paid",
-    deliveryFee: 3000,
     items: [
       { id: 3, name: "Irish Potatoes", quantity: 2, price: 6000 },
       { id: 5, name: "Fresh Mangoes", quantity: 2, price: 5000 },
@@ -195,7 +191,6 @@ export const ordersSeed = [
     status: "Cancelled",
     paymentMethod: "Paystack",
     paymentStatus: "Paid",
-    deliveryFee: 3000,
     items: [
       { id: 1, name: "Fresh Tomatoes", quantity: 1, price: 3500 },
       { id: 3, name: "Irish Potatoes", quantity: 3, price: 6000 },

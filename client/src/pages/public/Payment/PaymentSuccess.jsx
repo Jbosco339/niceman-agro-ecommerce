@@ -9,16 +9,14 @@ export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
   const reference = searchParams.get("reference");
   const callbackState = searchParams.get("state");
+  const hasConfirmationDetails = Boolean(reference && callbackState);
   const { clearCart } = useCart();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
-    if (!reference || !callbackState) {
-      setError("Payment confirmation details are missing. Check your account orders before trying again.");
-      return () => { active = false; };
-    }
+    if (!hasConfirmationDetails) return () => { active = false; };
     verifyPayment(reference, callbackState)
       .then(({ data }) => {
         if (!active) return;
@@ -29,16 +27,22 @@ export default function PaymentSuccess() {
         if (active) setError(requestError.message || "We could not confirm this payment yet.");
       });
     return () => { active = false; };
-  }, [reference, callbackState, clearCart]);
+  }, [reference, callbackState, clearCart, hasConfirmationDetails]);
+
+  const displayError =
+    error ||
+    (!hasConfirmationDetails
+      ? "Payment confirmation details are missing. Check your account orders before trying again."
+      : "");
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-12 sm:px-6 print:bg-white print:p-0">
       <section className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow-sm sm:p-10 print:max-w-none print:shadow-none">
         {!order && !error && <p role="status" className="py-16 text-center text-gray-600">Confirming your payment…</p>}
-        {error && (
+        {displayError && (
           <div className="py-8 text-center">
             <h1 className="text-2xl font-bold text-gray-900">Payment confirmation pending</h1>
-            <p role="alert" className="mt-3 text-gray-600">{error}</p>
+            <p role="alert" className="mt-3 text-gray-600">{displayError}</p>
             <p className="mt-2 text-sm text-gray-500">Your order is only marked paid after Paystack confirms it. You can check your order history shortly.</p>
             <Link to="/account/orders" className="mt-6 inline-block rounded-lg bg-green-700 px-5 py-3 font-semibold text-white">View my orders</Link>
           </div>
@@ -62,13 +66,19 @@ export default function PaymentSuccess() {
             <h2 className="mt-6 text-lg font-bold">Payment receipt</h2>
             <div className="mt-3 divide-y divide-gray-100">
               {(order.items || []).map((item, index) => (
-                <div key={`${item.product || item.name}-${index}`} className="flex justify-between gap-4 py-3 text-sm">
-                  <span>{item.name} × {item.quantity}</span><span className="font-medium">{formatNaira(Number(item.price) * Number(item.quantity))}</span>
+                <div key={`${item.product || item.name}-${index}`} className="flex items-center gap-3 py-3 text-sm">
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="h-14 w-14 rounded-lg bg-gray-50 object-contain p-1"
+                    />
+                  )}
+                  <span className="min-w-0 flex-1">{item.name} × {item.quantity}</span><span className="font-medium">{formatNaira(Number(item.price) * Number(item.quantity))}</span>
                 </div>
               ))}
             </div>
             <div className="mt-4 space-y-2 border-t border-gray-200 pt-4 text-sm">
-              <div className="flex justify-between"><span>Delivery</span><span>{formatNaira(order.deliveryFee)}</span></div>
               <div className="flex justify-between text-lg font-bold"><span>Total paid</span><span>{formatNaira(order.total)}</span></div>
               <div className="flex justify-between"><span>Payment method</span><span>Paystack</span></div>
               <div className="flex justify-between"><span>Status</span><span className="font-semibold text-green-700">Paid</span></div>

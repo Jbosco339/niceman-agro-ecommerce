@@ -14,12 +14,6 @@ export const getCheckoutSummary = async () => {
   return get("/checkout/summary");
 };
 
-// ==================== DELIVERY ====================
-
-export const calculateDeliveryFee = async (deliveryData) => {
-  return post("/checkout/delivery-fee", deliveryData);
-};
-
 // ==================== PAYMENT ====================
 
 export const initializePayment = async (paymentData) => {
@@ -56,7 +50,6 @@ export default {
   calculateCheckout,
   createOrder,
   getCheckoutSummary,
-  calculateDeliveryFee,
   initializePayment,
   getBankTransferReference,
   submitBankTransferPayment,

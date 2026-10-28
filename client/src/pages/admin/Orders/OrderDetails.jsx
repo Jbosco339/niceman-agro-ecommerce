@@ -30,12 +30,11 @@ export default function OrderDetails() {
     ? order.customer
     : { name: order.customer ?? "—", email: order.email ?? "—" };
   const items = Array.isArray(order.items) ? order.items : [];
-  const deliveryFee = Number(order.deliveryFee ?? 0);
   const subtotal = items.reduce(
     (total, item) => total + item.price * item.quantity,
     0
   );
-  const total = Number(order.total ?? subtotal + deliveryFee);
+  const total = Number(order.total ?? subtotal);
   const canConfirmPayment =
     order.paymentStatus !== "Paid" &&
     order.status !== "Cancelled" &&
@@ -273,13 +272,6 @@ export default function OrderDetails() {
               </span>
             </div>
 
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Delivery Fee</span>
-              <span className="font-medium text-gray-900">
-                {formatCurrency(deliveryFee)}
-              </span>
-            </div>
-
             <div className="border-t pt-3">
               <div className="flex justify-between">
                 <span className="font-bold text-gray-900">
@@ -334,9 +326,16 @@ export default function OrderDetails() {
               {items.map((item, index) => (
                 <tr key={item.id ?? `${item.name}-${index}`}>
                   <td className="px-5 py-4">
-                    <p className="font-semibold text-gray-900">
-                      {item.name}
-                    </p>
+                    <div className="flex items-center gap-3">
+                      {item.image && (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="h-12 w-12 rounded-lg bg-gray-50 object-contain p-1"
+                        />
+                      )}
+                      <p className="font-semibold text-gray-900">{item.name}</p>
+                    </div>
                   </td>
 
                   <td className="px-5 py-4 text-sm text-gray-700">

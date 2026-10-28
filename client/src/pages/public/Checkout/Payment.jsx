@@ -162,8 +162,15 @@ const Payment = () => {
                 {order.items.map((item, index) => (
                   <div
                     key={item.id || index}
-                    className="flex justify-between gap-3"
+                    className="flex items-center gap-3"
                   >
+                    {item.image && (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-14 w-14 rounded-lg bg-gray-50 object-contain p-1"
+                      />
+                    )}
                     <div>
                       <p className="font-medium text-gray-800">
                         {item.name}
@@ -173,7 +180,7 @@ const Payment = () => {
                       </p>
                     </div>
 
-                    <p className="font-medium">
+                    <p className="ml-auto font-medium">
                       ₦
                       {(
                         Number(item.price) * Number(item.quantity)

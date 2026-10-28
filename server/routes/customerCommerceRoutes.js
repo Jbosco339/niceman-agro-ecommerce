@@ -76,6 +76,7 @@ const getCheckout = async (user) => {
     items: cart.map(({ product, quantity }) => ({
       product: product._id.toString(),
       name: product.name,
+      image: product.image,
       price: product.price,
       quantity,
     })),
@@ -130,6 +131,7 @@ const getCheckoutFromItems = async (items) => {
     items: cart.map(({ product, quantity }) => ({
       product: product._id.toString(),
       name: product.name,
+      image: product.image,
       price: product.price,
       quantity,
     })),

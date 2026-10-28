@@ -43,11 +43,10 @@ function OrderDetails() {
     ],
 
     subtotal: 15500,
-    deliveryFee: 1500,
     discount: 0,
   };
 
-  const total = order.subtotal + order.deliveryFee - order.discount;
+  const total = order.subtotal - order.discount;
 
   const formatPrice = (amount) =>
     `₦${amount.toLocaleString("en-NG")}`;
@@ -219,16 +218,6 @@ function OrderDetails() {
                   </span>
                 </div>
 
-                <div className="flex justify-between gap-4">
-                  <span className="text-slate-500">
-                    Delivery
-                  </span>
-
-                  <span className="font-medium text-slate-800">
-                    {formatPrice(order.deliveryFee)}
-                  </span>
-                </div>
-
                 {order.discount > 0 && (
                   <div className="flex justify-between gap-4">
                     <span className="text-slate-500">
@@ -330,4 +319,3 @@ function OrderDetails() {
 }
 
 export default OrderDetails;
-

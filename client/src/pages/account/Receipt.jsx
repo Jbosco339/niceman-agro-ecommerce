@@ -104,9 +104,16 @@ export default function Receipt() {
             <h3 className="text-lg font-bold text-gray-900">Items</h3>
             <div className="mt-3 space-y-2 text-sm">
               {(order.items || []).map((item, index) => (
-                <div key={`${item.product || item.name}-${index}`} className="flex justify-between gap-4">
+                <div key={`${item.product || item.name}-${index}`} className="flex items-center gap-3">
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="h-14 w-14 rounded-lg bg-gray-50 object-contain p-1"
+                    />
+                  )}
                   <span>{item.name} × {item.quantity}</span>
-                  <span className="font-medium">{formatNaira(Number(item.price) * Number(item.quantity))}</span>
+                  <span className="ml-auto font-medium">{formatNaira(Number(item.price) * Number(item.quantity))}</span>
                 </div>
               ))}
             </div>
@@ -114,9 +121,6 @@ export default function Receipt() {
 
           <div className="mt-6 border-t border-gray-200 pt-4 space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatNaira(order.subtotal)}</span></div>
-            {Number(order.deliveryFee) > 0 && (
-              <div className="flex justify-between"><span className="text-gray-500">Delivery Fee</span><span>{formatNaira(order.deliveryFee)}</span></div>
-            )}
             <div className="flex justify-between text-lg font-bold"><span>Total Paid</span><span className="text-green-700">{formatNaira(order.total)}</span></div>
           </div>
 

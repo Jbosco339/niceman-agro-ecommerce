@@ -9,8 +9,7 @@ function Cart() {
   const navigate = useNavigate();
 
   const subtotal = cartTotal;
-  const deliveryFee = subtotal >= 50000 ? 0 : 3000;
-  const total = subtotal + deliveryFee;
+  const total = subtotal;
 
   const handleProceedToCheckout = () => {
     const validationMessage = (() => {
@@ -41,7 +40,6 @@ function Cart() {
       state: {
         cartItems,
         subtotal,
-        deliveryFee,
         total,
       },
     });
@@ -211,12 +209,6 @@ function Cart() {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-slate-600">Delivery Fee</span>
-                <span className="font-medium text-slate-800">
-                  {deliveryFee === 0 ? "FREE" : formatCurrency(deliveryFee)}
-                </span>
-              </div>
             </div>
 
             <div className="my-4 border-t border-slate-200" />
