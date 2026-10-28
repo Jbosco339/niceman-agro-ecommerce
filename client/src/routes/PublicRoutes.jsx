@@ -38,6 +38,7 @@ import OrderDetails from "../pages/account/OrderDetails";
 import ResetPassword from "../pages/account/ResetPassword";
 import Favorites from "../pages/public/Favorites/Favorites";
 import WriteReview from "../pages/public/WriteReview";
+import PrivacyPolicy from "../pages/public/Legal/PrivacyPolicy";
 
 function PublicRoutes() {
   return (
@@ -74,6 +75,7 @@ function PublicRoutes() {
       <Route path="/BlogCategory" element={<BlogCategory />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/Contact" element={<Contact />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/faq" element={<FAQ />} />
       <Route path="/FAQ" element={<FAQ />} />
       <Route path="/categories" element={<Categories />} />

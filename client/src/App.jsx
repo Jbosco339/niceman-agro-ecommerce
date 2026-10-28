@@ -2,6 +2,7 @@ import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import AppRoutes from "./routes/AppRoutes";
 import ScrollToTop from "./components/ScrollToTop";
+import PwaExperience from "./components/PwaExperience";
 import { useLocation } from "react-router-dom";
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
   return (
     <>
       <ScrollToTop />
+      <PwaExperience />
 
       <div className="flex min-h-screen flex-col">
         {showPublicLayout && <Header />}

@@ -37,6 +37,16 @@ function PrivacyPolicy() {
             information in line with this policy. We reserve the right to update
             this policy as needed to reflect operational or legal changes.
           </p>
+          <h2 className="text-xl font-bold text-slate-900">
+            Cookies and browser storage
+          </h2>
+          <p>
+            We use essential cookies to maintain secure account sessions and
+            browser storage to remember your shopping cart, favorites, and
+            privacy preference. These functions are needed to provide the
+            services you request. This website does not use advertising
+            cookies.
+          </p>
         </div>
       </div>
     </main>
