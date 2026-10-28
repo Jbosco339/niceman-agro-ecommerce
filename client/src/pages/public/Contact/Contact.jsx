@@ -12,6 +12,7 @@ const Contact = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -32,10 +33,12 @@ const Contact = () => {
         message: "",
       });
       setFeedback({
-        type: "success",
-        message:
-          result.message || "Your message was sent successfully.",
+        type: "",
+        message: "",
       });
+      setSuccessMessage(
+        result.message || "Your message was sent successfully.",
+      );
     } catch (error) {
       setFeedback({
         type: "error",
@@ -288,14 +291,10 @@ const Contact = () => {
                 ></textarea>
               </div>
 
-              {feedback.message && (
+              {feedback.type === "error" && feedback.message && (
                 <p
-                  role={feedback.type === "error" ? "alert" : "status"}
-                  className={`rounded-lg p-3 text-sm ${
-                    feedback.type === "error"
-                      ? "bg-red-50 text-red-700"
-                      : "bg-green-50 text-green-700"
-                  }`}
+                  role="alert"
+                  className="rounded-lg bg-red-50 p-3 text-sm text-red-700"
                 >
                   {feedback.message}
                 </p>
@@ -326,6 +325,45 @@ const Contact = () => {
           </p>
         </div>
       </section>
+
+      {successMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+          <section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="contact-success-title"
+            aria-describedby="contact-success-message"
+            className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl"
+          >
+            <div
+              aria-hidden="true"
+              className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-3xl font-bold text-green-700"
+            >
+              ✓
+            </div>
+            <h2
+              id="contact-success-title"
+              className="mt-5 text-2xl font-bold text-slate-900"
+            >
+              Message sent successfully
+            </h2>
+            <p
+              id="contact-success-message"
+              className="mt-3 text-slate-600"
+            >
+              {successMessage}
+            </p>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => setSuccessMessage("")}
+              className="mt-6 rounded-lg bg-green-700 px-6 py-3 font-semibold text-white transition hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-700/20"
+            >
+              Close
+            </button>
+          </section>
+        </div>
+      )}
     </main>
   );
 };

@@ -24,9 +24,10 @@ export const forgotPassword = async (email) => {
   return post("/user/forgot-password", { email });
 };
 
-export const resetPassword = async (token, password) => {
+export const resetPassword = async (token, password, confirmPassword) => {
   return post(`/user/reset-password/${encodeURIComponent(token)}`, {
     password,
+    confirmPassword,
   });
 };
 
