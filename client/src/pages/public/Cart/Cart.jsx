@@ -1,11 +1,23 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Minus, Plus, ShoppingCart } from "lucide-react";
+import {
+  ArrowLeft,
+  Minus,
+  Plus,
+  ShoppingCart,
+  Trash2,
+} from "lucide-react";
 import { useCart } from "../../../context/CartContext";
 
 const formatCurrency = (value) => `₦${Number(value).toLocaleString("en-NG")}`;
 
 function Cart() {
-  const { cartItems, cartTotal, updateQuantity } = useCart();
+  const {
+    cartItems,
+    cartTotal,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+  } = useCart();
   const navigate = useNavigate();
 
   const subtotal = cartTotal;
@@ -85,8 +97,16 @@ function Cart() {
   return (
     <div className="min-h-screen bg-gray-50">
       <section className="bg-green-950 px-4 py-12 text-white">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <h1 className="text-3xl font-bold md:text-4xl">Shopping Cart</h1>
+          <button
+            type="button"
+            onClick={clearCart}
+            className="inline-flex items-center gap-2 rounded-lg border border-white/40 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+          >
+            <Trash2 size={16} />
+            Clear cart
+          </button>
         </div>
       </section>
 
@@ -169,27 +189,42 @@ function Cart() {
                   </div>
                 </div>
 
-                <div className="ml-21 flex items-center justify-start gap-2 sm:hidden">
+                <div className="ml-21 flex flex-wrap items-center justify-between gap-3 sm:ml-0 sm:justify-end md:ml-0">
+                  <div className="flex items-center gap-2 md:hidden">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateQuantity(item.id, item.quantity - 1)
+                      }
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-green-600 hover:text-green-700"
+                      aria-label={`Decrease quantity for ${item.name}`}
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+
+                    <span className="flex h-8 min-w-[2.1rem] items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-1 text-sm font-semibold text-slate-800">
+                      {item.quantity}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateQuantity(item.id, item.quantity + 1)
+                      }
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-green-600 hover:text-green-700"
+                      aria-label={`Increase quantity for ${item.name}`}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-green-600 hover:text-green-700"
-                    aria-label={`Decrease quantity for ${item.name}`}
+                    onClick={() => removeFromCart(item.id)}
+                    aria-label={`Remove ${item.name} from cart`}
+                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 sm:text-sm"
                   >
-                    <Minus className="h-3.5 w-3.5" />
-                  </button>
-
-                  <span className="flex h-8 min-w-[2.1rem] items-center justify-center rounded-md border border-slate-200 bg-slate-50 px-1 text-sm font-semibold text-slate-800">
-                    {item.quantity}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:border-green-600 hover:text-green-700"
-                    aria-label={`Increase quantity for ${item.name}`}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Trash2 size={15} />
+                    Remove
                   </button>
                 </div>
               </div>
