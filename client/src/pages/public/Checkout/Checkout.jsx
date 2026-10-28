@@ -13,7 +13,11 @@ import {
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { cartItems: cartContextItems, cartTotal } = useCart();
+  const {
+    cartItems: cartContextItems,
+    cartTotal,
+    clearCart,
+  } = useCart();
   const { isAuthenticated, user } = useAuth();
   const [useLoyalty, setUseLoyalty] = useState(
     location.state?.redeemLoyalty === true,
@@ -147,6 +151,7 @@ const Checkout = () => {
         redeemLoyalty: useLoyalty,
       });
       if (order.paymentStatus === "Paid") {
+        clearCart();
         navigate("/checkout/order-confirmation", {
           state: {
             order: {
