@@ -140,7 +140,7 @@ router.post("/contact", contactMessageLimiter, async (req, res) => {
   await sendContactMessageEmail({ name, email, phone, subject, message });
   return res.status(200).json({
     status: "success",
-    message: "Your message has been sent. We will be in touch soon.",
+    message: "Your message was sent successfully. We will be in touch soon.",
   });
 });
 

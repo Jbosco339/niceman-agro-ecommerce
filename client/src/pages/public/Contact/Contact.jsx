@@ -33,7 +33,8 @@ const Contact = () => {
       });
       setFeedback({
         type: "success",
-        message: result.message || "Your message has been sent.",
+        message:
+          result.message || "Your message was sent successfully.",
       });
     } catch (error) {
       setFeedback({
