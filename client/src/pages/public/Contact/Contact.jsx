@@ -1,6 +1,50 @@
+import { useState } from "react";
 import { Clock3, Mail, MapPin, Phone } from "lucide-react";
+import { sendContactMessage } from "../../../services/contactService";
 
 const Contact = () => {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState({ type: "", message: "" });
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setFeedback({ type: "", message: "" });
+    try {
+      const result = await sendContactMessage(form);
+      setForm({
+        name: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: "",
+      });
+      setFeedback({
+        type: "success",
+        message: result.message || "Your message has been sent.",
+      });
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: error.message || "Unable to send your message. Please try again.",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <main className="bg-white text-slate-800">
       {/* Hero */}
@@ -130,7 +174,7 @@ const Contact = () => {
               Fill out the form below and our team will get back to you.
             </p>
 
-            <form className="mt-8 space-y-6">
+            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
               {/* Name */}
               <div>
                 <label
@@ -142,7 +186,13 @@ const Contact = () => {
 
                 <input
                   id="name"
+                  name="name"
                   type="text"
+                  value={form.name}
+                  onChange={handleChange}
+                  autoComplete="name"
+                  maxLength={120}
+                  required
                   placeholder="Enter your full name"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
                 />
@@ -159,7 +209,13 @@ const Contact = () => {
 
                 <input
                   id="email"
+                  name="email"
                   type="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  autoComplete="email"
+                  maxLength={254}
+                  required
                   placeholder="Enter your email address"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
                 />
@@ -176,7 +232,12 @@ const Contact = () => {
 
                 <input
                   id="phone"
+                  name="phone"
                   type="tel"
+                  value={form.phone}
+                  onChange={handleChange}
+                  autoComplete="tel"
+                  maxLength={40}
                   placeholder="phone number"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
                 />
@@ -193,7 +254,12 @@ const Contact = () => {
 
                 <input
                   id="subject"
+                  name="subject"
                   type="text"
+                  value={form.subject}
+                  onChange={handleChange}
+                  maxLength={160}
+                  required
                   placeholder="What is your enquiry about?"
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
                 />
@@ -210,18 +276,37 @@ const Contact = () => {
 
                 <textarea
                   id="message"
+                  name="message"
                   rows="5"
+                  value={form.message}
+                  onChange={handleChange}
+                  maxLength={5000}
+                  required
                   placeholder="Write your message..."
                   className="w-full resize-none rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
                 ></textarea>
               </div>
 
+              {feedback.message && (
+                <p
+                  role={feedback.type === "error" ? "alert" : "status"}
+                  className={`rounded-lg p-3 text-sm ${
+                    feedback.type === "error"
+                      ? "bg-red-50 text-red-700"
+                      : "bg-green-50 text-green-700"
+                  }`}
+                >
+                  {feedback.message}
+                </p>
+              )}
+
               {/* Submit */}
               <button
                 type="submit"
-                className="w-full rounded-lg bg-green-700 px-6 py-3 font-semibold text-white transition hover:bg-green-800"
+                disabled={submitting}
+                className="w-full rounded-lg bg-green-700 px-6 py-3 font-semibold text-white transition hover:bg-green-800 disabled:cursor-wait disabled:opacity-60"
               >
-                Send Message
+                {submitting ? "Sending…" : "Send Message"}
               </button>
             </form>
           </div>

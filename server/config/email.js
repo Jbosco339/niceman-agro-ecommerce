@@ -83,6 +83,31 @@ export const sendPasswordResetEmail = async (user, resetLink) => sendEmail({
     `,
 });
 
+export const sendContactMessageEmail = async ({
+    name,
+    email,
+    phone,
+    subject,
+    message,
+}) => {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail) throw new Error("Admin email is not configured");
+
+    return sendEmail({
+        to: adminEmail,
+        replyTo: email,
+        subject: `Contact form: ${subject}`,
+        text: `New contact form message\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone || "Not provided"}\nSubject: ${subject}\n\nMessage:\n${message}`,
+        html: `<h2>New contact form message</h2>
+            <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+            <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+            <p><strong>Phone:</strong> ${escapeHtml(phone || "Not provided")}</p>
+            <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
+            <p><strong>Message:</strong></p>
+            <p>${escapeHtml(message).replace(/\r\n|\r|\n/g, "<br>")}</p>`,
+    });
+};
+
 export const sendOrderConfirmationEmail = async (order) => {
     const { email, name } = customerDetails(order);
     if (!email) throw new Error("Order confirmation email address is missing");

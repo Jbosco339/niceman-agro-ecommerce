@@ -4,6 +4,7 @@ import rateLimit from "express-rate-limit";
 import auth from "../middlewares/auth.js";
 import { AdminRecord } from "../models/AdminRecord.js";
 import { validateAdminPayload } from "../controllers/adminResourceController.js";
+import { sendContactMessageEmail } from "../config/email.js";
 
 const router = express.Router();
 const publicReadLimiter = rateLimit({
@@ -25,6 +26,16 @@ const reviewWriteLimiter = rateLimit({
     status: "failed",
     message:
       "Too many review submissions. Please wait 15 minutes before trying again.",
+  },
+});
+const contactMessageLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    status: "failed",
+    message: "Too many messages sent. Please wait before trying again.",
   },
 });
 
@@ -95,6 +106,41 @@ router.get("/website-content", publicReadLimiter, async (_req, res) => {
   return res.status(200).json({
     status: "success",
     data: record?.payload ?? {},
+  });
+});
+
+router.post("/contact", contactMessageLimiter, async (req, res) => {
+  const body = req.body ?? {};
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+  const subject =
+    typeof body.subject === "string"
+      ? body.subject.trim().replace(/[\r\n]+/g, " ")
+      : "";
+  const message = typeof body.message === "string" ? body.message.trim() : "";
+
+  if (
+    !name ||
+    name.length > 120 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+    email.length > 254 ||
+    phone.length > 40 ||
+    !subject ||
+    subject.length > 160 ||
+    !message ||
+    message.length > 5000
+  ) {
+    return res.status(400).json({
+      status: "failed",
+      message: "Enter a valid name, email, subject, and message.",
+    });
+  }
+
+  await sendContactMessageEmail({ name, email, phone, subject, message });
+  return res.status(200).json({
+    status: "success",
+    message: "Your message has been sent. We will be in touch soon.",
   });
 });
 
