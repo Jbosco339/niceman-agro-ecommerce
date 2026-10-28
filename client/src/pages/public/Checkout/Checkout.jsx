@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../../../context/CartContext";
 import { useAuth } from "../../../context/useAuth";
@@ -14,20 +14,30 @@ const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { cartItems: cartContextItems, cartTotal } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
-  const cartItems = location.state?.cartItems ?? cartContextItems ?? [];
-  const [serverQuote, setServerQuote] = useState(null);
-  const [quoteError, setQuoteError] = useState("");
-  const [quoteLoading, setQuoteLoading] = useState(false);
+  const cartItems = useMemo(
+    () => location.state?.cartItems ?? cartContextItems ?? [],
+    [location.state?.cartItems, cartContextItems],
+  );
+  const cartSignature = JSON.stringify(
+    [
+      user?._id ?? user?.id ?? "",
+      cartItems.map((item) => [item.id, item.quantity]),
+    ],
+  );
+  const [quoteResult, setQuoteResult] = useState(null);
+  const quoteMatchesCart =
+    isAuthenticated &&
+    cartItems.length > 0 &&
+    quoteResult?.signature === cartSignature;
+  const serverQuote = quoteMatchesCart ? quoteResult.data : null;
+  const quoteError = quoteMatchesCart ? quoteResult.error || "" : "";
+  const quoteLoading =
+    isAuthenticated && cartItems.length > 0 && !quoteMatchesCart;
   const subtotal =
     serverQuote?.subtotal ?? location.state?.subtotal ?? cartTotal ?? 0;
-  const deliveryFee =
-    serverQuote?.deliveryFee ??
-    location.state?.deliveryFee ??
-    (subtotal >= 50000 ? 0 : 3000);
-  const total =
-    serverQuote?.total ?? location.state?.total ?? subtotal + deliveryFee;
+  const total = serverQuote?.total ?? subtotal;
   const displayItems = serverQuote?.items ?? cartItems;
 
   const [paymentMethod, setPaymentMethod] = useState("paystack");
@@ -35,25 +45,31 @@ const Checkout = () => {
   const [submitError, setSubmitError] = useState("");
   const [bankDetails, setBankDetails] = useState(null);
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
+  const [formOverrides, setFormOverrides] = useState({
+    userKey: "",
+    values: {},
+  });
+  const userKey = user?._id ?? user?.id ?? "";
+  const customerOverrides =
+    formOverrides.userKey === userKey ? formOverrides.values : {};
+  const [defaultFirstName = "", ...defaultLastNameParts] = (user?.userName || "")
+    .trim()
+    .split(/\s+/);
+  const formData = {
+    firstName: defaultFirstName,
+    lastName: defaultLastNameParts.join(" "),
+    email: user?.email || "",
+    phone: user?.phone || "",
     address: "",
     city: "",
     state: "",
     notes: "",
-  });
+    ...customerOverrides,
+  };
 
   useEffect(() => {
-    if (!isAuthenticated || !cartItems.length) {
-      setServerQuote(null);
-      setQuoteError("");
-      return undefined;
-    }
+    if (!isAuthenticated || !cartItems.length) return undefined;
     let active = true;
-    setQuoteLoading(true);
     calculateCheckout({
       items: cartItems.map((item) => ({
         productId: item.id,
@@ -62,23 +78,23 @@ const Checkout = () => {
     })
       .then(({ data }) => {
         if (active) {
-          setServerQuote(data);
-          setQuoteError("");
+          setQuoteResult({ signature: cartSignature, data, error: "" });
         }
       })
       .catch((error) => {
-        if (active)
-          setQuoteError(
-            error.message || "We could not confirm your checkout total.",
-          );
-      })
-      .finally(() => {
-        if (active) setQuoteLoading(false);
+        if (active) {
+          setQuoteResult({
+            signature: cartSignature,
+            data: null,
+            error:
+              error.message || "We could not confirm your checkout total.",
+          });
+        }
       });
     return () => {
       active = false;
     };
-  }, [isAuthenticated, cartItems]);
+  }, [isAuthenticated, cartItems, cartSignature]);
 
   const formatPrice = (price) => `₦${price.toLocaleString()}`;
 
@@ -93,9 +109,12 @@ const Checkout = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData((previous) => ({
-      ...previous,
-      [name]: value,
+    setFormOverrides((previous) => ({
+      userKey,
+      values: {
+        ...(previous.userKey === userKey ? previous.values : {}),
+        [name]: value,
+      },
     }));
   };
 
@@ -620,19 +639,6 @@ const Checkout = () => {
                     </span>
                   </div>
 
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>Delivery</span>
-
-                    <span className="font-semibold text-gray-800">
-                      {deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)}
-                    </span>
-                  </div>
-
-                  {deliveryFee === 0 && (
-                    <p className="text-xs font-medium text-green-700">
-                      You qualify for free delivery.
-                    </p>
-                  )}
                 </div>
 
                 <div className="my-5 border-t border-gray-200" />

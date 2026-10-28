@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import {
   getOrders,
   updateOrderStatus,
-  confirmPayment,
 } from "../../../services/adminService";
 
 const formatCurrency = (amount) => `₦${amount.toLocaleString("en-NG")}`;
@@ -242,6 +241,12 @@ export default function Orders() {
                             {order.paymentReference.length > 20 && "…"}
                           </span>
                         )}
+                        {order.paymentSubmittedAt &&
+                          order.paymentStatus !== "Paid" && (
+                            <span className="mt-1 text-xs font-semibold text-blue-700">
+                              Customer reported transfer
+                            </span>
+                          )}
                       </div>
                     </td>
 

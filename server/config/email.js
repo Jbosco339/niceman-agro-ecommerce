@@ -95,7 +95,7 @@ export const sendOrderConfirmationEmail = async (order) => {
             <p>We received your order <strong>${escapeHtml(orderNumber(order))}</strong>.</p>
             <p>Payment status: ${escapeHtml(order.paymentStatus || order.payment || "Pending")}</p>
             <table cellpadding="8" cellspacing="0" border="1"><thead><tr><th>Item</th><th>Qty</th><th>Unit price</th><th>Total</th></tr></thead><tbody>${orderRows(order)}</tbody></table>
-            <p>Delivery fee: NGN ${(Number(order.deliveryFee) || 0).toLocaleString()}</p>
+            ${Number(order.deliveryFee) > 0 ? `<p>Delivery fee: NGN ${Number(order.deliveryFee).toLocaleString()}</p>` : ""}
             <p><strong>Order total: NGN ${(Number(order.total) || 0).toLocaleString()}</strong></p>
             <p>We will notify you when your order status changes.</p>`,
     });
@@ -104,21 +104,28 @@ export const sendOrderConfirmationEmail = async (order) => {
 export const sendPaymentReceiptEmail = async (order) => {
     const { email, name } = customerDetails(order);
     if (!email) throw new Error("Receipt email address is missing");
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail) throw new Error("Admin email is not configured");
     const receiptNumber = order.receiptNumber || `RCP-${Date.now()}`;
     const orderId = order.id || "";
 
     return sendEmail({
         to: email,
+        ...(adminEmail.toLowerCase() !== email.toLowerCase()
+            ? { bcc: adminEmail }
+            : {}),
         subject: `Payment receipt for order ${escapeHtml(orderNumber(order))}`,
         html: `<h2>Payment received</h2>
             <p>Hello ${escapeHtml(name || "Customer")},</p>
-            <p>We received your payment for order <strong>${escapeHtml(order.orderNumber || "")}</strong>.</p>
-            <p>Payment reference: ${escapeHtml(order.paymentReference || "")}</p>
+            <p>We received your payment for order <strong>${escapeHtml(order.orderNumber || orderNumber(order))}</strong>.</p>
+            <p>Order reference: ${escapeHtml(order.orderNumber || "")}</p>
+            <p>Payment reference: ${escapeHtml(order.paymentReference || order.transactionReference || "")}</p>
+            ${order.transactionReference && order.paymentReference ? `<p>Bank transaction reference: ${escapeHtml(order.transactionReference)}</p>` : ""}
             <p>Receipt number: <strong>${escapeHtml(receiptNumber)}</strong></p>
             <p>Payment method: ${escapeHtml(order.paymentMethod || "Bank Transfer")}</p>
             <p>Payment confirmation date: ${escapeHtml(order.paymentConfirmationDate || order.paidAt || new Date().toISOString())}</p>
             <table cellpadding="8" cellspacing="0" border="1"><thead><tr><th>Item</th><th>Qty</th><th>Unit price</th><th>Total</th></tr></thead><tbody>${orderRows(order)}</tbody></table>
-            <p>Delivery fee: NGN ${(Number(order.deliveryFee) || 0).toLocaleString()}</p>
+            ${Number(order.deliveryFee) > 0 ? `<p>Delivery fee: NGN ${Number(order.deliveryFee).toLocaleString()}</p>` : ""}
             <p><strong>Total paid: NGN ${(Number(order.total) || 0).toLocaleString()}</strong></p>
             <p>Payment status: Paid</p>
             <p>You can download this receipt at any time from your <a href="${escapeHtml(process.env.CLIENT_URL || "")}/account/orders/${escapeHtml(orderId)}">order page</a>.</p>`,

@@ -126,6 +126,15 @@ export const releaseExpiredReservations = async () => {
   return released;
 };
 
+export const generateReceiptNumber = (orderDate) => {
+  const date = orderDate ? new Date(orderDate) : new Date();
+  const yy = String(date.getFullYear()).slice(-2);
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const seq = crypto.randomBytes(3).toString("hex").toUpperCase();
+  return `RCP-${yy}${mm}${dd}-${seq}`;
+};
+
 export const markOrderPaid = async (transaction) => {
   if (
     !transaction ||
@@ -162,6 +171,7 @@ export const markOrderPaid = async (transaction) => {
           "payload.status": "Processing",
           "payload.paidAt": transaction.paid_at || new Date().toISOString(),
           "payload.paystackTransactionId": String(transaction.id),
+          "payload.receiptNumber": generateReceiptNumber(),
           "payload.inventoryReserved": false,
         },
       },
@@ -173,7 +183,10 @@ export const markOrderPaid = async (transaction) => {
 
   if (!order.payload.receiptSentAt) {
     try {
-      await sendPaymentReceiptEmail(order.payload);
+      await sendPaymentReceiptEmail({
+        ...order.payload,
+        id: order.id,
+      });
       order.payload = {
         ...order.payload,
         receiptSentAt: new Date().toISOString(),
@@ -184,15 +197,6 @@ export const markOrderPaid = async (transaction) => {
     }
   }
   return order;
-};
-
-export const generateReceiptNumber = (orderDate) => {
-  const date = orderDate ? new Date(orderDate) : new Date();
-  const yy = String(date.getFullYear()).slice(-2);
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  const seq = crypto.randomBytes(3).toString("hex").toUpperCase();
-  return `RCP-${yy}${mm}${dd}-${seq}`;
 };
 
 export const confirmBankTransferPayment = async (
@@ -247,7 +251,10 @@ export const confirmBankTransferPayment = async (
 
   if (!confirmedOrder.payload.receiptSentAt) {
     try {
-      await sendPaymentReceiptEmail(confirmedOrder.payload);
+      await sendPaymentReceiptEmail({
+        ...confirmedOrder.payload,
+        id: confirmedOrder.id,
+      });
       confirmedOrder.payload = {
         ...confirmedOrder.payload,
         receiptSentAt: new Date().toISOString(),

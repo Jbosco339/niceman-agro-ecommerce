@@ -201,6 +201,20 @@ export default function OrderDetails() {
               </p>
             </div>
 
+            {order.paymentSubmittedAt && order.paymentStatus !== "Paid" && (
+              <div className="rounded-lg bg-blue-50 p-3">
+                <p className="text-xs font-semibold uppercase text-blue-700">
+                  Customer reported bank transfer
+                </p>
+                <p className="mt-1 text-sm text-blue-900">
+                  {new Date(order.paymentSubmittedAt).toLocaleString()}
+                </p>
+                <p className="mt-1 text-xs text-blue-700">
+                  Payment remains pending until you verify and approve it.
+                </p>
+              </div>
+            )}
+
             {order.paidAt && (
               <div>
                 <p className="text-xs font-semibold uppercase text-gray-400">
@@ -366,9 +380,9 @@ export default function OrderDetails() {
             </h3>
 
             <p className="mb-4 text-sm text-gray-600">
-              Enter the transaction reference from your bank to confirm this
-              payment. This will mark the order as paid and send the official
-              receipt to the customer.
+              Verify the transfer before approving it. This will mark the
+              order as paid and email the official receipt to the customer and
+              admin.
             </p>
 
             <div className="mb-4">

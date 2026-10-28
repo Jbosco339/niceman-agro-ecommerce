@@ -114,7 +114,9 @@ export default function Receipt() {
 
           <div className="mt-6 border-t border-gray-200 pt-4 space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatNaira(order.subtotal)}</span></div>
-            <div className="flex justify-between"><span className="text-gray-500">Delivery Fee</span><span>{formatNaira(order.deliveryFee)}</span></div>
+            {Number(order.deliveryFee) > 0 && (
+              <div className="flex justify-between"><span className="text-gray-500">Delivery Fee</span><span>{formatNaira(order.deliveryFee)}</span></div>
+            )}
             <div className="flex justify-between text-lg font-bold"><span>Total Paid</span><span className="text-green-700">{formatNaira(order.total)}</span></div>
           </div>
 

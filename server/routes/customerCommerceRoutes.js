@@ -72,15 +72,6 @@ const getCartData = async (user) => {
 
 const getCheckout = async (user) => {
   const { cart, subtotal } = await getCartData(user);
-  if (process.env.DELIVERY_FEE === undefined) {
-    const error = new Error("Delivery pricing is not configured");
-    error.statusCode = 503;
-    throw error;
-  }
-  const deliveryFee = Number(process.env.DELIVERY_FEE);
-  if (!Number.isFinite(deliveryFee) || deliveryFee < 0) {
-    throw new Error("DELIVERY_FEE must be a non-negative number");
-  }
   return {
     items: cart.map(({ product, quantity }) => ({
       product: product._id.toString(),
@@ -89,8 +80,8 @@ const getCheckout = async (user) => {
       quantity,
     })),
     subtotal,
-    deliveryFee,
-    total: subtotal + deliveryFee,
+    deliveryFee: 0,
+    total: subtotal,
   };
 };
 
@@ -130,14 +121,7 @@ const getCheckoutFromItems = async (items) => {
     }
     cart.push({ product, quantity });
   }
-  if (process.env.DELIVERY_FEE === undefined) {
-    const error = new Error("Delivery pricing is not configured");
-    error.statusCode = 503;
-    throw error;
-  }
-  const deliveryFee = Number(process.env.DELIVERY_FEE);
-  if (!Number.isFinite(deliveryFee) || deliveryFee < 0)
-    throw new Error("DELIVERY_FEE must be a non-negative number");
+  const deliveryFee = 0;
   const subtotal = cart.reduce(
     (sum, entry) => sum + entry.product.price * entry.quantity,
     0,
@@ -179,6 +163,9 @@ const createReservedOrder = async (user, checkout, payload) => {
     throw error;
   }
 };
+
+const createOrderNumber = () =>
+  `NA-${Date.now()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
 
 const updateCartItem = async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.productId)) {
@@ -261,26 +248,8 @@ router.post(
   "/checkout/delivery-fee",
   auth,
   checkoutLimiter,
-  async (req, res) => {
-    if (process.env.DELIVERY_FEE === undefined) {
-      return res
-        .status(503)
-        .json({
-          status: "failed",
-          message: "Delivery pricing is not configured",
-        });
-    }
-    const deliveryFee = Number(process.env.DELIVERY_FEE);
-    if (!Number.isFinite(deliveryFee) || deliveryFee < 0) {
-      return res
-        .status(503)
-        .json({
-          status: "failed",
-          message: "Delivery pricing is not configured",
-        });
-    }
-    return res.status(200).json({ status: "success", data: { deliveryFee } });
-  },
+  async (_req, res) =>
+    res.status(200).json({ status: "success", data: { deliveryFee: 0 } }),
 );
 router.post("/checkout/order", auth, checkoutLimiter, async (req, res) => {
   const user = await User.findById(req.user._id);
@@ -322,7 +291,7 @@ router.post("/checkout/order", auth, checkoutLimiter, async (req, res) => {
     },
     notes:
       typeof details.notes === "string" ? details.notes.slice(0, 1000) : "",
-    orderNumber: `NA-${Date.now()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`,
+    orderNumber: createOrderNumber(),
     subtotal: checkout.subtotal,
     total: checkout.total,
     deliveryFee: checkout.deliveryFee,
@@ -378,6 +347,8 @@ router.post("/orders", auth, checkoutLimiter, async (req, res) => {
   const order = await createReservedOrder(user, checkout, {
     customer: user.userName,
     email: user.email,
+    orderNumber: createOrderNumber(),
+    subtotal: checkout.subtotal,
     total: checkout.total,
     deliveryFee: checkout.deliveryFee,
     payment: "Pending",
@@ -683,7 +654,9 @@ router.post(
     if (
       order.payload.paymentStatus === "Paid" ||
       order.payload.status === "Cancelled" ||
-      !order.payload.inventoryReserved
+      !order.payload.inventoryReserved ||
+      (order.payload.paymentMethod &&
+        order.payload.paymentMethod !== "Bank Transfer")
     ) {
       return res
         .status(409)
@@ -692,39 +665,125 @@ router.post(
           message: "This order is no longer available for payment",
         });
     }
-    let paymentReference = order.payload.paymentReference;
-    if (!paymentReference) {
-      paymentReference = `BT-${crypto.randomUUID()}`;
-      await AdminRecord.updateOne(
-        {
-          _id: order._id,
-          resource: "order",
-          "payload.status": "Pending",
-          "payload.paymentStatus": "Pending",
-          "payload.inventoryReserved": true,
+    let updatedOrder = await AdminRecord.findOneAndUpdate(
+      {
+        _id: order._id,
+        resource: "order",
+        "payload.paymentStatus": "Pending",
+        "payload.status": { $ne: "Cancelled" },
+        "payload.inventoryReserved": true,
+        ...(!order.payload.paymentReference && {
           "payload.paymentReference": { $exists: false },
+        }),
+      },
+      {
+        $set: {
+          ...(!order.payload.paymentReference && {
+            "payload.paymentReference": `BT-${crypto.randomUUID()}`,
+          }),
+          "payload.paymentMethod": "Bank Transfer",
+          "payload.reservationExpiresAt": new Date(
+            Date.now() + 24 * 60 * 60 * 1000,
+          ),
         },
-        {
-          $set: {
-            "payload.paymentReference": paymentReference,
-            "payload.paymentMethod": "Bank Transfer",
-          },
-        },
-      );
+      },
+      { returnDocument: "after" },
+    );
+    if (!updatedOrder && !order.payload.paymentReference) {
+      updatedOrder = await AdminRecord.findOne({
+        ...ownedOrder(order.id, req.user._id),
+        "payload.paymentStatus": "Pending",
+        "payload.status": { $ne: "Cancelled" },
+        "payload.inventoryReserved": true,
+        "payload.paymentReference": { $exists: true },
+      });
     }
+    if (!updatedOrder?.payload.paymentReference) {
+      return res
+        .status(409)
+        .json({
+          status: "failed",
+          message: "This order is no longer available for bank transfer",
+        });
+    }
+    const paymentReference = updatedOrder.payload.paymentReference;
     const bankDetails = getBankDetails();
     return res.status(200).json({
       status: "success",
       data: {
-        orderId: order.id,
-        orderNumber: order.payload.orderNumber,
+        orderId: updatedOrder.id,
+        orderNumber: updatedOrder.payload.orderNumber,
         paymentReference,
-        total: order.payload.total,
-        deliveryFee: order.payload.deliveryFee,
+        total: updatedOrder.payload.total,
+        deliveryFee: updatedOrder.payload.deliveryFee,
         bankDetails,
-        customerName: order.payload.customer?.name || order.payload.customer,
-        customerEmail: order.payload.email,
+        customerName:
+          updatedOrder.payload.customer?.name || updatedOrder.payload.customer,
+        customerEmail: updatedOrder.payload.email,
       },
+    });
+  },
+);
+
+router.post(
+  "/orders/:id/payment-submitted",
+  auth,
+  checkoutLimiter,
+  async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res
+        .status(400)
+        .json({ status: "failed", message: "Invalid order id" });
+    }
+    const order = await AdminRecord.findOne(
+      ownedOrder(req.params.id, req.user._id),
+    );
+    if (!order) {
+      return res
+        .status(404)
+        .json({ status: "failed", message: "Order not found" });
+    }
+    if (
+      order.payload.paymentMethod !== "Bank Transfer" ||
+      !order.payload.paymentReference ||
+      order.payload.paymentStatus === "Paid" ||
+      order.payload.status === "Cancelled" ||
+      !order.payload.inventoryReserved
+    ) {
+      return res.status(409).json({
+        status: "failed",
+        message: "This order is not awaiting a bank transfer payment",
+      });
+    }
+    const updatedOrder = await AdminRecord.findOneAndUpdate(
+      {
+        ...ownedOrder(order.id, req.user._id),
+        "payload.paymentMethod": "Bank Transfer",
+        "payload.paymentReference": { $exists: true },
+        "payload.paymentStatus": "Pending",
+        "payload.status": { $ne: "Cancelled" },
+        "payload.inventoryReserved": true,
+        "payload.paymentSubmittedAt": { $exists: false },
+      },
+      { $set: { "payload.paymentSubmittedAt": new Date().toISOString() } },
+      { returnDocument: "after" },
+    );
+    if (updatedOrder) {
+      return res
+        .status(200)
+        .json({ status: "success", data: presentOrder(updatedOrder) });
+    }
+    const latestOrder = await AdminRecord.findOne(
+      ownedOrder(order.id, req.user._id),
+    );
+    if (latestOrder?.payload.paymentSubmittedAt) {
+      return res
+        .status(200)
+        .json({ status: "success", data: presentOrder(latestOrder) });
+    }
+    return res.status(409).json({
+      status: "failed",
+      message: "This order is no longer awaiting payment confirmation",
     });
   },
 );

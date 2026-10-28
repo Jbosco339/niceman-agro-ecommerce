@@ -30,6 +30,10 @@ const clientDistPath = path.resolve(__dirname, "../client/dist");
 const app = express();
 app.set("trust proxy", 1);
 const productionFrontendOrigin = "https://www.nicemanagro.com";
+const allowedProductionOrigins = [
+  productionFrontendOrigin,
+  "https://a1raters-com-1.onrender.com",
+];
 const validateRequiredConfiguration = () => {
   const required = ["MONGODB_URL", "JWT_SECRET"];
   if (process.env.NODE_ENV === "production") {
@@ -52,11 +56,12 @@ const validateRequiredConfiguration = () => {
     );
   if (
     process.env.NODE_ENV === "production" &&
-    process.env.CLIENT_URL?.trim().replace(/\/+$/, "") !==
-      productionFrontendOrigin
+    !allowedProductionOrigins.includes(
+      process.env.CLIENT_URL?.trim().replace(/\/+$/, ""),
+    )
   ) {
     throw new Error(
-      `CLIENT_URL must be exactly ${productionFrontendOrigin} in production`,
+      `CLIENT_URL must be one of ${allowedProductionOrigins.join(", ")} in production`,
     );
   }
 };
@@ -72,7 +77,7 @@ const normalizeOrigin = (value) => {
 
 const clientOrigins =
   process.env.NODE_ENV === "production"
-    ? [productionFrontendOrigin]
+    ? allowedProductionOrigins
     : [
         normalizeOrigin(process.env.CLIENT_URL),
         normalizeOrigin(process.env.VITE_CLIENT_URL),

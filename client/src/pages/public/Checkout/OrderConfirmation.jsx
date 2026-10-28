@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { submitBankTransferPayment } from "../../../services/checkoutService";
 
 const OrderConfirmation = () => {
   const location = useLocation();
 
-  const order = location.state?.order;
+  const [order, setOrder] = useState(location.state?.order);
+  const [submittingPayment, setSubmittingPayment] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   if (!order) {
     return (
@@ -41,8 +45,26 @@ const OrderConfirmation = () => {
   const isBankTransfer = order.paymentMethod === "Bank Transfer";
   const paid = order.paymentStatus === "Paid";
   const pendingVerification = !paid && isBankTransfer;
+  const paymentSubmitted = Boolean(order.paymentSubmittedAt);
 
   const formatPrice = (price) => `₦${price.toLocaleString()}`;
+
+  const handlePaymentSubmitted = async () => {
+    if (!order.id) {
+      setSubmitError("We could not find this order. Please check your orders.");
+      return;
+    }
+    setSubmittingPayment(true);
+    setSubmitError("");
+    try {
+      const { data } = await submitBankTransferPayment(order.id);
+      setOrder((current) => ({ ...current, ...data }));
+    } catch (error) {
+      setSubmitError(error.message || "We could not update your payment status.");
+    } finally {
+      setSubmittingPayment(false);
+    }
+  };
 
   const bankDetails = order.bankDetails ?? {
     accountName: "Niceman Agro & Farms",
@@ -63,7 +85,9 @@ const OrderConfirmation = () => {
             {paid
               ? "Order Confirmed!"
               : pendingVerification
-                ? "Payment Pending Verification"
+                ? paymentSubmitted
+                  ? "Payment Reported — Awaiting Approval"
+                  : "Complete Your Bank Transfer"
                 : "Order Received"}
           </h1>
 
@@ -71,7 +95,9 @@ const OrderConfirmation = () => {
             {paid
               ? "Thank you for your order. Your payment has been received and we will begin processing it shortly."
               : pendingVerification
-                ? "Thank you for your order. Your order has been received and is awaiting payment verification."
+                ? paymentSubmitted
+                  ? "Your payment status is still pending. An administrator will verify your transfer before approving the payment."
+                  : "Review the order below, transfer the exact total to the account, then let us know when you have paid."
                 : "Thank you for your order. Payment is still pending; we will process it after payment is confirmed."}
           </p>
         </div>
@@ -208,6 +234,31 @@ const OrderConfirmation = () => {
                       </span>
                     </div>
                   </div>
+
+                  {!paymentSubmitted && (
+                    <div className="mt-5 border-t border-green-200 pt-4">
+                      <p className="text-sm text-gray-700">
+                        After completing the transfer, let us know so our admin
+                        can verify it. Your payment remains pending until
+                        approval.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handlePaymentSubmitted}
+                        disabled={submittingPayment}
+                        className="mt-3 w-full rounded-lg bg-green-700 px-5 py-3 font-bold text-white transition hover:bg-green-800 disabled:cursor-wait disabled:opacity-60"
+                      >
+                        {submittingPayment
+                          ? "Submitting…"
+                          : "I've Paid — Notify Admin"}
+                      </button>
+                      {submitError && (
+                        <p role="alert" className="mt-3 text-sm text-red-700">
+                          {submitError}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -247,12 +298,15 @@ const OrderConfirmation = () => {
             {!paid && (
               <div className="rounded-xl bg-yellow-50 p-4 text-center">
                 <p className="font-bold text-yellow-800">
-                  Payment is being verified.
+                  {paymentSubmitted
+                    ? "Payment report received — awaiting admin approval."
+                    : "Payment is pending."}
                 </p>
 
                 <p className="mt-1 text-sm text-yellow-700">
-                  Your order will be confirmed once your bank transfer is
-                  verified. This usually takes up to 24 hours.
+                  {paymentSubmitted
+                    ? "Your payment status remains pending until an administrator verifies the transfer."
+                    : "After transferring, use the button above to notify us. An administrator will verify your payment."}
                 </p>
               </div>
             )}

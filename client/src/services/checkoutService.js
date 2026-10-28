@@ -30,6 +30,10 @@ export const getBankTransferReference = async (orderId) => {
   return post("/payments/bank-transfer/reference", { orderId });
 };
 
+export const submitBankTransferPayment = async (orderId) => {
+  return post(`/orders/${encodeURIComponent(orderId)}/payment-submitted`);
+};
+
 export const getBankDetails = async () => {
   return get("/payments/bank-transfer/details");
 };
@@ -55,6 +59,7 @@ export default {
   calculateDeliveryFee,
   initializePayment,
   getBankTransferReference,
+  submitBankTransferPayment,
   getBankDetails,
   verifyPayment,
   downloadReceipt,

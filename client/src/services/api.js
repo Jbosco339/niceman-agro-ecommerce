@@ -20,7 +20,8 @@ const getDefaultApiBase = () => {
 const configuredApiBase = import.meta.env.VITE_API_URL?.trim();
 const usesCanonicalProductionFrontend =
   typeof window !== "undefined" &&
-  window.location.hostname.toLowerCase() === "www.nicemanagro.com";
+  (window.location.hostname.toLowerCase() === "www.nicemanagro.com" ||
+   window.location.hostname.toLowerCase() === "a1raters-com-1.onrender.com");
 const productionApiBase = "https://www.nicemanagro.com/api/v1";
 const isLocalBrowser =
   typeof window !== "undefined" &&
