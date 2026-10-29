@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  Check,
-  Cookie,
-  RefreshCw,
-} from "lucide-react";
-import { registerSW } from "virtual:pwa-register";
+import { Check, Cookie, RefreshCw } from "lucide-react";
 
 const CONSENT_STORAGE_KEY = "niceman-cookie-consent";
 
@@ -20,44 +15,16 @@ const readCookieConsent = () => {
 
 function PwaExperience() {
   const [cookieConsent, setCookieConsent] = useState(readCookieConsent);
-  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [updateAvailable] = useState(false);
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState("");
   const updateApp = useRef(null);
 
   useEffect(() => {
-    let active = true;
-    let updateCheck;
-
-    try {
-      updateApp.current = registerSW({
-        immediate: true,
-        onNeedRefresh() {
-          if (!active) return;
-          setUpdateAvailable(true);
-          setShowUpdatePrompt(true);
-        },
-        onRegisteredSW(_serviceWorkerUrl, registration) {
-          if (!registration) return;
-          updateCheck = window.setInterval(() => {
-            registration.update().catch((error) => {
-              console.error("Unable to check for app updates:", error);
-            });
-          }, 60 * 1000);
-        },
-        onRegisterError(error) {
-          console.error("Unable to register the app service worker:", error);
-        },
-      });
-    } catch (error) {
-      console.error("Unable to initialize app updates:", error);
-    }
-
-    return () => {
-      active = false;
-      if (updateCheck) window.clearInterval(updateCheck);
-    };
+    // PWA is intentionally disabled for local development.
+    // The previous registerSW implementation remains here for future restoration.
+    return () => {};
   }, []);
 
   useEffect(() => {
@@ -91,7 +58,7 @@ function PwaExperience() {
   return (
     <>
       {cookieConsent === null && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4">
+        <div className="fixed inset-0 z-70 flex items-center justify-center bg-slate-950/60 p-4">
           <section
             role="dialog"
             aria-modal="true"
@@ -111,8 +78,8 @@ function PwaExperience() {
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   We use essential browser storage and cookies to keep your
-                  account secure and remember your cart and preferences. You
-                  can read how we handle personal information in our{" "}
+                  account secure and remember your cart and preferences. You can
+                  read how we handle personal information in our{" "}
                   <Link
                     to="/privacy"
                     onClick={() => saveCookieConsent("essential")}
@@ -146,7 +113,7 @@ function PwaExperience() {
       )}
 
       {showUpdatePrompt && updateAvailable && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4">
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/60 p-4">
           <section
             role="alertdialog"
             aria-modal="true"

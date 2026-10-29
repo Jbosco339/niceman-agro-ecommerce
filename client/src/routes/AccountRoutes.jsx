@@ -8,6 +8,7 @@ import Login from "../pages/account/Login";
 import Register from "../pages/account/Register";
 import ChangePassword from "../pages/account/ChangePassword";
 import SavedAddresses from "../pages/account/SavedAddresses";
+import Favorites from "../pages/public/Favorites/Favorites";
 
 function AccountRoutes() {
   return (
@@ -18,6 +19,7 @@ function AccountRoutes() {
       <Route path="dashboard" element={<AccountDashboard />} />
       <Route path="profile" element={<Profile />} />
       <Route path="orders" element={<MyOrders />} />
+      <Route path="wishlist" element={<Favorites />} />
       <Route path="orders/:orderId" element={<OrderDetails />} />
       <Route path="orders/:orderId/receipt" element={<Receipt />} />
       <Route path="change-password" element={<ChangePassword />} />

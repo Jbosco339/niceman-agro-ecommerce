@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Heart, Search } from "lucide-react";
 import { useFavorites } from "../../../context/FavoritesContext";
+import AccountNavigation from "../../account/AccountNavigation";
 
 function formatPrice(price) {
   return `₦${Number(price).toLocaleString("en-NG")}`;
@@ -22,6 +23,8 @@ function Favorites() {
 
       <section className="py-10 sm:py-14">
         <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
+          <AccountNavigation />
+
           {favorites.length === 0 ? (
             <div className="rounded-lg border border-slate-200 bg-white px-6 py-16 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-700">

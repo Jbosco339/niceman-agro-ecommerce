@@ -1,66 +1,105 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getCustomerProfile } from "../../services/customerService";
+import AccountNavigation from "./AccountNavigation";
 
-function Profile() {
-  const [profile, setProfile] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    email: "johndoe@example.com",
-    phone: "+234 800 000 0000",
+const emptyProfile = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  address: "",
+  city: "",
+  state: "",
+};
+
+const splitUserName = (name = "") => {
+  const trimmed = name.trim();
+
+  if (!trimmed) {
+    return { firstName: "", lastName: "" };
+  }
+
+  const parts = trimmed.split(/\s+/);
+
+  return {
+    firstName: parts[0] || "",
+    lastName: parts.slice(1).join(" ") || "",
+  };
+};
+
+const buildProfileFromUser = (user = {}) => {
+  const userName = typeof user.userName === "string" ? user.userName : "";
+  const { firstName, lastName } = splitUserName(userName);
+
+  return {
+    firstName,
+    lastName,
+    email: user.email || "",
+    phone: user.phone || "",
     address: "",
     city: "",
     state: "",
-  });
-
-  const [message, setMessage] = useState("");
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setProfile((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
   };
+};
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+function Profile() {
+  const [profile, setProfile] = useState(emptyProfile);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-    // Frontend only for now.
-    // Backend/profile API can be connected later.
-    setMessage("Profile information updated successfully.");
+  useEffect(() => {
+    let active = true;
 
-    setTimeout(() => {
-      setMessage("");
-    }, 3000);
-  };
+    const fetchProfile = async () => {
+      if (!active) return;
+
+      setError("");
+      setLoading(true);
+
+      try {
+        const { data } = await getCustomerProfile();
+        const nextProfile = buildProfileFromUser(data ?? {});
+        if (active) {
+          setProfile(nextProfile);
+        }
+      } catch (loadError) {
+        if (!active) return;
+        setError(
+          loadError?.message || "Unable to load your profile right now.",
+        );
+        setProfile(emptyProfile);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void fetchProfile();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const profileName = [profile.firstName, profile.lastName]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <main className="min-h-screen bg-slate-50 py-10">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-
-        {/* Breadcrumb */}
         <div className="mb-8 flex items-center gap-2 text-sm text-slate-500">
-          <Link
-            to="/"
-            className="transition hover:text-green-700"
-          >
+          <Link to="/" className="transition hover:text-green-700">
             Home
           </Link>
 
           <span>/</span>
 
-          <span className="font-medium text-slate-700">
-            Profile
-          </span>
+          <span className="font-medium text-slate-700">Profile</span>
         </div>
 
-        {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-800">
-            My Profile
-          </h1>
+          <h1 className="text-3xl font-bold text-slate-800">My Profile</h1>
 
           <p className="mt-2 text-slate-500">
             Manage your personal information and account details.
@@ -68,21 +107,23 @@ function Profile() {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-4">
-
-          {/* Account Sidebar */}
           <aside className="rounded-xl bg-white p-6 shadow-sm">
             <div className="mb-6 flex flex-col items-center text-center">
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-green-100 text-3xl font-bold text-green-700">
-                JD
+                {profileName
+                  ? profileName
+                      .split(" ")
+                      .slice(0, 2)
+                      .map((part) => part.charAt(0).toUpperCase())
+                      .join("") || "?"
+                  : "?"}
               </div>
 
               <h2 className="mt-4 text-lg font-semibold text-slate-800">
-                John Doe
+                {profileName || "Customer"}
               </h2>
 
-              <p className="text-sm text-slate-500">
-                Customer
-              </p>
+              <p className="text-sm text-slate-500">Customer</p>
             </div>
 
             <nav className="space-y-2">
@@ -106,199 +147,123 @@ function Profile() {
               >
                 My Orders
               </Link>
+
+              <Link
+                to="/account/wishlist"
+                className="block rounded-lg px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-green-50 hover:text-green-700"
+              >
+                Wishlist
+              </Link>
             </nav>
           </aside>
 
-          {/* Profile Content */}
           <section className="lg:col-span-3">
-            <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
+            <AccountNavigation />
 
+            <div className="rounded-xl bg-white p-6 shadow-sm sm:p-8">
               <div className="mb-8 border-b border-slate-200 pb-6">
                 <h2 className="text-xl font-semibold text-slate-800">
                   Personal Information
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Update your personal details below.
+                  Your personal details from your account.
                 </p>
               </div>
 
-              {message && (
-                <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
-                  {message}
+              {error && (
+                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  {error}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              {loading ? (
+                <div className="space-y-6">
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="h-12 animate-pulse rounded-lg bg-slate-200" />
+                    <div className="h-12 animate-pulse rounded-lg bg-slate-200" />
+                  </div>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="h-12 animate-pulse rounded-lg bg-slate-200" />
+                    <div className="h-12 animate-pulse rounded-lg bg-slate-200" />
+                  </div>
+                  <div className="h-12 animate-pulse rounded-lg bg-slate-200" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <label
+                        htmlFor="firstName"
+                        className="mb-2 block text-sm font-medium text-slate-700"
+                      >
+                        First Name
+                      </label>
 
-                {/* Name */}
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div>
-                    <label
-                      htmlFor="firstName"
-                      className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                      First Name
-                    </label>
+                      <input
+                        id="firstName"
+                        type="text"
+                        value={profile.firstName}
+                        readOnly
+                        className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none"
+                      />
+                    </div>
 
-                    <input
-                      id="firstName"
-                      name="firstName"
-                      type="text"
-                      value={profile.firstName}
-                      onChange={handleChange}
-                      className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
-                    />
+                    <div>
+                      <label
+                        htmlFor="lastName"
+                        className="mb-2 block text-sm font-medium text-slate-700"
+                      >
+                        Last Name
+                      </label>
+
+                      <input
+                        id="lastName"
+                        type="text"
+                        value={profile.lastName}
+                        readOnly
+                        className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label
-                      htmlFor="lastName"
-                      className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                      Last Name
-                    </label>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="mb-2 block text-sm font-medium text-slate-700"
+                      >
+                        Email
+                      </label>
 
-                    <input
-                      id="lastName"
-                      name="lastName"
-                      type="text"
-                      value={profile.lastName}
-                      onChange={handleChange}
-                      className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
-                    />
+                      <input
+                        id="email"
+                        type="email"
+                        value={profile.email}
+                        readOnly
+                        className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="phone"
+                        className="mb-2 block text-sm font-medium text-slate-700"
+                      >
+                        Phone Number
+                      </label>
+
+                      <input
+                        id="phone"
+                        type="tel"
+                        value={profile.phone || "Not available"}
+                        readOnly
+                        className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none"
+                      />
+                    </div>
                   </div>
                 </div>
-
-                {/* Email + Phone */}
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                      Email Address
-                    </label>
-
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={profile.email}
-                      onChange={handleChange}
-                      className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="phone"
-                      className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                      Phone Number
-                    </label>
-
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={profile.phone}
-                      onChange={handleChange}
-                      className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
-                    />
-                  </div>
-                </div>
-
-                {/* Address */}
-                <div>
-                  <label
-                    htmlFor="address"
-                    className="mb-2 block text-sm font-medium text-slate-700"
-                  >
-                    Address
-                  </label>
-
-                  <input
-                    id="address"
-                    name="address"
-                    type="text"
-                    value={profile.address}
-                    onChange={handleChange}
-                    placeholder="Enter your address"
-                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
-                  />
-                </div>
-
-                {/* Location */}
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div>
-                    <label
-                      htmlFor="city"
-                      className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                      City
-                    </label>
-
-                    <input
-                      id="city"
-                      name="city"
-                      type="text"
-                      value={profile.city}
-                      onChange={handleChange}
-                      placeholder="Enter your city"
-                      className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="state"
-                      className="mb-2 block text-sm font-medium text-slate-700"
-                    >
-                      State
-                    </label>
-
-                    <input
-                      id="state"
-                      name="state"
-                      type="text"
-                      value={profile.state}
-                      onChange={handleChange}
-                      placeholder="Enter your state"
-                      className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
-                    />
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setProfile({
-                        firstName: "John",
-                        lastName: "Doe",
-                        email: "johndoe@example.com",
-                        phone: "+234 800 000 0000",
-                        address: "",
-                        city: "",
-                        state: "",
-                      })
-                    }
-                    className="rounded-lg border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    className="rounded-lg bg-green-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-green-800"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-
-              </form>
+              )}
             </div>
           </section>
         </div>
@@ -308,6 +273,3 @@ function Profile() {
 }
 
 export default Profile;
-
-
-

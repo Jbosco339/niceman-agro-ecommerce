@@ -16,6 +16,7 @@ import {
   createReview,
   getProductReviews,
 } from "../../../services/reviewService";
+import { useFavorites } from "../../../context/FavoritesContext";
 
 const emptyReview = {
   rating: 5,
@@ -31,6 +32,7 @@ function ProductDetails() {
   const [error, setError] = useState("");
   const { addToCart, cartItems, updateQuantity, removeFromCart } = useCart();
   const { isAuthenticated } = useAuth();
+  const { toggleFavorite, isFavorite } = useFavorites();
   const [productReviews, setProductReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewError, setReviewError] = useState("");
@@ -40,36 +42,68 @@ function ProductDetails() {
 
   useEffect(() => {
     if (!id) return;
-    setLoading(true);
-    getProduct(id)
-      .then(({ data }) => {
+
+    let active = true;
+
+    const fetchProduct = async () => {
+      setLoading(true);
+
+      try {
+        const { data } = await getProduct(id);
+        if (!active) return;
         setProduct(data);
         setError("");
-      })
-      .catch(() => {
+      } catch {
+        if (!active) return;
         setError("Failed to load product.");
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void fetchProduct();
+
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   useEffect(() => {
     if (!id) return;
 
-    setReviewsLoading(true);
-    getProductReviews(id)
-      .then(({ data }) => {
+    let active = true;
+
+    const fetchReviews = async () => {
+      setReviewsLoading(true);
+
+      try {
+        const { data } = await getProductReviews(id);
+        if (!active) return;
+
         const approvedReviews = Array.isArray(data)
           ? data.filter((review) => review?.status === "Approved")
           : [];
         setProductReviews(approvedReviews);
-      })
-      .catch(() => {
+      } catch {
+        if (!active) return;
         setProductReviews([]);
-      })
-      .finally(() => setReviewsLoading(false));
+      } finally {
+        if (active) {
+          setReviewsLoading(false);
+        }
+      }
+    };
+
+    void fetchReviews();
+
+    return () => {
+      active = false;
+    };
   }, [id]);
 
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const isWishlisted = !!product && isFavorite(product.id);
   const [addFeedback, setAddFeedback] = useState("");
 
   const averageRating =
@@ -375,7 +409,10 @@ function ProductDetails() {
 
               <button
                 type="button"
-                onClick={() => setIsWishlisted((current) => !current)}
+                onClick={() => {
+                  if (!product) return;
+                  toggleFavorite(product);
+                }}
                 className={`flex items-center justify-center gap-2 rounded-lg border px-5 py-3.5 font-semibold transition ${
                   isWishlisted
                     ? "border-red-200 bg-red-50 text-red-600"

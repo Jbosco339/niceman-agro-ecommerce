@@ -156,6 +156,25 @@ const getHeroSlides = (siteContent) => {
   );
 };
 
+const fallbackHeroImage = "/images/hero/fallbackImg.jpg";
+
+const getHeroBackgroundImage = (slide, loadedHeroImages) => {
+  const candidateImage =
+    typeof slide?.image === "string" && slide.image.trim()
+      ? slide.image
+      : fallbackHeroImage;
+
+  const resolvedImage =
+    loadedHeroImages[candidateImage] === false
+      ? fallbackHeroImage
+      : candidateImage;
+
+  return {
+    backgroundImage: `linear-gradient(90deg, rgba(3, 54, 31, 0.88), rgba(3, 54, 31, 0.30)), url("${resolvedImage}")`,
+    backgroundColor: "#0f172a",
+  };
+};
+
 function Home() {
   const location = useLocation();
   const { products } = useProducts();
@@ -178,6 +197,60 @@ function Home() {
 
   const [active, setActive] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [loadedHeroImages, setLoadedHeroImages] = useState({});
+
+  useEffect(() => {
+    const nextLoaded = {};
+
+    slides.forEach((slide) => {
+      const image = typeof slide?.image === "string" ? slide.image.trim() : "";
+      if (!image) {
+        nextLoaded[fallbackHeroImage] = true;
+        return;
+      }
+
+      nextLoaded[image] = false;
+    });
+
+    setLoadedHeroImages(nextLoaded);
+
+    const imageLoaders = slides
+      .map((slide) => {
+        const image =
+          typeof slide?.image === "string" ? slide.image.trim() : "";
+        if (!image) return null;
+
+        const img = new Image();
+        img.src = image;
+        return new Promise((resolve) => {
+          img.onload = () => resolve({ image, loaded: true });
+          img.onerror = () => resolve({ image, loaded: false });
+        });
+      })
+      .filter(Boolean);
+
+    if (!imageLoaders.length) return undefined;
+
+    let active = true;
+
+    Promise.all(imageLoaders).then((results) => {
+      if (!active) return;
+
+      setLoadedHeroImages((current) => {
+        const next = { ...current };
+
+        results.forEach(({ image, loaded }) => {
+          next[image] = loaded;
+        });
+
+        return next;
+      });
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [slides]);
 
   useEffect(() => {
     if (!slides.length) return undefined;
@@ -271,16 +344,6 @@ function Home() {
         <div className="absolute inset-0">
           {slides.map((slide, i) => {
             const missingImage = !slide.image;
-            const backgroundStyle = missingImage
-              ? {
-                  backgroundImage:
-                    "linear-gradient(90deg, rgba(3, 54, 31, 0.88), rgba(3, 54, 31, 0.30))",
-                  backgroundColor: "#e2e8f0",
-                }
-              : {
-                  backgroundImage: `linear-gradient(90deg, rgba(3, 54, 31, 0.88), rgba(3, 54, 31, 0.30)), url("${slide.image}")`,
-                  backgroundColor: "#0f172a",
-                };
 
             return (
               <div
@@ -289,7 +352,7 @@ function Home() {
                 className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out z-0 ${
                   i === active ? "opacity-100" : "opacity-0"
                 }`}
-                style={backgroundStyle}
+                style={getHeroBackgroundImage(slide, loadedHeroImages)}
               />
             );
           })}
@@ -348,20 +411,6 @@ function Home() {
               </div>
             </div>
           ))}
-
-          {/* Slide indicators */}
-          <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-2">
-            {slides.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setActive(idx)}
-                aria-label={`Go to slide ${idx + 1}`}
-                className={`h-2 w-8 rounded-full transition-all duration-300 ${
-                  idx === active ? "w-8 bg-white/90" : "w-2 bg-white/40"
-                }`}
-              />
-            ))}
-          </div>
         </div>
       </section>
 
