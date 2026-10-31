@@ -60,16 +60,18 @@ const OrderConfirmation = () => {
       const { data } = await submitBankTransferPayment(order.id);
       setOrder((current) => ({ ...current, ...data }));
     } catch (error) {
-      setSubmitError(error.message || "We could not update your payment status.");
+      setSubmitError(
+        error.message || "We could not update your payment status.",
+      );
     } finally {
       setSubmittingPayment(false);
     }
   };
 
   const bankDetails = order.bankDetails ?? {
-    accountName: "Niceman Agro & Farms",
-    bankName: "Access Bank",
-    accountNumber: "1234567890",
+    accountName: "Niceman Agro and Farm",
+    bankName: "Wema Bank",
+    accountNumber: "0125362805",
   };
 
   return (

@@ -759,9 +759,9 @@ router.delete("/customers/account", auth, async (req, res) => {
 });
 
 const getBankDetails = () => ({
-  accountName: process.env.BANK_ACCOUNT_NAME || "Niceman Agro & Farms",
-  bankName: process.env.BANK_NAME || "Access Bank",
-  accountNumber: process.env.BANK_ACCOUNT_NUMBER || "1234567890",
+  accountName: process.env.BANK_ACCOUNT_NAME || "Niceman Agro and Farm",
+  bankName: process.env.BANK_NAME || "Wema Bank",
+  accountNumber: process.env.BANK_ACCOUNT_NUMBER || "0125362805",
 });
 
 router.post(

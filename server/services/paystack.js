@@ -71,18 +71,36 @@ export const isValidPaystackSignature = (rawBody, signature) => {
 export const reserveInventory = async (items) => {
   const reserved = [];
   for (const item of items) {
+    const product = await Product.findOne({
+      _id: item.product,
+      status: "Active",
+    }).lean();
+
+    if (!product) {
+      await releaseInventory(reserved);
+      return false;
+    }
+
+    const quantity = Number(item.quantity) || 0;
+    const currentStock = Number(product.stock) || 0;
+    const deducted = Math.min(quantity, currentStock);
+    const nextStock = Math.max(0, currentStock - quantity);
+
+    item.stockDeducted = deducted;
+
     const result = await Product.updateOne(
       {
         _id: item.product,
         status: "Active",
-        stock: { $gte: item.quantity },
       },
-      { $inc: { stock: -item.quantity } },
+      { $set: { stock: nextStock } },
     );
-    if (result.modifiedCount !== 1) {
+
+    if (result.matchedCount !== 1) {
       await releaseInventory(reserved);
       return false;
     }
+
     reserved.push(item);
   }
   return true;
@@ -90,12 +108,15 @@ export const reserveInventory = async (items) => {
 
 export const releaseInventory = async (items) => {
   await Promise.all(
-    (items ?? []).map((item) =>
-      Product.updateOne(
+    (items ?? []).map((item) => {
+      const restoreAmount = Number(item?.stockDeducted) || 0;
+      if (restoreAmount <= 0) return null;
+
+      return Product.updateOne(
         { _id: item.product },
-        { $inc: { stock: item.quantity } },
-      ),
-    ),
+        { $inc: { stock: restoreAmount } },
+      );
+    }),
   );
 };
 
@@ -129,11 +150,7 @@ export const releaseExpiredReservations = async () => {
 
 export const restoreLoyaltyRedemption = async (order) => {
   const amountKobo = Number(order?.payload?.loyaltyPointsRedeemedKobo) || 0;
-  if (
-    !order ||
-    amountKobo <= 0 ||
-    order.payload.loyaltyPointsRestoredAt
-  ) {
+  if (!order || amountKobo <= 0 || order.payload.loyaltyPointsRestoredAt) {
     return;
   }
 
@@ -308,11 +325,7 @@ export const confirmBankTransferPayment = async (
   transactionReference,
   adminUserId,
 ) => {
-  if (
-    !order ||
-    order.resource !== "order"
-  )
-    return null;
+  if (!order || order.resource !== "order") return null;
 
   if (order.payload.paymentStatus === "Paid") {
     return order.payload.loyaltyAwardStatus === "Pending"

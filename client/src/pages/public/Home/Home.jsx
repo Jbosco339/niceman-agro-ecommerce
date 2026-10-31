@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import useProducts from "../../../hooks/useProducts";
 import { useCategoryContext } from "../../../context/CategoryContext";
@@ -55,7 +55,7 @@ const homepageHeroButtons = [
     text: "Shop Products",
     link: "/shop",
     secondaryText: "Learn & Grow",
-    secondaryLink: "#learn-and-grow",
+    secondaryLink: "/#learn-and-grow",
   },
   {
     text: "Explore Products",
@@ -175,8 +175,51 @@ const getHeroBackgroundImage = (slide, loadedHeroImages) => {
   };
 };
 
+const buildLoadedHeroImages = (slides = []) => {
+  const nextLoaded = {};
+
+  slides.forEach((slide) => {
+    const image = typeof slide?.image === "string" ? slide.image.trim() : "";
+    if (!image) {
+      nextLoaded[fallbackHeroImage] = true;
+      return;
+    }
+
+    nextLoaded[image] = false;
+  });
+
+  return nextLoaded;
+};
+
+const isHomePath = (pathname = "") => pathname === "/" || pathname === "/Home";
+
+const getHashId = (value = "") => {
+  const match = String(value || "").match(/#([A-Za-z0-9_-]+)/);
+  return match ? match[1] : "";
+};
+
+const scrollToHashId = (targetId) => {
+  const normalizedId = (targetId || "").replace(/^#/, "").trim();
+  if (!normalizedId) return;
+
+  const target = document.getElementById(normalizedId);
+  if (!target) return;
+
+  const header = document.querySelector("header");
+  const headerOffset = header ? header.offsetHeight + 12 : 72;
+  const top =
+    target.getBoundingClientRect().top + window.scrollY - headerOffset;
+
+  window.scrollTo({
+    top,
+    left: 0,
+    behavior: "smooth",
+  });
+};
+
 function Home() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { products } = useProducts();
   const { activeCategories } = useCategoryContext();
   const { content: siteContent } = useWebsiteContent();
@@ -197,22 +240,22 @@ function Home() {
 
   const [active, setActive] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [loadedHeroImages, setLoadedHeroImages] = useState({});
+  const [loadedHeroImages, setLoadedHeroImages] = useState(() =>
+    buildLoadedHeroImages(slides),
+  );
 
   useEffect(() => {
-    const nextLoaded = {};
+    const nextLoaded = buildLoadedHeroImages(slides);
 
-    slides.forEach((slide) => {
-      const image = typeof slide?.image === "string" ? slide.image.trim() : "";
-      if (!image) {
-        nextLoaded[fallbackHeroImage] = true;
-        return;
-      }
-
-      nextLoaded[image] = false;
+    setLoadedHeroImages((current) => {
+      const merged = { ...current };
+      Object.keys(nextLoaded).forEach((key) => {
+        if (!(key in merged)) {
+          merged[key] = nextLoaded[key];
+        }
+      });
+      return merged;
     });
-
-    setLoadedHeroImages(nextLoaded);
 
     const imageLoaders = slides
       .map((slide) => {
@@ -287,7 +330,6 @@ function Home() {
 
   useEffect(() => {
     let mounted = true;
-    // keep existing state until fetch resolves
 
     getFeaturedPosts()
       .then((res) => {
@@ -309,28 +351,32 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    if (!location.hash) return undefined;
-
-    const targetId = location.hash.replace("#", "");
-    if (!targetId) return undefined;
+    if (!isHomePath(location.pathname)) return undefined;
+    const hashId = getHashId(location.hash);
+    if (!hashId) return undefined;
 
     const timer = window.setTimeout(() => {
-      const element = document.getElementById(targetId);
-      if (!element) return;
-
-      const header = document.querySelector("header");
-      const headerOffset = header ? header.offsetHeight + 12 : 72;
-      const top =
-        element.getBoundingClientRect().top + window.scrollY - headerOffset;
-
-      window.scrollTo({
-        top,
-        behavior: "smooth",
-      });
-    }, 60);
+      scrollToHashId(hashId);
+    }, 80);
 
     return () => window.clearTimeout(timer);
   }, [location.hash, location.pathname]);
+
+  const handleHomeHashLink = (event, targetLink) => {
+    const hashId = getHashId(targetLink);
+    if (!hashId || !isHomePath(location.pathname)) return;
+
+    event.preventDefault();
+
+    const currentHashId = getHashId(location.hash);
+    if (currentHashId === hashId) {
+      window.setTimeout(() => scrollToHashId(hashId), 20);
+      return;
+    }
+
+    navigate(targetLink.startsWith("/") ? targetLink : `/#${hashId}`);
+    window.setTimeout(() => scrollToHashId(hashId), 140);
+  };
 
   return (
     <main className="overflow-hidden bg-white text-slate-800">
@@ -402,6 +448,12 @@ function Home() {
                       to={
                         slide.secondaryButtonLink || slide.buttonLink || "/shop"
                       }
+                      onClick={(event) => {
+                        const targetHref = slide.secondaryButtonLink || "#";
+                        if (targetHref.includes("#")) {
+                          handleHomeHashLink(event, targetHref);
+                        }
+                      }}
                       className="inline-flex min-h-12 items-center justify-center rounded-md border border-white px-7 font-semibold text-white transition hover:bg-white hover:text-green-800"
                     >
                       {slide.secondaryButtonText || "Explore Products"}

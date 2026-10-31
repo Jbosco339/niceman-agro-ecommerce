@@ -1,4 +1,11 @@
-import React, { createContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useLocation } from "react-router-dom";
 import { get as publicGet } from "../services/api";
 import { getWebsiteContent as getAdminWebsiteContent } from "../services/adminService";
 
@@ -6,92 +13,87 @@ export const initialWebsiteContent = {};
 
 export const WebsiteContentContext = createContext(null);
 
-let websiteContentRequest = null;
-let websiteContentCache = {};
-let websiteContentLoaded = false;
+const modeState = {
+  public: {
+    request: null,
+    cache: {},
+    loaded: false,
+  },
+  admin: {
+    request: null,
+    cache: {},
+    loaded: false,
+  },
+};
 
 export function WebsiteContentProvider({ children }) {
-  const [content, setContent] = useState(
-    websiteContentLoaded ? websiteContentCache : {},
-  );
+  const location = useLocation();
+  const routeMode = location.pathname.startsWith("/admin") ? "admin" : "public";
+  const [content, setContent] = useState(modeState[routeMode].cache);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
+    const modeData = modeState[routeMode];
 
     const loadContent = async () => {
-      const isAdminRoute =
-        typeof window !== "undefined" &&
-        window.location.pathname.startsWith("/admin");
-
-      if (!isAdminRoute) {
-        if (websiteContentLoaded) {
-          if (active) setContent(websiteContentCache);
-          return;
+      if (modeData.loaded) {
+        if (active) {
+          setContent(modeData.cache);
+          setLoading(false);
         }
-
-        if (websiteContentRequest) {
-          if (active) setLoading(true);
-          try {
-            const { data } = await websiteContentRequest;
-            const next = data && typeof data === "object" ? data : {};
-            websiteContentCache = next;
-            websiteContentLoaded = true;
-            if (active) setContent(next);
-          } catch {
-            websiteContentCache = {};
-            websiteContentLoaded = true;
-            if (active) setContent({});
-          } finally {
-            if (active) setLoading(false);
-          }
-          return;
-        }
-
-        if (active) setLoading(true);
-        websiteContentRequest = publicGet("/website-content")
-          .then(({ data }) => {
-            const next = data && typeof data === "object" ? data : {};
-            websiteContentCache = next;
-            websiteContentLoaded = true;
-            if (active) setContent(next);
-            return next;
-          })
-          .catch(() => {
-            websiteContentCache = {};
-            websiteContentLoaded = true;
-            if (active) setContent({});
-            return {};
-          })
-          .finally(() => {
-            websiteContentRequest = null;
-            if (active) setLoading(false);
-          });
         return;
       }
 
-      if (
-        websiteContentLoaded &&
-        websiteContentCache &&
-        !websiteContentRequest
-      ) {
-        if (active) setContent(websiteContentCache);
+      if (modeData.request) {
+        if (active) setLoading(true);
+
+        try {
+          const { data } = await modeData.request;
+          const next = data && typeof data === "object" ? data : {};
+          modeData.cache = next;
+          modeData.loaded = true;
+          if (active) setContent(next);
+        } catch {
+          modeData.cache = {};
+          modeData.loaded = true;
+          if (active) setContent({});
+        } finally {
+          if (active) setLoading(false);
+        }
         return;
       }
 
       if (active) setLoading(true);
+
+      const request =
+        routeMode === "admin"
+          ? getAdminWebsiteContent()
+          : publicGet("/website-content");
+
+      modeData.request = request
+        .then(({ data }) => {
+          const next = data && typeof data === "object" ? data : {};
+          modeData.cache = next;
+          modeData.loaded = true;
+          if (active) setContent(next);
+          return next;
+        })
+        .catch(() => {
+          modeData.cache = {};
+          modeData.loaded = true;
+          if (active) setContent({});
+          return {};
+        })
+        .finally(() => {
+          modeData.request = null;
+          if (active) setLoading(false);
+        });
+
       try {
-        const { data } = await getAdminWebsiteContent();
-        const next = data && typeof data === "object" ? data : {};
-        websiteContentCache = next;
-        websiteContentLoaded = true;
-        if (active) setContent(next);
+        await modeData.request;
       } catch {
-        websiteContentCache = {};
-        websiteContentLoaded = true;
-        if (active) setContent({});
-      } finally {
-        if (active) setLoading(false);
+        // handled in the catch above
       }
     };
 
@@ -100,22 +102,37 @@ export function WebsiteContentProvider({ children }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [routeMode]);
 
-  const updateSection = (section, updates) => {
-    setContent((cur) => ({
-      ...cur,
-      [section]: { ...(cur[section] || {}), ...updates },
-    }));
-  };
+  const updateSection = useCallback(
+    (section, updates) => {
+      setContent((cur) => {
+        const next = {
+          ...cur,
+          [section]: { ...(cur[section] || {}), ...updates },
+        };
 
-  const setSection = (section, value) => {
-    setContent((cur) => ({ ...cur, [section]: value }));
-  };
+        modeState[routeMode].cache = next;
+        return next;
+      });
+    },
+    [routeMode],
+  );
+
+  const setSection = useCallback(
+    (section, value) => {
+      setContent((cur) => {
+        const next = { ...cur, [section]: value };
+        modeState[routeMode].cache = next;
+        return next;
+      });
+    },
+    [routeMode],
+  );
 
   const value = useMemo(
     () => ({ content, setContent, loading, updateSection, setSection }),
-    [content, loading],
+    [content, loading, updateSection, setSection],
   );
 
   return (
